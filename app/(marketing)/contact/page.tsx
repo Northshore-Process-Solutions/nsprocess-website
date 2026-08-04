@@ -237,26 +237,33 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
             />
           </Reveal>
           <Reveal delay={0.08}>
-            <Card className="overflow-hidden p-4">
-              <div className="relative min-h-80 rounded-[1.5rem] bg-secondary p-6">
-                <div className="absolute inset-0 opacity-60 [background-image:linear-gradient(to_right,rgba(11,37,69,0.12)_1px,transparent_1px),linear-gradient(to_bottom,rgba(11,37,69,0.12)_1px,transparent_1px)] [background-size:32px_32px]" />
-                <div className="relative flex min-h-64 flex-col justify-between">
-                  <div className="max-w-sm rounded-2xl bg-card p-5 shadow-soft">
-                    <MapPin aria-hidden className="size-7 text-accent" />
-                    <h2 className="mt-4 text-2xl font-semibold">
-                      {contact.serviceArea}
-                    </h2>
-                    <p className="mt-3 leading-7 text-muted-foreground">
-                      Local guidance for businesses that need practical help,
-                      not enterprise complexity.
-                    </p>
-                  </div>
-                  <div className="self-end rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-card">
-                    North Shore, MA
-                  </div>
+            <div className="overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-soft">
+              <div className="relative aspect-[4/3] min-h-80 w-full bg-secondary sm:aspect-[5/4]">
+                <iframe
+                  allowFullScreen
+                  className="absolute inset-0 h-full w-full border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src="https://www.openstreetmap.org/export/embed.html?bbox=-71.12%2C42.38%2C-70.68%2C42.78&amp;layer=mapnik"
+                  title="Map of Massachusetts North Shore service area"
+                />
+              </div>
+              <div className="flex items-start gap-3 px-5 py-4">
+                <MapPin
+                  aria-hidden
+                  className="mt-0.5 size-5 shrink-0 text-accent"
+                />
+                <div>
+                  <p className="font-semibold text-foreground">
+                    {contact.serviceArea}
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    Local guidance for businesses that need practical help, not
+                    enterprise complexity.
+                  </p>
                 </div>
               </div>
-            </Card>
+            </div>
           </Reveal>
         </div>
       </section>
