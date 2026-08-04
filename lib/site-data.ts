@@ -1,6 +1,6 @@
 export const contact = {
   phone: "(978) 308-9744",
-  email: "hello@nsprocess.com",
+  email: "info@nsprocess.com",
   serviceArea: "Massachusetts North Shore",
   hours: "Monday-Friday, 8:30 AM-5:30 PM",
 };
