@@ -23,7 +23,18 @@ const reviewSteps = [
   "We recommend practical quick wins and next steps.",
 ];
 
-export default function ContactPage() {
+type ContactPageProps = {
+  searchParams?: Promise<{
+    sent?: string;
+    error?: string;
+  }>;
+};
+
+export default async function ContactPage({ searchParams }: ContactPageProps) {
+  const params = await searchParams;
+  const sent = params?.sent === "1";
+  const error = params?.error === "1";
+
   return (
     <main>
       <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
@@ -60,12 +71,29 @@ export default function ContactPage() {
           <Reveal delay={0.1}>
             <Card className="p-6 sm:p-8">
               <form
-                action={`mailto:${contact.email}`}
+                action="/api/contact"
                 aria-label="Free Process Review request form"
                 className="space-y-5"
-                encType="text/plain"
                 method="post"
               >
+                {sent ? (
+                  <div
+                    aria-live="polite"
+                    className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium leading-6 text-emerald-900"
+                  >
+                    Thanks. Your request was sent, and we&apos;ll follow up
+                    shortly.
+                  </div>
+                ) : null}
+                {error ? (
+                  <div
+                    aria-live="polite"
+                    className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium leading-6 text-red-900"
+                  >
+                    Something went wrong sending the form. Please email us at{" "}
+                    {contact.email}.
+                  </div>
+                ) : null}
                 <div className="grid gap-5 sm:grid-cols-2">
                   <label className="space-y-2 text-sm font-semibold">
                     First name
@@ -128,7 +156,12 @@ export default function ContactPage() {
                     required
                   />
                 </label>
-                <Button className="w-full" size="lg" type="submit" variant="accent">
+                <Button
+                  className="w-full"
+                  size="lg"
+                  type="submit"
+                  variant="accent"
+                >
                   Request My Free Process Review
                 </Button>
                 <p className="text-center text-sm leading-6 text-muted-foreground">
