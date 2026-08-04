@@ -13,14 +13,15 @@ export function Logo({ className }: { className?: string }) {
       )}
       href="/"
     >
-      <span className="relative h-12 w-14 overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-border transition-transform duration-200 group-hover:-translate-y-0.5">
+      <span className="grid h-12 w-16 place-items-center rounded-2xl bg-white p-1.5 shadow-soft ring-1 ring-border transition-transform duration-200 group-hover:-translate-y-0.5">
         <Image
           alt=""
-          className="scale-[2.35] object-contain"
-          fill
+          className="h-auto w-full object-contain"
+          height={46}
           priority
-          sizes="56px"
+          sizes="64px"
           src="/transparentLogo.png"
+          width={64}
         />
       </span>
       <span className="leading-tight">
