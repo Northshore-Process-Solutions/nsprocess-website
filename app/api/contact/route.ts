@@ -56,6 +56,12 @@ async function createWebsiteLead(input: {
 export async function POST(request: Request) {
   const formData = await request.formData();
 
+  // Honeypot: real users never see/fill this field.
+  const honeypot = getField(formData, "company_website");
+  if (honeypot) {
+    return redirectToContact(request, "sent");
+  }
+
   const firstName = getField(formData, "firstName");
   const lastName = getField(formData, "lastName");
   const business = getField(formData, "business");

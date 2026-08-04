@@ -73,7 +73,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
               <form
                 action="/api/contact"
                 aria-label="Free Process Review request form"
-                className="space-y-5"
+                className="relative space-y-5"
                 method="post"
               >
                 {sent ? (
@@ -94,6 +94,20 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
                     {contact.email}.
                   </div>
                 ) : null}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -left-[9999px] h-0 w-0 overflow-hidden opacity-0"
+                >
+                  <label>
+                    Company website
+                    <input
+                      autoComplete="off"
+                      name="company_website"
+                      tabIndex={-1}
+                      type="text"
+                    />
+                  </label>
+                </div>
                 <div className="grid gap-5 sm:grid-cols-2">
                   <label className="space-y-2 text-sm font-semibold">
                     First name
