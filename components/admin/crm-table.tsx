@@ -1,5 +1,6 @@
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Pencil, Trash2 } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import type { CrmTableRow } from "@/lib/crm";
 import { cn } from "@/lib/utils";
 
@@ -10,13 +11,25 @@ const statusStyles: Record<string, string> = {
   do_not_use: "bg-red-50 text-red-800 border-red-200",
 };
 
-export function CrmTable({ rows }: { rows: CrmTableRow[] }) {
+type CrmTableProps = {
+  rows: CrmTableRow[];
+  onEdit: (row: CrmTableRow) => void;
+  onDelete: (row: CrmTableRow) => void;
+  deletingId?: string | null;
+};
+
+export function CrmTable({
+  rows,
+  onEdit,
+  onDelete,
+  deletingId = null,
+}: CrmTableProps) {
   if (rows.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
         <p className="text-lg font-semibold">No organizations yet</p>
         <p className="mt-2 text-sm text-muted-foreground">
-          Add vendors or customer contacts in Supabase to see them here.
+          Use Add organization to create your first vendor or customer record.
         </p>
       </div>
     );
@@ -35,6 +48,7 @@ export function CrmTable({ rows }: { rows: CrmTableRow[] }) {
               <th className="px-4 py-3 font-semibold">Phone</th>
               <th className="px-4 py-3 font-semibold">Status</th>
               <th className="px-4 py-3 font-semibold">Category</th>
+              <th className="px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -115,6 +129,29 @@ export function CrmTable({ rows }: { rows: CrmTableRow[] }) {
                 </td>
                 <td className="px-4 py-4 text-muted-foreground">
                   {row.category || "—"}
+                </td>
+                <td className="px-4 py-4">
+                  <div className="flex gap-2">
+                    <Button
+                      aria-label={`Edit ${row.name}`}
+                      onClick={() => onEdit(row)}
+                      size="icon"
+                      type="button"
+                      variant="outline"
+                    >
+                      <Pencil aria-hidden className="size-4" />
+                    </Button>
+                    <Button
+                      aria-label={`Delete ${row.name}`}
+                      disabled={deletingId === row.id}
+                      onClick={() => onDelete(row)}
+                      size="icon"
+                      type="button"
+                      variant="outline"
+                    >
+                      <Trash2 aria-hidden className="size-4" />
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ))}

@@ -1,7 +1,7 @@
 import { Building2, Users } from "lucide-react";
 import { redirect } from "next/navigation";
 
-import { CrmTable } from "@/components/admin/crm-table";
+import { CrmPanel } from "@/components/admin/crm-panel";
 import { SignOutButton } from "@/components/admin/sign-out-button";
 import { Logo } from "@/components/logo";
 import {
@@ -52,13 +52,19 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       status,
       notes,
       organization_relationships (
+        id,
         relationship_type,
         lifecycle_stage
       ),
       organization_contacts (
+        id,
         title,
         is_primary,
+        contact_id,
         contacts (
+          id,
+          first_name,
+          last_name,
           display_name,
           email,
           phone
@@ -97,7 +103,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             CRM
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Organizations and contacts from your Supabase database.
+            Manage organizations, relationship types, and primary contacts.
           </p>
         </div>
         <SignOutButton />
@@ -124,16 +130,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         </div>
       </section>
 
-      <nav
-        aria-label="CRM filters"
-        className="mb-5 flex flex-wrap gap-2"
-      >
+      <nav aria-label="CRM filters" className="mb-5 flex flex-wrap gap-2">
         {filters.map((filter) => {
           const active = typeFilter === filter.value;
           const href =
-            filter.value === "all"
-              ? "/admin"
-              : `/admin?type=${filter.value}`;
+            filter.value === "all" ? "/admin" : `/admin?type=${filter.value}`;
 
           return (
             <a
@@ -151,7 +152,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         })}
       </nav>
 
-      <CrmTable rows={rows} />
+      <CrmPanel rows={rows} />
     </main>
   );
 }

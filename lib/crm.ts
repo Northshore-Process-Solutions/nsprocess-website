@@ -5,6 +5,12 @@ export type RelationshipType =
   | "partner"
   | "supplier";
 
+export type OrganizationStatus =
+  | "active"
+  | "inactive"
+  | "prospect"
+  | "do_not_use";
+
 export type OrganizationRow = {
   id: string;
   name: string;
@@ -14,25 +20,34 @@ export type OrganizationRow = {
   phone: string | null;
   city: string | null;
   state: string | null;
-  status: string;
+  status: OrganizationStatus;
   notes: string | null;
   organization_relationships:
     | {
+        id: string;
         relationship_type: RelationshipType;
         lifecycle_stage: string | null;
       }[]
     | null;
   organization_contacts:
     | {
+        id: string;
         title: string | null;
         is_primary: boolean;
+        contact_id: string;
         contacts:
           | {
+              id: string;
+              first_name: string | null;
+              last_name: string | null;
               display_name: string | null;
               email: string | null;
               phone: string | null;
             }
           | {
+              id: string;
+              first_name: string | null;
+              last_name: string | null;
               display_name: string | null;
               email: string | null;
               phone: string | null;
@@ -45,26 +60,55 @@ export type OrganizationRow = {
 export type CrmTableRow = {
   id: string;
   name: string;
+  relationshipType: RelationshipType | null;
   relationshipTypes: RelationshipType[];
   category: string | null;
-  status: string;
+  status: OrganizationStatus;
   primaryContact: string | null;
+  contactFirstName: string | null;
+  contactLastName: string | null;
   contactTitle: string | null;
+  contactId: string | null;
   email: string | null;
   phone: string | null;
+  organizationEmail: string | null;
+  organizationPhone: string | null;
+  city: string | null;
+  state: string | null;
   location: string | null;
   website: string | null;
   notes: string | null;
 };
 
+export const RELATIONSHIP_TYPES: RelationshipType[] = [
+  "vendor",
+  "customer",
+  "lead",
+  "partner",
+  "supplier",
+];
+
+export const ORGANIZATION_STATUSES: OrganizationStatus[] = [
+  "active",
+  "inactive",
+  "prospect",
+  "do_not_use",
+];
+
 function unwrapContact(
   contacts:
     | {
+        id: string;
+        first_name: string | null;
+        last_name: string | null;
         display_name: string | null;
         email: string | null;
         phone: string | null;
       }
     | {
+        id: string;
+        first_name: string | null;
+        last_name: string | null;
         display_name: string | null;
         email: string | null;
         phone: string | null;
@@ -82,21 +126,68 @@ export function mapOrganizationToCrmRow(org: OrganizationRow): CrmTableRow {
   const primary =
     contacts.find((contact) => contact.is_primary) ?? contacts[0] ?? null;
   const person = unwrapContact(primary?.contacts);
-
   const location = [org.city, org.state].filter(Boolean).join(", ") || null;
 
   return {
     id: org.id,
     name: org.name,
+    relationshipType: relationships[0]?.relationship_type ?? null,
     relationshipTypes: relationships.map((item) => item.relationship_type),
     category: org.category,
     status: org.status,
     primaryContact: person?.display_name?.trim() || null,
+    contactFirstName: person?.first_name ?? null,
+    contactLastName: person?.last_name ?? null,
     contactTitle: primary?.title ?? null,
+    contactId: person?.id ?? primary?.contact_id ?? null,
     email: person?.email || org.email,
     phone: person?.phone || org.phone,
+    organizationEmail: org.email,
+    organizationPhone: org.phone,
+    city: org.city,
+    state: org.state,
     location,
     website: org.website,
     notes: org.notes,
+  };
+}
+
+export function emptyCrmFormValues() {
+  return {
+    name: "",
+    relationshipType: "vendor" as RelationshipType,
+    status: "active" as OrganizationStatus,
+    category: "",
+    website: "",
+    email: "",
+    phone: "",
+    city: "",
+    state: "",
+    notes: "",
+    contactFirstName: "",
+    contactLastName: "",
+    contactEmail: "",
+    contactPhone: "",
+    contactTitle: "",
+  };
+}
+
+export function crmRowToFormValues(row: CrmTableRow) {
+  return {
+    name: row.name,
+    relationshipType: row.relationshipType ?? ("vendor" as RelationshipType),
+    status: row.status,
+    category: row.category ?? "",
+    website: row.website ?? "",
+    email: row.organizationEmail ?? "",
+    phone: row.organizationPhone ?? "",
+    city: row.city ?? "",
+    state: row.state ?? "",
+    notes: row.notes ?? "",
+    contactFirstName: row.contactFirstName ?? "",
+    contactLastName: row.contactLastName ?? "",
+    contactEmail: row.email ?? "",
+    contactPhone: row.phone ?? "",
+    contactTitle: row.contactTitle ?? "",
   };
 }
