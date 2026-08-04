@@ -38,6 +38,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 
 Create an admin user in the Supabase dashboard under **Authentication → Users → Add user**, then sign in at `/admin/login`.
 
+Admin sections:
+
+- `/admin` — CRM for customers, leads, vendors, and partners
+- `/admin/tools` — internal stack/tools your business depends on (Supabase, GitHub, Vercel, etc.)
+
 ## Brand System
 
 See `BRAND.md` for the logo concept, color palette, typography, copy voice, iconography, illustration direction, spacing scale, and component guidance.

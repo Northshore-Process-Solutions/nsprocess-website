@@ -1,6 +1,7 @@
 import { Building2, Users } from "lucide-react";
 import { redirect } from "next/navigation";
 
+import { AdminNav } from "@/components/admin/admin-nav";
 import { CrmPanel } from "@/components/admin/crm-panel";
 import { SignOutButton } from "@/components/admin/sign-out-button";
 import { Logo } from "@/components/logo";
@@ -99,6 +100,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <Logo />
+          <AdminNav current="crm" />
           <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">
             CRM
           </h1>
