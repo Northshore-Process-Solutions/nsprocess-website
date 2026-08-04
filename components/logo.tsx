@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 import { cn } from "@/lib/utils";
 
@@ -12,8 +13,15 @@ export function Logo({ className }: { className?: string }) {
       )}
       href="/"
     >
-      <span className="grid size-10 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-soft transition-transform duration-200 group-hover:-translate-y-0.5">
-        <span className="text-sm font-bold tracking-tight">NS</span>
+      <span className="relative h-12 w-14 overflow-hidden rounded-2xl bg-white shadow-soft ring-1 ring-border transition-transform duration-200 group-hover:-translate-y-0.5">
+        <Image
+          alt=""
+          className="scale-[2.35] object-contain"
+          fill
+          priority
+          sizes="56px"
+          src="/transparentLogo.png"
+        />
       </span>
       <span className="leading-tight">
         <span className="block text-sm font-bold tracking-tight text-foreground">

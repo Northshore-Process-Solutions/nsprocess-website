@@ -8,7 +8,7 @@ North Shore Process Solutions is a local Business Efficiency Partner. The brand 
 
 ## Logo Concept
 
-The primary logo uses a compact `NS` monogram inside a rounded navy tile paired with a two-line wordmark:
+The primary logo uses the provided `NS` wave mark from `public/transparentLogo.png` inside a rounded white tile paired with a two-line wordmark:
 
 - `North Shore`
 - `Process Solutions`
