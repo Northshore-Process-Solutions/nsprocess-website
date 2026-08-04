@@ -8,6 +8,7 @@ import {
   type OrganizationStatus,
   type RelationshipType,
 } from "@/lib/crm";
+import { normalizeUsPhone } from "@/lib/phone";
 import { createClient } from "@/lib/supabase/server";
 
 export type OrganizationInput = {
@@ -39,6 +40,25 @@ function clean(value?: string | null) {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function parsePhoneField(
+  value: string | undefined,
+  label: string,
+): { phone?: string; error?: string } {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) {
+    return { phone: undefined };
+  }
+
+  const normalized = normalizeUsPhone(trimmed);
+  if (!normalized) {
+    return {
+      error: `${label} must be a valid 10-digit US number.`,
+    };
+  }
+
+  return { phone: normalized };
+}
+
 function parseInput(input: OrganizationInput): OrganizationInput | ActionResult {
   const name = input.name.trim();
   if (!name) {
@@ -53,6 +73,16 @@ function parseInput(input: OrganizationInput): OrganizationInput | ActionResult 
     return { ok: false, error: "Invalid status." };
   }
 
+  const organizationPhone = parsePhoneField(input.phone, "Organization phone");
+  if (organizationPhone.error) {
+    return { ok: false, error: organizationPhone.error };
+  }
+
+  const contactPhone = parsePhoneField(input.contactPhone, "Contact phone");
+  if (contactPhone.error) {
+    return { ok: false, error: contactPhone.error };
+  }
+
   return {
     name,
     relationshipType: input.relationshipType,
@@ -60,14 +90,14 @@ function parseInput(input: OrganizationInput): OrganizationInput | ActionResult 
     category: clean(input.category) ?? undefined,
     website: clean(input.website) ?? undefined,
     email: clean(input.email) ?? undefined,
-    phone: clean(input.phone) ?? undefined,
+    phone: organizationPhone.phone,
     city: clean(input.city) ?? undefined,
     state: clean(input.state) ?? undefined,
     notes: clean(input.notes) ?? undefined,
     contactFirstName: clean(input.contactFirstName) ?? undefined,
     contactLastName: clean(input.contactLastName) ?? undefined,
     contactEmail: clean(input.contactEmail) ?? undefined,
-    contactPhone: clean(input.contactPhone) ?? undefined,
+    contactPhone: contactPhone.phone,
     contactTitle: clean(input.contactTitle) ?? undefined,
     contactId: input.contactId ?? null,
   };

@@ -204,6 +204,7 @@ function OrganizationFormDialog({
               <input
                 className="min-h-11 w-full rounded-2xl border border-input bg-background px-4 py-3 text-base font-normal outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
                 onChange={(event) => updateField("phone", event.target.value)}
+                placeholder="(978) 555-0184"
                 value={values.phone}
               />
             </label>
@@ -270,6 +271,7 @@ function OrganizationFormDialog({
                   onChange={(event) =>
                     updateField("contactPhone", event.target.value)
                   }
+                  placeholder="(978) 555-0184"
                   value={values.contactPhone}
                 />
               </label>
