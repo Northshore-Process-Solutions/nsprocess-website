@@ -193,14 +193,28 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
             <Card className="h-full p-6">
               <Phone aria-hidden className="size-7 text-accent" />
               <h2 className="mt-5 text-xl font-semibold">Phone</h2>
-              <p className="mt-2 text-muted-foreground">{contact.phone}</p>
+              <p className="mt-2 text-muted-foreground">
+                <a
+                  className="transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  href={`tel:+1${contact.phone.replace(/\D/g, "")}`}
+                >
+                  {contact.phone}
+                </a>
+              </p>
             </Card>
           </Reveal>
           <Reveal delay={0.05}>
             <Card className="h-full p-6">
               <Mail aria-hidden className="size-7 text-accent" />
               <h2 className="mt-5 text-xl font-semibold">Email</h2>
-              <p className="mt-2 text-muted-foreground">{contact.email}</p>
+              <p className="mt-2 text-muted-foreground">
+                <a
+                  className="transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  href={`mailto:${contact.email}`}
+                >
+                  {contact.email}
+                </a>
+              </p>
             </Card>
           </Reveal>
           <Reveal delay={0.1}>

@@ -3,6 +3,7 @@ import { ArrowRight, Mail, MapPin, Phone } from "lucide-react";
 
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
+import { contact } from "@/lib/site-data";
 
 export function SiteFooter() {
   return (
@@ -53,15 +54,25 @@ export function SiteFooter() {
           <ul className="mt-5 space-y-4 text-sm text-primary-foreground/75">
             <li className="flex gap-3">
               <MapPin aria-hidden className="mt-0.5 size-4 shrink-0" />
-              Massachusetts North Shore
+              {contact.serviceArea}
             </li>
             <li className="flex gap-3">
               <Phone aria-hidden className="mt-0.5 size-4 shrink-0" />
-              (978) 555-0184
+              <a
+                className="transition hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                href={`tel:+1${contact.phone.replace(/\D/g, "")}`}
+              >
+                {contact.phone}
+              </a>
             </li>
             <li className="flex gap-3">
               <Mail aria-hidden className="mt-0.5 size-4 shrink-0" />
-              hello@nsprocess.com
+              <a
+                className="transition hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                href={`mailto:${contact.email}`}
+              >
+                {contact.email}
+              </a>
             </li>
           </ul>
         </div>
