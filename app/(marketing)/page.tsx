@@ -10,7 +10,6 @@ import {
   Mail,
   MessageSquare,
   Repeat,
-  Sparkles,
   Users,
 } from "lucide-react";
 
@@ -85,14 +84,10 @@ const processSteps = [
 export default function Home() {
   return (
     <main>
-      <section className="overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
+      <section className="overflow-hidden px-4 pb-16 pt-8 sm:px-6 sm:pb-20 sm:pt-10 lg:px-8 lg:pb-24 lg:pt-12">
         <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1fr_0.9fr]">
           <Reveal>
             <div>
-              <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground shadow-soft">
-                <Sparkles aria-hidden className="size-4 text-accent" />
-                Business Efficiency Partner for North Shore small businesses
-              </p>
               <h1 className="max-w-4xl text-5xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
                 Helping Small Businesses Get Their Time Back.
               </h1>
