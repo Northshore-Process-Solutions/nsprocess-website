@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 
+import { normalizeUsPhone } from "@/lib/phone";
+import { createPublicSupabaseClient } from "@/lib/supabase/admin";
+
 export const runtime = "nodejs";
 
 function getField(formData: FormData, name: string) {
@@ -23,6 +26,33 @@ function redirectToContact(request: Request, status: "sent" | "error") {
   return NextResponse.redirect(url, { status: 303 });
 }
 
+async function createWebsiteLead(input: {
+  firstName: string;
+  lastName: string;
+  business: string;
+  email: string;
+  phone: string;
+  message: string;
+}) {
+  const supabase = createPublicSupabaseClient();
+  const phone = input.phone ? normalizeUsPhone(input.phone) : null;
+
+  const { error } = await supabase.from("leads").insert({
+    business_name: input.business,
+    contact_name: `${input.firstName} ${input.lastName}`.trim(),
+    email: input.email.toLowerCase(),
+    phone,
+    title: "Free Process Review",
+    source: "website_form",
+    stage: "new_inquiry",
+    message: input.message,
+  });
+
+  if (error) {
+    console.error("Failed to create website lead", error);
+  }
+}
+
 export async function POST(request: Request) {
   const formData = await request.formData();
 
@@ -36,6 +66,8 @@ export async function POST(request: Request) {
   if (!firstName || !lastName || !business || !email || !message) {
     return redirectToContact(request, "error");
   }
+
+  const normalizedPhone = phone ? normalizeUsPhone(phone) : null;
 
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, CONTACT_TO } =
     process.env;
@@ -87,6 +119,15 @@ export async function POST(request: Request) {
         <p><strong>Message:</strong></p>
         <p>${safe.message}</p>
       `,
+    });
+
+    await createWebsiteLead({
+      firstName,
+      lastName,
+      business,
+      email,
+      phone: normalizedPhone ?? "",
+      message,
     });
 
     return redirectToContact(request, "sent");

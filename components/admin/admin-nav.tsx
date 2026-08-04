@@ -3,17 +3,20 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "/admin", label: "CRM" },
-  { href: "/admin/tools", label: "Stack" },
+  { href: "/admin", label: "CRM", key: "crm" as const },
+  { href: "/admin/pipeline", label: "Pipeline", key: "pipeline" as const },
+  { href: "/admin/tools", label: "Stack", key: "stack" as const },
 ];
 
-export function AdminNav({ current }: { current: "crm" | "stack" }) {
+export function AdminNav({
+  current,
+}: {
+  current: "crm" | "pipeline" | "stack";
+}) {
   return (
     <nav aria-label="Admin sections" className="mt-6 flex flex-wrap gap-2">
       {links.map((link) => {
-        const active =
-          (current === "crm" && link.href === "/admin") ||
-          (current === "stack" && link.href === "/admin/tools");
+        const active = current === link.key;
 
         return (
           <Link

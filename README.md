@@ -40,8 +40,11 @@ Create an admin user in the Supabase dashboard under **Authentication → Users 
 
 Admin sections:
 
-- `/admin` — CRM for customers, leads, vendors, and partners
+- `/admin` — CRM for customers, vendors, and partners
+- `/admin/pipeline` — Free Process Review lead pipeline
 - `/admin/tools` — internal stack/tools your business depends on (Supabase, GitHub, Vercel, etc.)
+
+Website contact form submissions create a lead in `new_inquiry` and still send the email notification.
 
 ## Brand System
 
