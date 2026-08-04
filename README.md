@@ -1,36 +1,38 @@
-# nsprocess-website
+# North Shore Process Solutions Website
 
-Company website for **North Shore Process Solutions**.
+Production website and brand system for **North Shore Process Solutions**, a Business Efficiency Partner helping small businesses get their time back.
 
-- **Live URL:** https://nsprocess.com (connect after deploy)
-- **Stack:** Static HTML / CSS
-- **Org:** [nsprocess](https://github.com/nsprocess) *(update if your org name differs)*
+- **Live URL:** https://nsprocess.com
+- **Stack:** Next.js, TypeScript, Tailwind CSS, shadcn-style components, Lucide Icons, Framer Motion
+- **Primary CTA:** Book a Free Process Review
 
-## Local development
+## Local Development
 
-Open `index.html` in a browser, or run a simple local server:
+Install dependencies, then start the dev server:
 
 ```bash
-python -m http.server 8080
+npm install
+npm run dev
 ```
 
-Then visit http://localhost:8080
+Visit http://localhost:3000.
+
+## Checks
+
+```bash
+npm run typecheck
+npm run build
+```
+
+## Brand System
+
+See `BRAND.md` for the logo concept, color palette, typography, copy voice, iconography, illustration direction, spacing scale, and component guidance.
 
 ## Deploy
 
-1. Push this repo to GitHub under your org as `nsprocess-website`
-2. Connect the repo to [Vercel](https://vercel.com), [Netlify](https://netlify.com), or [Cloudflare Pages](https://pages.cloudflare.com)
-3. Add custom domain `nsprocess.com` in the host dashboard
-4. Update DNS at your domain registrar to point to the host
+This app is ready for Vercel or any host that supports Next.js.
 
-## Repo setup (first push)
-
-```bash
-git add .
-git commit -m "Initial company website setup"
-git branch -M main
-git remote add origin https://github.com/YOUR-ORG/nsprocess-website.git
-git push -u origin main
-```
-
-Replace `YOUR-ORG` with your GitHub organization name.
+1. Push this repo to GitHub.
+2. Import the project in Vercel.
+3. Add the custom domain `nsprocess.com`.
+4. Update DNS at the domain registrar.
