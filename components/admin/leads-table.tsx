@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import {
   LEAD_STAGES,
   leadSourceLabel,
-  leadStageLabel,
   type LeadRow,
   type LeadStage,
 } from "@/lib/leads";
@@ -103,33 +102,26 @@ export function LeadsTable({
                   {leadSourceLabel(row.source)}
                 </td>
                 <td className="px-4 py-4">
-                  <div className="space-y-2">
-                    <span
-                      className={cn(
-                        "inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
-                        stageStyles[row.stage],
-                      )}
-                    >
-                      {leadStageLabel(row.stage)}
-                    </span>
-                    <select
-                      aria-label={`Update stage for ${row.business_name}`}
-                      className="min-h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-xs font-medium outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
-                      defaultValue={row.stage}
-                      onChange={(event) =>
-                        handleStageChange(
-                          row.id,
-                          event.target.value as LeadStage,
-                        )
-                      }
-                    >
-                      {LEAD_STAGES.map((stage) => (
-                        <option key={stage.value} value={stage.value}>
-                          {stage.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <select
+                    aria-label={`Update stage for ${row.business_name}`}
+                    className={cn(
+                      "min-h-10 w-full rounded-full border px-3 py-2 text-xs font-semibold outline-none focus:ring-2 focus:ring-ring/20",
+                      stageStyles[row.stage],
+                    )}
+                    defaultValue={row.stage}
+                    onChange={(event) =>
+                      handleStageChange(
+                        row.id,
+                        event.target.value as LeadStage,
+                      )
+                    }
+                  >
+                    {LEAD_STAGES.map((stage) => (
+                      <option key={stage.value} value={stage.value}>
+                        {stage.label}
+                      </option>
+                    ))}
+                  </select>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
                   {row.next_follow_up_at || "—"}
