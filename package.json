@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@radix-ui/react-slot": "latest",
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.112.0",
     "class-variance-authority": "latest",
     "clsx": "latest",
     "framer-motion": "latest",

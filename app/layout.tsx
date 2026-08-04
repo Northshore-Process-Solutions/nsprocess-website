@@ -2,8 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import type React from "react";
 
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 
 const inter = Inter({
@@ -15,7 +13,8 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL("https://nsprocess.com"),
   title: {
-    default: "North Shore Process Solutions | Helping Small Businesses Get Their Time Back",
+    default:
+      "North Shore Process Solutions | Helping Small Businesses Get Their Time Back",
     template: "%s | North Shore Process Solutions",
   },
   description:
@@ -62,9 +61,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} font-sans antialiased`}>
-        <SiteHeader />
         {children}
-        <SiteFooter />
       </body>
     </html>
   );

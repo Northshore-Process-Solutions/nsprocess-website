@@ -24,6 +24,20 @@ npm run typecheck
 npm run build
 ```
 
+## Admin CRM
+
+Internal CRM lives at `/admin` and reads from the Supabase project **NSPS - Admin Portal**.
+
+Required environment variables:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+```
+
+Create an admin user in the Supabase dashboard under **Authentication → Users → Add user**, then sign in at `/admin/login`.
+
 ## Brand System
 
 See `BRAND.md` for the logo concept, color palette, typography, copy voice, iconography, illustration direction, spacing scale, and component guidance.
