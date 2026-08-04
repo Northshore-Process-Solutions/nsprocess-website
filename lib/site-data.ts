@@ -42,299 +42,86 @@ export const services = [
   {
     title: "Business Process Reviews",
     summary:
-      "A practical review of how work moves through your business today.",
+      "A clear look at how work moves through your business today, and where time is getting lost.",
     why:
-      "Most time leaks are hidden in handoffs, rework, duplicate entry, and unclear ownership.",
+      "Most slowdowns hide in handoffs, rework, duplicate entry, and unclear ownership.",
     saves:
-      "You get a clear map of what is slowing the business down and where quick wins are hiding.",
+      "You get a practical map of bottlenecks and a prioritized list of improvements.",
     outcomes: [
-      "Cleaner daily operations",
+      "Clearer daily operations",
       "Less work falling through the cracks",
-      "A prioritized improvement roadmap",
-    ],
-    examples: [
-      "Office workflow audit",
-      "Customer intake review",
-      "Job handoff mapping",
+      "A focused improvement roadmap",
     ],
   },
   {
-    title: "Workflow Automation",
+    title: "Workflow Design & Automation",
     summary:
-      "Automations that move routine work forward without someone manually pushing every step.",
+      "Redesign repetitive processes so routine work moves forward without constant manual chasing.",
     why:
-      "The same repetitive clicks and reminders quietly consume hours every week.",
+      "The same clicks, reminders, and status updates quietly consume hours every week.",
     saves:
-      "Your team spends less time copying, pasting, checking, and chasing.",
+      "Your team spends less time pushing work along and more time doing the work that matters.",
     outcomes: [
       "Faster turnaround",
       "Fewer missed steps",
-      "More consistent customer service",
-    ],
-    examples: [
-      "Lead routing",
-      "Job status updates",
-      "Invoice reminder workflows",
+      "More consistent results",
     ],
   },
   {
-    title: "AI Consulting",
+    title: "Technology Strategy & Selection",
     summary:
-      "Plain-English guidance on where practical AI can help and where it is not worth the distraction.",
+      "Help choosing the right tools for the job, and deciding what to keep, simplify, replace, or leave alone.",
+    why:
+      "Buying more software is easy. Matching technology to a real process problem is what saves time.",
+    saves:
+      "You avoid tool sprawl, wasted subscriptions, and systems your team will not use.",
+    outcomes: [
+      "Clearer tool decisions",
+      "Less unnecessary complexity",
+      "Better fit for how you work",
+    ],
+  },
+  {
+    title: "Systems Integration",
+    summary:
+      "Connect the tools you already use so information moves cleanly between them.",
+    why:
+      "Disconnected systems create duplicate entry, missed updates, and avoidable mistakes.",
+    saves:
+      "Data is entered once and shows up where the next person needs it.",
+    outcomes: [
+      "Cleaner handoffs",
+      "Fewer manual updates",
+      "Less app switching",
+    ],
+  },
+  {
+    title: "Practical AI",
+    summary:
+      "Plain-English guidance on where AI can help your workflows, and where it is not worth the distraction.",
     why:
       "AI is useful when it saves real time, not when it creates another complicated tool to manage.",
     saves:
-      "We find safe, useful ways to draft, summarize, organize, and answer routine questions faster.",
+      "We find practical ways to draft, summarize, organize, and support routine work faster.",
     outcomes: [
-      "Less time writing repetitive messages",
+      "Less repetitive writing",
       "Faster information lookup",
-      "Clear AI usage guidelines",
-    ],
-    examples: [
-      "Email draft assistants",
-      "Internal knowledge search",
-      "Meeting summary workflows",
+      "Clear usage guidelines",
     ],
   },
   {
-    title: "CRM Selection & Implementation",
+    title: "Documentation & Team Adoption",
     summary:
-      "Help choosing and setting up a customer system that matches how your business actually sells and serves.",
+      "Simple process documentation and training so improved workflows stick with your team.",
     why:
-      "A CRM only helps if your team can trust it and use it without extra friction.",
+      "Even good systems fail when the process only lives in one person's head.",
     saves:
-      "Customer details, follow-ups, estimates, and next steps live in one organized place.",
-    outcomes: [
-      "Better pipeline visibility",
-      "More reliable follow-up",
-      "Cleaner customer records",
-    ],
-    examples: ["CRM comparison", "Pipeline setup", "Team onboarding"],
-  },
-  {
-    title: "Microsoft 365 Optimization",
-    summary:
-      "Make Outlook, Teams, SharePoint, OneDrive, Forms, and Power Automate work better together.",
-    why:
-      "Many businesses already pay for tools that can save time when they are organized properly.",
-    saves:
-      "Files, forms, approvals, and team communication become easier to find and manage.",
-    outcomes: [
-      "Cleaner file structure",
-      "Faster approvals",
-      "Less inbox clutter",
-    ],
-    examples: ["Shared file cleanup", "Form routing", "Approval workflows"],
-  },
-  {
-    title: "Google Workspace Optimization",
-    summary:
-      "Improve how Gmail, Drive, Calendar, Forms, Sheets, and shared files support day-to-day work.",
-    why:
-      "Small improvements to existing tools often save more time than adding new software.",
-    saves:
-      "Your team can find information faster and reduce back-and-forth coordination.",
-    outcomes: [
-      "Better shared drive organization",
-      "Cleaner scheduling",
-      "Automated form responses",
-    ],
-    examples: ["Drive cleanup", "Calendar workflows", "Sheet automation"],
-  },
-  {
-    title: "Zapier Automation",
-    summary:
-      "Connect everyday apps so information moves automatically between them.",
-    why:
-      "Zapier is ideal for reducing duplicate data entry across common business tools.",
-    saves:
-      "New leads, form responses, payments, and tasks can trigger the next step automatically.",
-    outcomes: [
-      "Fewer manual updates",
-      "Faster team alerts",
-      "Better data consistency",
-    ],
-    examples: ["Lead to CRM", "Form to task list", "Payment notifications"],
-  },
-  {
-    title: "Make.com Automation",
-    summary:
-      "More flexible automations for multi-step workflows and systems that need careful routing.",
-    why:
-      "Some processes need more logic than a simple trigger-and-action setup.",
-    saves:
-      "Complex handoffs become repeatable without relying on memory or manual tracking.",
-    outcomes: [
-      "Smarter routing",
-      "Cleaner multi-step processes",
-      "Reduced admin time",
-    ],
-    examples: ["Job intake flows", "Document routing", "Operations dashboards"],
-  },
-  {
-    title: "Appointment Scheduling",
-    summary:
-      "Online booking, reminders, intake questions, and calendar coordination that reduce phone tag.",
-    why:
-      "Scheduling should not require repeated calls, emails, and manual confirmations.",
-    saves:
-      "Customers book faster and your team spends less time coordinating appointments.",
-    outcomes: [
-      "Fewer missed appointments",
-      "Less back-and-forth",
-      "Cleaner calendars",
-    ],
-    examples: ["Service booking", "Consultation scheduling", "Reminder setup"],
-  },
-  {
-    title: "Customer Follow-up Automation",
-    summary:
-      "Reliable follow-up sequences that keep customers informed before, during, and after service.",
-    why:
-      "Great customer service often comes down to timely communication.",
-    saves:
-      "Your team does not have to remember every check-in, review request, or next step.",
-    outcomes: [
-      "Better customer experience",
-      "More repeat business",
-      "Fewer missed opportunities",
-    ],
-    examples: ["Estimate follow-up", "Review requests", "Post-service check-ins"],
-  },
-  {
-    title: "Email Automation",
-    summary:
-      "Templates, routing rules, and automated responses for common messages.",
-    why:
-      "Rewriting the same emails every day drains time and attention.",
-    saves:
-      "Routine communication becomes faster while still sounding personal and professional.",
-    outcomes: [
-      "Faster response times",
-      "Less inbox overwhelm",
-      "More consistent messaging",
-    ],
-    examples: ["Inquiry replies", "Status updates", "Internal routing"],
-  },
-  {
-    title: "Document Automation",
-    summary:
-      "Generate proposals, agreements, checklists, and internal documents from clean inputs.",
-    why:
-      "Manual document creation is slow and easy to get wrong.",
-    saves:
-      "Common documents can be created faster with fewer copy-and-paste mistakes.",
-    outcomes: [
-      "Faster proposals",
-      "Cleaner paperwork",
-      "Reduced rework",
-    ],
-    examples: ["Proposal templates", "Work orders", "Client packets"],
-  },
-  {
-    title: "Digital Forms",
-    summary:
-      "Mobile-friendly forms that collect the right information and send it where it needs to go.",
-    why:
-      "Paper forms, PDFs, and scattered emails make information hard to track.",
-    saves:
-      "Information is captured once, clearly, and routed automatically.",
-    outcomes: [
-      "Cleaner intake",
-      "Less missing information",
-      "Faster handoffs",
-    ],
-    examples: ["New customer intake", "Field reports", "Employee requests"],
-  },
-  {
-    title: "Internal Knowledge Bases",
-    summary:
-      "A searchable home for procedures, answers, templates, and team know-how.",
-    why:
-      "When answers live in one person's head, everyone else waits or guesses.",
-    saves:
-      "Employees can find answers faster and onboard with less repeated explanation.",
-    outcomes: [
-      "Faster training",
-      "Fewer repeated questions",
-      "More consistent work",
-    ],
-    examples: ["SOP library", "FAQ hub", "Training resources"],
-  },
-  {
-    title: "Reporting Dashboards",
-    summary:
-      "Clear dashboards that show the numbers you need without hunting through spreadsheets.",
-    why:
-      "Business owners need visibility without spending hours preparing reports.",
-    saves:
-      "Key information becomes easier to monitor and act on.",
-    outcomes: [
-      "Better decisions",
-      "Less spreadsheet cleanup",
-      "Faster monthly reporting",
-    ],
-    examples: ["Sales dashboards", "Operations tracking", "Job performance"],
-  },
-  {
-    title: "Software Integrations",
-    summary:
-      "Practical connections between the tools already running your business.",
-    why:
-      "Disconnected systems create duplicate work and avoidable mistakes.",
-    saves:
-      "Data moves between systems with less manual entry and fewer missed updates.",
-    outcomes: [
-      "Cleaner data",
-      "Fewer handoff errors",
-      "Less app switching",
-    ],
-    examples: ["CRM to accounting", "Forms to scheduling", "Ecommerce to email"],
-  },
-  {
-    title: "SOP Documentation",
-    summary:
-      "Clear step-by-step documentation for recurring tasks and workflows.",
-    why:
-      "Documented processes make quality easier to repeat as the team grows.",
-    saves:
-      "Employees spend less time guessing, interrupting, or reinventing the process.",
+      "Employees spend less time guessing, interrupting, or falling back into old habits.",
     outcomes: [
       "Easier delegation",
+      "Smoother onboarding",
       "More consistent work",
-      "Faster onboarding",
     ],
-    examples: ["Office procedures", "Customer handoffs", "Closing checklists"],
-  },
-  {
-    title: "Employee Training",
-    summary:
-      "Practical training that helps your team use improved systems with confidence.",
-    why:
-      "Even simple tools fail when people do not understand how they fit into daily work.",
-    saves:
-      "Your team adopts new workflows faster and avoids old habits creeping back in.",
-    outcomes: [
-      "Smoother rollout",
-      "Less resistance",
-      "Better long-term results",
-    ],
-    examples: ["Team workshops", "Quick reference guides", "Workflow coaching"],
-  },
-  {
-    title: "Technology Strategy",
-    summary:
-      "A plain-English plan for which tools to keep, improve, replace, or connect.",
-    why:
-      "Small businesses need useful technology decisions, not more subscriptions.",
-    saves:
-      "You avoid costly tool sprawl and focus on systems that make the business easier to run.",
-    outcomes: [
-      "Clear priorities",
-      "Better software decisions",
-      "Lower operational friction",
-    ],
-    examples: ["Tool audit", "Automation roadmap", "Growth planning"],
   },
 ];
 

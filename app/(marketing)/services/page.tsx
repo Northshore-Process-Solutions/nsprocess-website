@@ -17,7 +17,7 @@ import { services } from "@/lib/site-data";
 export const metadata: Metadata = {
   title: "Services",
   description:
-    "Business process reviews, workflow automation, practical AI consulting, CRM implementation, digital forms, dashboards, and technology strategy for North Shore small businesses.",
+    "Process reviews, workflow automation, technology selection, systems integration, and practical AI for North Shore small businesses.",
   alternates: {
     canonical: "/services",
   },
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 export default function ServicesPage() {
   return (
     <main>
-      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <section className="px-4 pb-16 pt-8 sm:px-6 sm:pb-20 sm:pt-10 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <Reveal>
             <div className="max-w-4xl">
@@ -34,14 +34,13 @@ export default function ServicesPage() {
                 Services
               </p>
               <h1 className="text-5xl font-bold tracking-tight text-foreground sm:text-6xl">
-                Practical ways to save time, reduce stress, and run a more
-                organized business.
+                Better workflows. The right technology. Less busywork.
               </h1>
               <p className="mt-6 text-lg leading-8 text-muted-foreground sm:text-xl sm:leading-9">
-                Every service starts with the same question: how does this save
-                you time? We help you improve the way work gets done with the
-                right mix of process review, automation, AI, documentation, and
-                everyday business tools.
+                We help you improve how work gets done, then choose technology
+                that fits the process, not the other way around. The goal is
+                simple: save time, reduce friction, and make daily operations
+                easier to run.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button asChild size="lg" variant="accent">
@@ -63,19 +62,19 @@ export default function ServicesPage() {
         <div className="mx-auto grid max-w-7xl gap-6 md:grid-cols-3">
           {[
             {
-              title: "We start with operations",
-              text: "Before recommending tools, we learn how work actually moves through your business.",
+              title: "Process first",
+              text: "We start with how work actually moves through your business before recommending any tools.",
               icon: Lightbulb,
             },
             {
-              title: "We prioritize quick wins",
-              text: "The first improvements should reduce friction quickly and build confidence with your team.",
-              icon: Clock3,
+              title: "Right tool for the job",
+              text: "Sometimes that means improving what you already have. Sometimes it means choosing something better. Often it means buying less.",
+              icon: CheckCircle2,
             },
             {
-              title: "We keep it practical",
-              text: "No unnecessary software, no AI hype, no complicated systems your team will not use.",
-              icon: CheckCircle2,
+              title: "Practical improvements",
+              text: "We look for changes your team can adopt quickly, without unnecessary complexity or tech for tech's sake.",
+              icon: Clock3,
             },
           ].map((item, index) => {
             const Icon = item.icon;
@@ -99,9 +98,9 @@ export default function ServicesPage() {
         <div className="mx-auto max-w-7xl">
           <Reveal>
             <SectionHeading
-              eyebrow="What We Can Improve"
-              title="A full-service efficiency partner for the work that keeps your business moving."
-              description="These services can stand alone or combine into a focused improvement roadmap after your Free Process Review."
+              eyebrow="How We Help"
+              title="Focused services for improving processes with the right technology."
+              description="These can stand alone or combine into a clear improvement plan after your Free Process Review."
             />
           </Reveal>
           <div className="mt-12 grid gap-6 lg:grid-cols-2">
@@ -126,7 +125,7 @@ export default function ServicesPage() {
                       </div>
                       <div className="rounded-2xl bg-secondary p-4">
                         <p className="text-sm font-semibold text-primary">
-                          How it saves time
+                          How it helps
                         </p>
                         <p className="mt-2 text-sm leading-6 text-muted-foreground">
                           {service.saves}
@@ -152,21 +151,6 @@ export default function ServicesPage() {
                         ))}
                       </ul>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        Example use cases
-                      </p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {service.examples.map((example) => (
-                          <span
-                            className="rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-muted-foreground"
-                            key={example}
-                          >
-                            {example}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
                   </CardContent>
                 </Card>
               </Reveal>
@@ -181,11 +165,12 @@ export default function ServicesPage() {
             <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
               <div>
                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                  Not sure which service you need?
+                  Not sure where to start?
                 </h2>
                 <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">
-                  That is exactly what the Free Process Review is for. We will
-                  help you identify the most useful first step.
+                  That is exactly what the Free Process Review is for. We look
+                  at how work gets done today and recommend the most useful next
+                  step.
                 </p>
               </div>
               <Button asChild size="lg" variant="accent">
