@@ -62,7 +62,7 @@ function parsePhoneField(
 function parseInput(input: OrganizationInput): OrganizationInput | ActionResult {
   const name = input.name.trim();
   if (!name) {
-    return { ok: false, error: "Organization name is required." };
+    return { ok: false, error: "Business name is required." };
   }
 
   if (!RELATIONSHIP_TYPES.includes(input.relationshipType)) {
@@ -73,7 +73,7 @@ function parseInput(input: OrganizationInput): OrganizationInput | ActionResult 
     return { ok: false, error: "Invalid status." };
   }
 
-  const organizationPhone = parsePhoneField(input.phone, "Organization phone");
+  const organizationPhone = parsePhoneField(input.phone, "Business phone");
   if (organizationPhone.error) {
     return { ok: false, error: organizationPhone.error };
   }
@@ -274,7 +274,7 @@ export async function createOrganization(
     .single();
 
   if (error || !organization) {
-    return { ok: false, error: error?.message ?? "Failed to create organization." };
+    return { ok: false, error: error?.message ?? "Failed to create business." };
   }
 
   const relationshipResult = await syncRelationship(

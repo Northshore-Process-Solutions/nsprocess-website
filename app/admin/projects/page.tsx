@@ -4,7 +4,12 @@ import { AdminNav } from "@/components/admin/admin-nav";
 import { ProjectsTable } from "@/components/admin/projects-table";
 import { SignOutButton } from "@/components/admin/sign-out-button";
 import { Logo } from "@/components/logo";
-import type { ProjectWithOrganization } from "@/lib/projects";
+import {
+  isNextActionOverdue,
+  isProjectPastTarget,
+  type ProjectTaskRow,
+  type ProjectWithOrganization,
+} from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ProjectsPage() {
@@ -15,26 +20,58 @@ export default async function ProjectsPage() {
     redirect("/admin/login");
   }
 
-  const { data, error } = await supabase
-    .from("projects")
-    .select(
-      `
-      *,
-      organizations (
-        id,
-        name
+  const [
+    { data, error },
+    { data: tasksData, error: tasksError },
+  ] = await Promise.all([
+    supabase
+      .from("projects")
+      .select(
+        `
+        *,
+        organizations (
+          id,
+          name
+        )
+      `,
       )
-    `,
-    )
-    .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("project_tasks")
+      .select("id, project_id, is_done")
+      .eq("is_done", false),
+  ]);
 
   if (error) {
     throw new Error(`Failed to load projects: ${error.message}`);
   }
+  if (tasksError) {
+    throw new Error(`Failed to load tasks: ${tasksError.message}`);
+  }
 
-  const projects = (data ?? []) as ProjectWithOrganization[];
-  const activeCount = projects.filter(
+  const openCountByProject = ((tasksData ?? []) as Pick<
+    ProjectTaskRow,
+    "id" | "project_id" | "is_done"
+  >[]).reduce<Record<string, number>>((acc, task) => {
+    acc[task.project_id] = (acc[task.project_id] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const projects = ((data ?? []) as ProjectWithOrganization[]).map(
+    (project) => ({
+      ...project,
+      open_task_count: openCountByProject[project.id] ?? 0,
+    }),
+  );
+
+  const inProgress = projects.filter(
     (project) => project.status === "active" || project.status === "planning",
+  ).length;
+  const overdueNextActions = projects.filter((project) =>
+    isNextActionOverdue(project),
+  ).length;
+  const pastTarget = projects.filter((project) =>
+    isProjectPastTarget(project),
   ).length;
 
   return (
@@ -47,14 +84,14 @@ export default async function ProjectsPage() {
             Projects
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Delivery work after deposit — customers leave Pipeline and land
-            here.
+            Lightweight delivery workspace after deposit — tasks, schedule, and
+            next actions in one place.
           </p>
         </div>
         <SignOutButton />
       </header>
 
-      <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl border border-border bg-card px-4 py-4 shadow-soft">
           <p className="text-sm text-muted-foreground">Total projects</p>
           <p className="mt-2 text-3xl font-bold tracking-tight">
@@ -63,13 +100,17 @@ export default async function ProjectsPage() {
         </div>
         <div className="rounded-2xl border border-border bg-card px-4 py-4 shadow-soft">
           <p className="text-sm text-muted-foreground">In progress</p>
-          <p className="mt-2 text-3xl font-bold tracking-tight">{activeCount}</p>
+          <p className="mt-2 text-3xl font-bold tracking-tight">{inProgress}</p>
         </div>
         <div className="rounded-2xl border border-border bg-card px-4 py-4 shadow-soft">
-          <p className="text-sm text-muted-foreground">Completed</p>
+          <p className="text-sm text-muted-foreground">Overdue next actions</p>
           <p className="mt-2 text-3xl font-bold tracking-tight">
-            {projects.filter((project) => project.status === "completed").length}
+            {overdueNextActions}
           </p>
+        </div>
+        <div className="rounded-2xl border border-border bg-card px-4 py-4 shadow-soft">
+          <p className="text-sm text-muted-foreground">Past target end</p>
+          <p className="mt-2 text-3xl font-bold tracking-tight">{pastTarget}</p>
         </div>
       </section>
 

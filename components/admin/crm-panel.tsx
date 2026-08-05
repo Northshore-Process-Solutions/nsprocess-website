@@ -40,7 +40,7 @@ export function CrmPanel({ rows }: { rows: CrmTableRow[] }) {
 
   async function handleDelete(row: CrmTableRow) {
     const confirmed = window.confirm(
-      `Delete ${row.name}? This removes the organization and its linked primary contact.`,
+      `Delete ${row.name}? This removes the business and its linked primary contact.`,
     );
 
     if (!confirmed) return;
@@ -52,7 +52,7 @@ export function CrmPanel({ rows }: { rows: CrmTableRow[] }) {
     setDeletingId(null);
 
     if (!result.ok) {
-      setError(result.error ?? "Failed to delete organization.");
+      setError(result.error ?? "Failed to delete business.");
       return;
     }
 
@@ -63,7 +63,7 @@ export function CrmPanel({ rows }: { rows: CrmTableRow[] }) {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <label className="relative block min-w-0 flex-1">
-          <span className="sr-only">Search organizations</span>
+          <span className="sr-only">Search businesses</span>
           <Search
             aria-hidden
             className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
@@ -83,7 +83,7 @@ export function CrmPanel({ rows }: { rows: CrmTableRow[] }) {
           variant="accent"
         >
           <Plus aria-hidden className="size-4" />
-          Add organization
+          Add business
         </Button>
       </div>
 
@@ -97,10 +97,10 @@ export function CrmPanel({ rows }: { rows: CrmTableRow[] }) {
         deletingId={deletingId}
         emptyMessage={
           query.trim()
-            ? "No organizations match your search."
-            : "Use Add organization to create your first vendor or customer record."
+            ? "No businesses match your search."
+            : "Use Add business to create your first vendor or customer record."
         }
-        emptyTitle={query.trim() ? "No matches" : "No organizations yet"}
+        emptyTitle={query.trim() ? "No matches" : "No businesses yet"}
         onDelete={handleDelete}
         onEdit={openEdit}
         rows={filteredRows}

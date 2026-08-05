@@ -79,7 +79,7 @@ export function OrganizationDetail({
 
   async function handleDelete() {
     const confirmed = window.confirm(
-      `Delete ${organization.name}? This removes the organization and its linked primary contact.`,
+      `Delete ${organization.name}? This removes the business and its linked primary contact.`,
     );
     if (!confirmed) return;
 
@@ -90,7 +90,7 @@ export function OrganizationDetail({
     setDeleting(false);
 
     if (!result.ok) {
-      setError(result.error ?? "Failed to delete organization.");
+      setError(result.error ?? "Failed to delete business.");
       return;
     }
 
@@ -168,7 +168,7 @@ export function OrganizationDetail({
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-2xl border border-border bg-card p-6 shadow-soft">
-          <h2 className="text-lg font-semibold">Company</h2>
+          <h2 className="text-lg font-semibold">Business</h2>
           <dl className="mt-4 space-y-4 text-sm">
             <div>
               <dt className="text-muted-foreground">Email</dt>
@@ -294,7 +294,7 @@ export function OrganizationDetail({
           <div>
             <h2 className="text-lg font-semibold">Projects</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Delivery work for this customer after deposit.
+              Delivery work for this business after deposit.
             </p>
           </div>
           <Button asChild variant="outline">
@@ -365,7 +365,7 @@ export function OrganizationDetail({
           <div>
             <h2 className="text-lg font-semibold">Process Review history</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Pipeline leads linked to this organization.
+              Pipeline leads linked to this business.
             </p>
           </div>
           <Button asChild variant="outline">
@@ -377,7 +377,7 @@ export function OrganizationDetail({
           <div className="mt-6 rounded-2xl border border-dashed border-border p-8 text-center">
             <p className="font-semibold">No linked Process Review leads</p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Marking a Pipeline lead deposit received creates a CRM customer
+              Marking a Pipeline lead deposit received creates a CRM business
               and project here.
             </p>
           </div>

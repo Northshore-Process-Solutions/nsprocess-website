@@ -100,10 +100,10 @@ function OrganizationFormDialog({
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold tracking-tight">
-              {mode === "edit" ? "Edit organization" : "Add organization"}
+              {mode === "edit" ? "Edit business" : "Add business"}
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Save the company record, relationship type, and primary contact.
+              Save the business record, relationship type, and primary contact.
             </p>
           </div>
           <Button onClick={onClose} type="button" variant="ghost">
@@ -120,7 +120,7 @@ function OrganizationFormDialog({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-2 text-sm font-semibold sm:col-span-2">
-              Organization name
+              Business name
               <input
                 className="min-h-11 w-full rounded-2xl border border-input bg-background px-4 py-3 text-base font-normal outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
                 onChange={(event) => updateField("name", event.target.value)}
@@ -191,7 +191,7 @@ function OrganizationFormDialog({
             </label>
 
             <label className="space-y-2 text-sm font-semibold">
-              Organization email
+              Business email
               <input
                 className="min-h-11 w-full rounded-2xl border border-input bg-background px-4 py-3 text-base font-normal outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
                 onChange={(event) => updateField("email", event.target.value)}
@@ -201,7 +201,7 @@ function OrganizationFormDialog({
             </label>
 
             <label className="space-y-2 text-sm font-semibold">
-              Organization phone
+              Business phone
               <input
                 className="min-h-11 w-full rounded-2xl border border-input bg-background px-4 py-3 text-base font-normal outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
                 onChange={(event) => updateField("phone", event.target.value)}
@@ -307,7 +307,7 @@ function OrganizationFormDialog({
                 ? "Saving..."
                 : mode === "edit"
                   ? "Save changes"
-                  : "Add organization"}
+                  : "Add business"}
             </Button>
           </div>
         </form>

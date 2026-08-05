@@ -137,7 +137,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
                   <input
                     className="min-h-11 w-full rounded-2xl border border-input bg-background px-4 py-3 text-base font-normal outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
                     name="business"
-                    placeholder="Your company"
+                    placeholder="Your business"
                     required
                     type="text"
                   />

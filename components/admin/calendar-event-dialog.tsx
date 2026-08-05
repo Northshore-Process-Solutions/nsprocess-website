@@ -279,7 +279,7 @@ function CalendarEventDialogInner({
               </select>
             </label>
             <label className="space-y-2 text-sm font-semibold sm:col-span-2">
-              Organization
+              Business
               <select
                 className="min-h-11 w-full rounded-2xl border border-input bg-background px-4 py-3 text-base font-normal outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
                 onChange={(e) => updateField("organizationId", e.target.value)}

@@ -26,8 +26,8 @@ export function CrmTable({
   onEdit,
   onDelete,
   deletingId = null,
-  emptyTitle = "No organizations yet",
-  emptyMessage = "Use Add organization to create your first vendor or customer record.",
+  emptyTitle = "No businesses yet",
+  emptyMessage = "Use Add business to create your first vendor or customer record.",
 }: CrmTableProps) {
   if (rows.length === 0) {
     return (
@@ -44,7 +44,7 @@ export function CrmTable({
         <table className="min-w-full border-collapse text-left text-sm">
           <thead className="bg-muted/70 text-xs uppercase tracking-[0.14em] text-muted-foreground">
             <tr>
-              <th className="px-4 py-3 font-semibold">Organization</th>
+              <th className="px-4 py-3 font-semibold">Business</th>
               <th className="px-4 py-3 font-semibold">Type</th>
               <th className="px-4 py-3 font-semibold">Primary contact</th>
               <th className="px-4 py-3 font-semibold">Email</th>

@@ -49,7 +49,7 @@ function parseInput(input: ActivityInput): ActivityInput | ActionResult {
   if (!organizationId && !leadId && !projectId) {
     return {
       ok: false,
-      error: "Activity must belong to a lead, organization, or project.",
+      error: "Activity must belong to a lead, business, or project.",
     };
   }
 

@@ -71,7 +71,7 @@ function parseInput(input: CalendarEventInput): CalendarEventInput | ActionResul
   if (!leadId && !organizationId && !projectId) {
     return {
       ok: false,
-      error: "Link the event to a lead, organization, or project.",
+      error: "Link the event to a lead, business, or project.",
     };
   }
 

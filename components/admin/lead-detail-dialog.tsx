@@ -109,7 +109,7 @@ export function LeadDetailDialog({
                     className="text-accent hover:underline"
                     href={`/admin/organizations/${lead.organization_id}`}
                   >
-                    View organization
+                    View business
                   </Link>
                 ) : (
                   "Not linked"

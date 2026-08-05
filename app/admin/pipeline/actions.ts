@@ -532,7 +532,7 @@ export async function convertWonLeadToCrm(
     if (error || !organization) {
       return {
         ok: false,
-        error: error?.message ?? "Failed to create organization.",
+        error: error?.message ?? "Failed to create business.",
       };
     }
 

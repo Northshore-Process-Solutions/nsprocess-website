@@ -7,7 +7,7 @@ import { Logo } from "@/components/logo";
 import type { ActivityRow } from "@/lib/activities";
 import type { CalendarEventWithRelations } from "@/lib/calendar";
 import type { LeadRow } from "@/lib/leads";
-import type { ProjectWithOrganization } from "@/lib/projects";
+import type { ProjectTaskRow, ProjectWithOrganization } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
 
 type ProjectPageProps = {
@@ -58,6 +58,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     { data: leadData, error: leadError },
     { data: activitiesData, error: activitiesError },
     { data: eventsData, error: eventsError },
+    { data: tasksData, error: tasksError },
   ] = await Promise.all([
     leadPromise,
     supabase
@@ -91,6 +92,13 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
           : `project_id.eq.${id}`,
       )
       .order("starts_at", { ascending: true }),
+    supabase
+      .from("project_tasks")
+      .select("*")
+      .eq("project_id", id)
+      .order("is_done", { ascending: true })
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true }),
   ]);
 
   if (leadError) {
@@ -101,6 +109,9 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   }
   if (eventsError) {
     throw new Error(`Failed to load calendar events: ${eventsError.message}`);
+  }
+  if (tasksError) {
+    throw new Error(`Failed to load tasks: ${tasksError.message}`);
   }
 
   // Deduplicate if both project_id and lead_id match the same row.
@@ -117,6 +128,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       ]),
     ).values(),
   );
+  const tasks = (tasksData ?? []) as ProjectTaskRow[];
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -133,6 +145,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         events={events}
         lead={(leadData as LeadRow | null) ?? null}
         project={project}
+        tasks={tasks}
       />
     </main>
   );

@@ -72,7 +72,7 @@ export default async function AdminPage() {
             CRM
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Manage organizations and contacts. Inquiries live in Pipeline;
+            Manage businesses and contacts. Inquiries live in Pipeline;
             delivery work lives in Projects.
           </p>
         </div>
