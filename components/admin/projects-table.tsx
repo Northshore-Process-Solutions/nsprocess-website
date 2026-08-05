@@ -1,5 +1,10 @@
-import Link from "next/link";
+"use client";
 
+import Link from "next/link";
+import { CalendarDays, Eye } from "lucide-react";
+
+import { ActionHoverTooltip } from "@/components/admin/action-hover-tooltip";
+import { Button } from "@/components/ui/button";
 import {
   projectStatusLabel,
   type ProjectWithOrganization,
@@ -17,6 +22,110 @@ const statusStyles: Record<string, string> = {
 type ProjectsTableProps = {
   rows: ProjectWithOrganization[];
 };
+
+function PreviewField({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        {label}
+      </p>
+      <div className="mt-1 text-sm font-medium text-foreground">{value}</div>
+    </div>
+  );
+}
+
+function ProjectViewAction({ row }: { row: ProjectWithOrganization }) {
+  return (
+    <ActionHoverTooltip
+      content={
+        <>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              Project preview
+            </p>
+            <p className="mt-1 text-base font-bold tracking-tight">{row.name}</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {row.organizations?.name ?? "No organization"}
+            </p>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <PreviewField
+              label="Status"
+              value={
+                <span
+                  className={cn(
+                    "inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold",
+                    statusStyles[row.status] ?? statusStyles.active,
+                  )}
+                >
+                  {projectStatusLabel(row.status)}
+                </span>
+              }
+            />
+            <PreviewField
+              label="Started"
+              value={
+                row.started_at
+                  ? new Date(`${row.started_at}T12:00:00`).toLocaleDateString()
+                  : "—"
+              }
+            />
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Click to open project.
+          </p>
+        </>
+      }
+    >
+      <Button
+        asChild
+        aria-label={`Open ${row.name}`}
+        size="icon"
+        type="button"
+        variant="outline"
+      >
+        <Link href={`/admin/projects/${row.id}`}>
+          <Eye aria-hidden className="size-4" />
+        </Link>
+      </Button>
+    </ActionHoverTooltip>
+  );
+}
+
+function ProjectCalendarAction({ row }: { row: ProjectWithOrganization }) {
+  const href = row.lead_id
+    ? `/admin/calendar?leadId=${row.lead_id}`
+    : "/admin/calendar";
+
+  return (
+    <ActionHoverTooltip
+      content={
+        <p className="text-sm text-muted-foreground">
+          View this project&apos;s events on the calendar.
+        </p>
+      }
+      width={220}
+    >
+      <Button
+        asChild
+        aria-label={`Calendar for ${row.name}`}
+        size="icon"
+        type="button"
+        variant="outline"
+      >
+        <Link href={href}>
+          <CalendarDays aria-hidden className="size-4" />
+        </Link>
+      </Button>
+    </ActionHoverTooltip>
+  );
+}
 
 export function ProjectsTable({ rows }: ProjectsTableProps) {
   if (rows.length === 0) {
@@ -41,6 +150,7 @@ export function ProjectsTable({ rows }: ProjectsTableProps) {
               <th className="px-4 py-3 font-semibold">Organization</th>
               <th className="px-4 py-3 font-semibold">Started</th>
               <th className="px-4 py-3 font-semibold">Status</th>
+              <th className="px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -50,29 +160,15 @@ export function ProjectsTable({ rows }: ProjectsTableProps) {
                 key={row.id}
               >
                 <td className="px-4 py-4">
-                  <Link
-                    className="font-semibold text-foreground hover:text-accent hover:underline"
-                    href={`/admin/projects/${row.id}`}
-                  >
-                    {row.name}
-                  </Link>
+                  <div className="font-semibold text-foreground">{row.name}</div>
                   {row.notes ? (
                     <p className="mt-2 max-w-md text-xs leading-5 text-muted-foreground">
                       {row.notes}
                     </p>
                   ) : null}
                 </td>
-                <td className="px-4 py-4">
-                  {row.organizations ? (
-                    <Link
-                      className="font-medium text-accent hover:underline"
-                      href={`/admin/organizations/${row.organizations.id}`}
-                    >
-                      {row.organizations.name}
-                    </Link>
-                  ) : (
-                    "—"
-                  )}
+                <td className="px-4 py-4 font-medium">
+                  {row.organizations?.name ?? "—"}
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap text-muted-foreground">
                   {row.started_at
@@ -88,6 +184,12 @@ export function ProjectsTable({ rows }: ProjectsTableProps) {
                   >
                     {projectStatusLabel(row.status)}
                   </span>
+                </td>
+                <td className="px-4 py-4">
+                  <div className="flex gap-2">
+                    <ProjectCalendarAction row={row} />
+                    <ProjectViewAction row={row} />
+                  </div>
                 </td>
               </tr>
             ))}

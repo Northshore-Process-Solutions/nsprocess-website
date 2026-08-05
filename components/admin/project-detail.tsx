@@ -39,14 +39,6 @@ const statusStyles: Record<string, string> = {
   cancelled: "bg-red-50 text-red-800 border-red-200",
 };
 
-const eventTypeStyles: Record<string, string> = {
-  consult: "bg-indigo-100 text-indigo-900",
-  onsite: "bg-teal-100 text-teal-900",
-  call: "bg-sky-100 text-sky-900",
-  follow_up: "bg-amber-100 text-amber-950",
-  other: "bg-stone-100 text-stone-800",
-};
-
 type ProjectDetailProps = {
   project: ProjectWithOrganization;
   lead: LeadRow | null;
@@ -92,7 +84,10 @@ export function ProjectDetail({
   const upcoming = events.filter(
     (event) => new Date(event.starts_at).getTime() >= Date.now(),
   );
-  const nextEvent = upcoming[0] ?? null;
+  const nextEvent = upcoming[0] ?? events[events.length - 1] ?? null;
+  const calendarHref = project.lead_id
+    ? `/admin/calendar?leadId=${project.lead_id}`
+    : "/admin/calendar";
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -132,7 +127,7 @@ export function ProjectDetail({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <Link
@@ -162,23 +157,23 @@ export function ProjectDetail({
                 {project.organizations.name}
               </Link>
             ) : null}
+            {project.started_at ? (
+              <span className="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground">
+                Started{" "}
+                {new Date(`${project.started_at}T12:00:00`).toLocaleDateString()}
+              </span>
+            ) : null}
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            disabled={!lead}
-            onClick={() => setReplyOpen(true)}
-            type="button"
-            variant="outline"
-          >
-            <Mail aria-hidden className="size-4" />
-            Email
-          </Button>
-          <Button onClick={openCreateEvent} type="button" variant="accent">
-            <Plus aria-hidden className="size-4" />
-            Schedule
-          </Button>
-        </div>
+        <Button
+          disabled={!lead}
+          onClick={() => setReplyOpen(true)}
+          type="button"
+          variant="outline"
+        >
+          <Mail aria-hidden className="size-4" />
+          Email
+        </Button>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -212,7 +207,7 @@ export function ProjectDetail({
               {lead.message ? (
                 <div className="sm:col-span-2">
                   <dt className="text-muted-foreground">Original inquiry</dt>
-                  <dd className="mt-1 whitespace-pre-wrap leading-6 text-foreground/90">
+                  <dd className="mt-1 line-clamp-3 whitespace-pre-wrap leading-6 text-foreground/90">
                     {lead.message}
                   </dd>
                 </div>
@@ -226,17 +221,26 @@ export function ProjectDetail({
         </section>
 
         <section className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-          <div className="flex items-center gap-2">
-            <CalendarDays aria-hidden className="size-4 text-accent" />
-            <h2 className="text-lg font-semibold">Next event</h2>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <CalendarDays aria-hidden className="size-4 text-accent" />
+              <h2 className="text-lg font-semibold">Events</h2>
+            </div>
+            <Button asChild size="sm" variant="ghost">
+              <Link href={calendarHref}>Calendar</Link>
+            </Button>
           </div>
+
           {nextEvent ? (
             <button
               className="mt-4 w-full rounded-2xl border border-border bg-background p-4 text-left transition hover:bg-secondary/40"
               onClick={() => openEditEvent(nextEvent)}
               type="button"
             >
-              <p className="font-semibold">{nextEvent.title}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                {upcoming[0] ? "Next" : "Latest"}
+              </p>
+              <p className="mt-1 font-semibold">{nextEvent.title}</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 {calendarEventTypeLabel(nextEvent.event_type)} ·{" "}
                 {new Date(nextEvent.starts_at).toLocaleDateString()}{" "}
@@ -244,106 +248,68 @@ export function ProjectDetail({
               </p>
             </button>
           ) : (
-            <p className="mt-3 text-sm text-muted-foreground">
-              Nothing scheduled. Book an onsite, call, or follow-up.
+            <p className="mt-4 text-sm text-muted-foreground">
+              Nothing scheduled yet.
             </p>
           )}
+
+          {upcoming.length > 1 ? (
+            <p className="mt-3 text-xs text-muted-foreground">
+              +{upcoming.length - 1} more upcoming — view on calendar
+            </p>
+          ) : events.length > 0 && upcoming.length <= 1 ? (
+            <p className="mt-3 text-xs text-muted-foreground">
+              {events.length} event{events.length === 1 ? "" : "s"} total —
+              view on calendar
+            </p>
+          ) : null}
+
           <Button
             className="mt-4 w-full"
             onClick={openCreateEvent}
             type="button"
-            variant="outline"
+            variant="accent"
           >
+            <Plus aria-hidden className="size-4" />
             Schedule event
           </Button>
         </section>
       </div>
 
-      <section className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="grid gap-4 lg:grid-cols-5">
+        <div className="lg:col-span-3">
+          <ActivityPanel
+            activities={activities}
+            compact
+            leadId={project.lead_id}
+            organizationId={project.organization_id}
+            projectId={project.id}
+          />
+        </div>
+
+        <form
+          className="space-y-4 rounded-2xl border border-border bg-card p-5 shadow-soft lg:col-span-2"
+          onSubmit={onSubmit}
+        >
           <div>
-            <h2 className="text-lg font-semibold">Calendar</h2>
+            <h2 className="text-lg font-semibold">Details</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Events for this project, including history from the original
-              lead.
+              Status and a short summary.
             </p>
           </div>
-          <Button asChild variant="outline">
-            <Link href="/admin/calendar">Open calendar</Link>
-          </Button>
-        </div>
 
-        {events.length === 0 ? (
-          <div className="mt-4 rounded-2xl border border-dashed border-border p-6 text-center">
-            <p className="font-semibold">No events yet</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Schedule onsites, calls, and check-ins from here.
-            </p>
-          </div>
-        ) : (
-          <ul className="mt-4 space-y-3">
-            {events.map((event) => (
-              <li key={event.id}>
-                <button
-                  className="flex w-full items-start justify-between gap-3 rounded-2xl border border-border px-4 py-3 text-left transition hover:bg-secondary/40"
-                  onClick={() => openEditEvent(event)}
-                  type="button"
-                >
-                  <div>
-                    <p className="font-semibold">{event.title}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {new Date(event.starts_at).toLocaleString()}
-                      {event.location ? ` · ${event.location}` : ""}
-                    </p>
-                  </div>
-                  <span
-                    className={cn(
-                      "rounded-full px-2.5 py-1 text-xs font-semibold",
-                      eventTypeStyles[event.event_type] ??
-                        eventTypeStyles.other,
-                    )}
-                  >
-                    {calendarEventTypeLabel(event.event_type)}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          {error ? (
+            <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-900">
+              {error}
+            </div>
+          ) : null}
+          {saved ? (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-900">
+              Saved.
+            </div>
+          ) : null}
 
-      <ActivityPanel
-        activities={activities}
-        leadId={project.lead_id}
-        organizationId={project.organization_id}
-        projectId={project.id}
-      />
-
-      <form
-        className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-soft"
-        onSubmit={onSubmit}
-      >
-        <div>
-          <h2 className="text-lg font-semibold">Project details</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Status and a short internal summary. Use the activity log for
-            ongoing notes.
-          </p>
-        </div>
-
-        {error ? (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-900">
-            {error}
-          </div>
-        ) : null}
-        {saved ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-900">
-            Project saved.
-          </div>
-        ) : null}
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="space-y-2 text-sm font-semibold sm:col-span-2">
+          <label className="block space-y-2 text-sm font-semibold">
             Name
             <input
               className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -353,7 +319,7 @@ export function ProjectDetail({
             />
           </label>
 
-          <label className="space-y-2 text-sm font-semibold">
+          <label className="block space-y-2 text-sm font-semibold">
             Status
             <select
               className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -370,7 +336,7 @@ export function ProjectDetail({
             </select>
           </label>
 
-          <label className="space-y-2 text-sm font-semibold">
+          <label className="block space-y-2 text-sm font-semibold">
             Started
             <input
               className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -380,23 +346,21 @@ export function ProjectDetail({
             />
           </label>
 
-          <label className="space-y-2 text-sm font-semibold sm:col-span-2">
+          <label className="block space-y-2 text-sm font-semibold">
             Internal summary
             <textarea
               className="min-h-24 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
               onChange={(event) => setNotes(event.target.value)}
-              placeholder="Optional high-level summary — use Activity log for dated notes."
+              placeholder="Optional high-level summary."
               value={notes}
             />
           </label>
-        </div>
 
-        <div className="flex justify-end">
           <Button disabled={loading} type="submit" variant="accent">
-            {loading ? "Saving…" : "Save project"}
+            {loading ? "Saving…" : "Save"}
           </Button>
-        </div>
-      </form>
+        </form>
+      </div>
 
       <LeadReplyDialog
         lead={lead}
