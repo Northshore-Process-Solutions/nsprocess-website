@@ -80,6 +80,17 @@ export default async function PipelinePage() {
     return acc;
   }, {});
 
+  const countByStage = (stage: LeadRow["stage"]) =>
+    leads.filter((lead) => lead.stage === stage).length;
+
+  const kpis = [
+    { label: "New Leads", value: countByStage("new_inquiry") },
+    { label: "Consults Booked", value: countByStage("review_booked") },
+    { label: "Proposals Sent", value: countByStage("proposal_sent") },
+    { label: "Deposits Received", value: countByStage("deposit_received") },
+    { label: "Awaiting Follow-Up", value: countByStage("follow_up") },
+  ];
+
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -96,6 +107,18 @@ export default async function PipelinePage() {
         </div>
         <SignOutButton />
       </header>
+
+      <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {kpis.map((kpi) => (
+          <div
+            className="rounded-2xl border border-border bg-card px-4 py-4 shadow-soft"
+            key={kpi.label}
+          >
+            <p className="text-sm text-muted-foreground">{kpi.label}</p>
+            <p className="mt-2 text-3xl font-bold tracking-tight">{kpi.value}</p>
+          </div>
+        ))}
+      </section>
 
       <LeadsPanel
         activitiesByLeadId={activitiesByLeadId}
