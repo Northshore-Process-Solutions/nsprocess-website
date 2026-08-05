@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { CalendarDays, Eye, Mail } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
-import { updateLeadStage } from "@/app/admin/pipeline/actions";
 import { Button } from "@/components/ui/button";
 import {
   calendarEventTypeLabel,
@@ -12,8 +12,8 @@ import {
   type CalendarEventRow,
 } from "@/lib/calendar";
 import {
-  LEAD_STAGES,
   leadSourceLabel,
+  leadStageLabel,
   type LeadRow,
   type LeadStage,
 } from "@/lib/leads";
@@ -35,8 +35,6 @@ type LeadsTableProps = {
   eventsByLeadId?: Record<string, CalendarEventRow[]>;
   onView: (row: LeadRow) => void;
   onReply: (row: LeadRow) => void;
-  onStageChanged: () => void;
-  onError?: (message: string) => void;
 };
 
 function LeadCalendarAction({
@@ -46,14 +44,118 @@ function LeadCalendarAction({
   lead: LeadRow;
   events: CalendarEventRow[];
 }) {
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState<{
+    top: number;
+    left: number;
+    placeBelow: boolean;
+  } | null>(null);
+
   const upcoming = events.filter(
     (event) => new Date(event.starts_at).getTime() >= Date.now(),
   );
   const previewEvents = (upcoming.length > 0 ? upcoming : events).slice(0, 5);
   const hasEvents = events.length > 0;
 
+  function updatePosition() {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const width = 256;
+    const left = Math.min(
+      Math.max(8, rect.right - width),
+      window.innerWidth - width - 8,
+    );
+    const placeBelow = rect.top < 140;
+
+    setCoords({
+      top: placeBelow ? rect.bottom + 8 : rect.top - 8,
+      left,
+      placeBelow,
+    });
+  }
+
+  useEffect(() => {
+    if (!open) return;
+
+    updatePosition();
+    function handleReposition() {
+      updatePosition();
+    }
+
+    window.addEventListener("scroll", handleReposition, true);
+    window.addEventListener("resize", handleReposition);
+    return () => {
+      window.removeEventListener("scroll", handleReposition, true);
+      window.removeEventListener("resize", handleReposition);
+    };
+  }, [open]);
+
+  const tooltip =
+    open && coords && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            className="pointer-events-none fixed z-[80] w-64 rounded-2xl border border-border bg-card p-3 text-left shadow-card"
+            role="tooltip"
+            style={{
+              top: coords.top,
+              left: coords.left,
+              transform: coords.placeBelow ? "none" : "translateY(-100%)",
+            }}
+          >
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              {upcoming.length > 0 ? "Upcoming events" : "Booked events"}
+            </p>
+            {previewEvents.length === 0 ? (
+              <p className="mt-2 text-sm text-muted-foreground">
+                No events yet. Click to schedule.
+              </p>
+            ) : (
+              <ul className="mt-2 space-y-2">
+                {previewEvents.map((event) => (
+                  <li key={event.id}>
+                    <p className="truncate text-sm font-semibold">
+                      {event.title}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {calendarEventTypeLabel(event.event_type)} ·{" "}
+                      {new Date(event.starts_at).toLocaleDateString()}{" "}
+                      {formatEventTime(event.starts_at)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {events.length > previewEvents.length ? (
+              <p className="mt-2 text-xs text-muted-foreground">
+                +{events.length - previewEvents.length} more
+              </p>
+            ) : null}
+          </div>,
+          document.body,
+        )
+      : null;
+
   return (
-    <div className="group relative">
+    <div
+      className="relative"
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setOpen(false);
+        }
+      }}
+      onFocus={() => {
+        updatePosition();
+        setOpen(true);
+      }}
+      onMouseEnter={() => {
+        updatePosition();
+        setOpen(true);
+      }}
+      onMouseLeave={() => setOpen(false)}
+      ref={triggerRef}
+    >
       <Button
         asChild
         aria-label={`Schedule event for ${lead.business_name}`}
@@ -66,41 +168,7 @@ function LeadCalendarAction({
           <CalendarDays aria-hidden className="size-4" />
         </Link>
       </Button>
-
-      <div
-        className={cn(
-          "pointer-events-none absolute bottom-full right-0 z-30 mb-2 w-64 rounded-2xl border border-border bg-card p-3 text-left shadow-card",
-          "opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100",
-        )}
-        role="tooltip"
-      >
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-          {upcoming.length > 0 ? "Upcoming events" : "Booked events"}
-        </p>
-        {previewEvents.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">
-            No events yet. Click to schedule.
-          </p>
-        ) : (
-          <ul className="mt-2 space-y-2">
-            {previewEvents.map((event) => (
-              <li key={event.id}>
-                <p className="truncate text-sm font-semibold">{event.title}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {calendarEventTypeLabel(event.event_type)} ·{" "}
-                  {new Date(event.starts_at).toLocaleDateString()}{" "}
-                  {formatEventTime(event.starts_at)}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-        {events.length > previewEvents.length ? (
-          <p className="mt-2 text-xs text-muted-foreground">
-            +{events.length - previewEvents.length} more
-          </p>
-        ) : null}
-      </div>
+      {tooltip}
     </div>
   );
 }
@@ -110,11 +178,7 @@ export function LeadsTable({
   eventsByLeadId = {},
   onView,
   onReply,
-  onStageChanged,
-  onError,
 }: LeadsTableProps) {
-  const [stageUpdatingId, setStageUpdatingId] = useState<string | null>(null);
-
   if (rows.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
@@ -124,19 +188,6 @@ export function LeadsTable({
         </p>
       </div>
     );
-  }
-
-  async function handleStageChange(leadId: string, stage: LeadStage) {
-    setStageUpdatingId(leadId);
-    const result = await updateLeadStage(leadId, stage);
-    setStageUpdatingId(null);
-
-    if (!result.ok) {
-      onError?.(result.error ?? "Failed to update stage.");
-      return;
-    }
-
-    onStageChanged();
   }
 
   return (
@@ -180,28 +231,14 @@ export function LeadsTable({
                 {leadSourceLabel(row.source)}
               </td>
               <td className="px-4 py-4">
-                <select
-                  aria-label={`Update stage for ${row.business_name}`}
+                <span
                   className={cn(
-                    "min-h-10 w-full rounded-full border px-3 py-2 text-xs font-semibold outline-none focus:ring-2 focus:ring-ring/20",
+                    "inline-flex rounded-full border px-3 py-1 text-xs font-semibold",
                     stageStyles[row.stage],
                   )}
-                  disabled={stageUpdatingId === row.id}
-                  key={`${row.id}-${row.stage}`}
-                  onChange={(event) =>
-                    handleStageChange(
-                      row.id,
-                      event.target.value as LeadStage,
-                    )
-                  }
-                  value={row.stage}
                 >
-                  {LEAD_STAGES.map((stage) => (
-                    <option key={stage.value} value={stage.value}>
-                      {stage.label}
-                    </option>
-                  ))}
-                </select>
+                  {leadStageLabel(row.stage)}
+                </span>
               </td>
               <td className="px-4 py-4">
                 <div className="flex gap-2">

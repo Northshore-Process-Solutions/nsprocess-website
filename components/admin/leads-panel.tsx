@@ -106,12 +106,7 @@ export function LeadsPanel({
 
       <LeadsTable
         eventsByLeadId={eventsByLeadId}
-        onError={(message) => setError(message)}
         onReply={openReply}
-        onStageChanged={() => {
-          setError(null);
-          router.refresh();
-        }}
         onView={openView}
         rows={rows}
       />
