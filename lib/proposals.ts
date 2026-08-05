@@ -71,7 +71,7 @@ export const PROPOSAL_STATUSES: Array<{
   { value: "expired", label: "Expired" },
 ];
 
-export const PROPOSAL_LINE_SLOT_COUNT = 10;
+export const PROPOSAL_LINE_SLOT_COUNT = 8;
 
 export const DEFAULT_PROPOSAL_TERMS = `Payment: A deposit of the stated percentage is due upon acceptance to reserve the engagement. Remaining balance follows the line items or milestone schedule.
 
