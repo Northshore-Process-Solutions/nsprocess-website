@@ -22,7 +22,7 @@ const filters: Array<{ label: string; value: string }> = [
   { label: "All", value: "all" },
   { label: "Vendors", value: "vendor" },
   { label: "Customers", value: "customer" },
-  { label: "Leads", value: "lead" },
+  { label: "Prospects", value: "lead" },
   { label: "Partners", value: "partner" },
   { label: "Suppliers", value: "supplier" },
 ];
@@ -105,7 +105,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             CRM
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Manage organizations, relationship types, and primary contacts.
+            Manage organizations and contacts. Process Review inquiries live in
+            Pipeline.
           </p>
         </div>
         <SignOutButton />

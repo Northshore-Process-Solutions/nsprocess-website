@@ -88,6 +88,22 @@ export const RELATIONSHIP_TYPES: RelationshipType[] = [
   "supplier",
 ];
 
+/** UI labels — CRM "lead" means prospect, not a Pipeline Process Review lead. */
+export const RELATIONSHIP_TYPE_LABELS: Record<RelationshipType, string> = {
+  vendor: "Vendor",
+  customer: "Customer",
+  lead: "Prospect",
+  partner: "Partner",
+  supplier: "Supplier",
+};
+
+export function relationshipTypeLabel(type: RelationshipType | string) {
+  return (
+    RELATIONSHIP_TYPE_LABELS[type as RelationshipType] ??
+    type.replaceAll("_", " ")
+  );
+}
+
 export const ORGANIZATION_STATUSES: OrganizationStatus[] = [
   "active",
   "inactive",

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ExternalLink, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import type { CrmTableRow } from "@/lib/crm";
+import { relationshipTypeLabel, type CrmTableRow } from "@/lib/crm";
 import { cn } from "@/lib/utils";
 
 const statusStyles: Record<string, string> = {
@@ -61,23 +61,25 @@ export function CrmTable({
                 key={row.id}
               >
                 <td className="px-4 py-4">
-                  <Link
-                    className="font-semibold text-foreground transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    href={`/admin/organizations/${row.id}`}
-                  >
-                    {row.name}
-                  </Link>
-                  {row.website ? (
-                    <a
-                      className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
-                      href={row.website}
-                      rel="noreferrer"
-                      target="_blank"
+                  <div className="flex flex-col items-start gap-1">
+                    <Link
+                      className="font-semibold text-foreground transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      href={`/admin/organizations/${row.id}`}
                     >
-                      Website
-                      <ExternalLink aria-hidden className="size-3" />
-                    </a>
-                  ) : null}
+                      {row.name}
+                    </Link>
+                    {row.website ? (
+                      <a
+                        className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+                        href={row.website}
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        Website
+                        <ExternalLink aria-hidden className="size-3" />
+                      </a>
+                    ) : null}
+                  </div>
                   {row.notes ? (
                     <p className="mt-2 max-w-xs text-xs leading-5 text-muted-foreground">
                       {row.notes}
@@ -89,10 +91,10 @@ export function CrmTable({
                     {row.relationshipTypes.length > 0 ? (
                       row.relationshipTypes.map((type) => (
                         <span
-                          className="rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold capitalize text-muted-foreground"
+                          className="rounded-full border border-border bg-background px-2.5 py-1 text-xs font-semibold text-muted-foreground"
                           key={type}
                         >
-                          {type}
+                          {relationshipTypeLabel(type)}
                         </span>
                       ))
                     ) : (

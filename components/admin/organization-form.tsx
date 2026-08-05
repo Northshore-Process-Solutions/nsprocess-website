@@ -13,6 +13,7 @@ import {
   RELATIONSHIP_TYPES,
   crmRowToFormValues,
   emptyCrmFormValues,
+  relationshipTypeLabel,
   type CrmTableRow,
 } from "@/lib/crm";
 
@@ -142,7 +143,7 @@ function OrganizationFormDialog({
               >
                 {RELATIONSHIP_TYPES.map((type) => (
                   <option key={type} value={type}>
-                    {type}
+                    {relationshipTypeLabel(type)}
                   </option>
                 ))}
               </select>

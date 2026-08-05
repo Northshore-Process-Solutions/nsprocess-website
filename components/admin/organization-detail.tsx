@@ -16,7 +16,10 @@ import { useState } from "react";
 import { deleteOrganization } from "@/app/admin/actions";
 import { OrganizationForm } from "@/components/admin/organization-form";
 import { Button } from "@/components/ui/button";
-import type { CrmTableRow } from "@/lib/crm";
+import {
+  relationshipTypeLabel,
+  type CrmTableRow,
+} from "@/lib/crm";
 import {
   leadSourceLabel,
   leadStageLabel,
@@ -92,10 +95,10 @@ export function OrganizationDetail({
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {organization.relationshipTypes.map((type) => (
               <span
-                className="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold capitalize text-muted-foreground"
+                className="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground"
                 key={type}
               >
-                {type}
+                {relationshipTypeLabel(type)}
               </span>
             ))}
             <span
