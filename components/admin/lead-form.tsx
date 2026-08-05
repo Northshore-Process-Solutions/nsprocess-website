@@ -7,7 +7,9 @@ import {
   updateLead,
   type LeadInput,
 } from "@/app/admin/pipeline/actions";
+import { ActivityPanel } from "@/components/admin/activity-panel";
 import { Button } from "@/components/ui/button";
+import type { ActivityRow } from "@/lib/activities";
 import {
   LEAD_SOURCES,
   LEAD_STAGES,
@@ -20,6 +22,7 @@ type LeadFormProps = {
   open: boolean;
   mode: "create" | "edit";
   initialRow?: LeadRow | null;
+  activities?: ActivityRow[];
   onClose: () => void;
   onSaved: () => void;
 };
@@ -28,6 +31,7 @@ export function LeadForm({
   open,
   mode,
   initialRow,
+  activities = [],
   onClose,
   onSaved,
 }: LeadFormProps) {
@@ -35,6 +39,7 @@ export function LeadForm({
 
   return (
     <LeadFormDialog
+      activities={activities}
       initialRow={initialRow}
       mode={mode}
       onClose={onClose}
@@ -46,6 +51,7 @@ export function LeadForm({
 function LeadFormDialog({
   mode,
   initialRow,
+  activities = [],
   onClose,
   onSaved,
 }: Omit<LeadFormProps, "open">) {
@@ -259,6 +265,17 @@ function LeadFormDialog({
             </Button>
           </div>
         </form>
+
+        {mode === "edit" && initialRow ? (
+          <div className="mt-8 border-t border-border pt-6">
+            <ActivityPanel
+              activities={activities}
+              compact
+              leadId={initialRow.id}
+              organizationId={initialRow.organization_id}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );

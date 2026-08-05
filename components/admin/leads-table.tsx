@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   LEAD_STAGES,
+  isCustomerStage,
   leadSourceLabel,
   type LeadRow,
   type LeadStage,
@@ -19,9 +20,11 @@ import { cn } from "@/lib/utils";
 
 const stageStyles: Record<LeadStage, string> = {
   new_inquiry: "bg-sky-50 text-sky-800 border-sky-200",
+  follow_up: "bg-cyan-50 text-cyan-800 border-cyan-200",
   review_booked: "bg-indigo-50 text-indigo-800 border-indigo-200",
   review_completed: "bg-violet-50 text-violet-800 border-violet-200",
   proposal_sent: "bg-amber-50 text-amber-900 border-amber-200",
+  deposit_received: "bg-teal-50 text-teal-800 border-teal-200",
   won: "bg-emerald-50 text-emerald-800 border-emerald-200",
   lost: "bg-red-50 text-red-800 border-red-200",
 };
@@ -72,7 +75,7 @@ export function LeadsTable({
 
   async function handleConvert(row: LeadRow) {
     setConvertingId(row.id);
-    const result = await convertWonLeadToCrm(row.id);
+    const result = await convertWonLeadToCrm(row.id, row.stage);
     setConvertingId(null);
 
     if (!result.ok) {
@@ -102,7 +105,8 @@ export function LeadsTable({
           <tbody>
             {rows.map((row) => {
               const linkedToCrm = Boolean(row.organization_id);
-              const canConvert = row.stage === "won" && !linkedToCrm;
+              const canConvert =
+                isCustomerStage(row.stage) && !linkedToCrm;
 
               return (
                 <tr

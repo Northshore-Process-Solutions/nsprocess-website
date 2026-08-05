@@ -246,8 +246,8 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
                   className="absolute inset-0 h-full w-full border-0"
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  src="https://www.openstreetmap.org/export/embed.html?bbox=-71.12%2C42.38%2C-70.68%2C42.78&amp;layer=mapnik"
-                  title="Map of Massachusetts North Shore service area"
+                  src="https://www.openstreetmap.org/export/embed.html?bbox=-71.05%2C42.55%2C-70.70%2C42.95&amp;layer=mapnik&amp;marker=42.8418%2C-70.8606"
+                  title="Map pin for Salisbury, Massachusetts North Shore service area"
                 />
               </div>
               <div className="flex items-start gap-3 px-5 py-4">
@@ -257,11 +257,11 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
                 />
                 <div>
                   <p className="font-semibold text-foreground">
-                    {contact.serviceArea}
+                    Salisbury, MA
                   </p>
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Local guidance for businesses that need practical help, not
-                    enterprise complexity.
+                    Based on the North Shore and serving small businesses across
+                    the region.
                   </p>
                 </div>
               </div>

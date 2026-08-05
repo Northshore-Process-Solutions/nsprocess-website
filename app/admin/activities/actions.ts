@@ -1,0 +1,163 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+
+import {
+  ACTIVITY_TYPES,
+  type ActivityType,
+} from "@/lib/activities";
+import { createClient } from "@/lib/supabase/server";
+
+export type ActivityInput = {
+  organizationId?: string | null;
+  leadId?: string | null;
+  activityType: ActivityType;
+  subject?: string;
+  body?: string;
+  occurredAt?: string;
+};
+
+export type ActionResult = {
+  ok: boolean;
+  error?: string;
+};
+
+function clean(value?: string | null) {
+  const trimmed = value?.trim() ?? "";
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+async function requireUser() {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+
+  if (!data?.claims) {
+    return { supabase, error: "You must be signed in." as const };
+  }
+
+  return { supabase, error: null };
+}
+
+function parseInput(input: ActivityInput): ActivityInput | ActionResult {
+  const organizationId = clean(input.organizationId) ?? null;
+  const leadId = clean(input.leadId) ?? null;
+
+  if (!organizationId && !leadId) {
+    return { ok: false, error: "Activity must belong to a lead or organization." };
+  }
+
+  if (!ACTIVITY_TYPES.some((item) => item.value === input.activityType)) {
+    return { ok: false, error: "Invalid activity type." };
+  }
+
+  const occurredAt = clean(input.occurredAt);
+  if (occurredAt) {
+    const parsed = new Date(occurredAt);
+    if (Number.isNaN(parsed.getTime())) {
+      return { ok: false, error: "Invalid activity date." };
+    }
+  }
+
+  return {
+    organizationId,
+    leadId,
+    activityType: input.activityType,
+    subject: clean(input.subject) ?? undefined,
+    body: clean(input.body) ?? undefined,
+    occurredAt: occurredAt ?? undefined,
+  };
+}
+
+function revalidateTargets(input: {
+  organizationId?: string | null;
+  leadId?: string | null;
+}) {
+  revalidatePath("/admin");
+  revalidatePath("/admin/pipeline");
+  if (input.organizationId) {
+    revalidatePath(`/admin/organizations/${input.organizationId}`);
+  }
+}
+
+export async function createActivity(
+  input: ActivityInput,
+): Promise<ActionResult> {
+  const parsed = parseInput(input);
+  if ("ok" in parsed) return parsed;
+
+  const { supabase, error: authError } = await requireUser();
+  if (authError) return { ok: false, error: authError };
+
+  const occurredAt = parsed.occurredAt
+    ? new Date(parsed.occurredAt).toISOString()
+    : new Date().toISOString();
+
+  const { error } = await supabase.from("activities").insert({
+    organization_id: parsed.organizationId ?? null,
+    lead_id: parsed.leadId ?? null,
+    activity_type: parsed.activityType,
+    subject: parsed.subject ?? null,
+    body: parsed.body ?? null,
+    occurred_at: occurredAt,
+  });
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidateTargets(parsed);
+  return { ok: true };
+}
+
+export async function updateActivity(
+  activityId: string,
+  input: ActivityInput,
+): Promise<ActionResult> {
+  if (!activityId) return { ok: false, error: "Missing activity id." };
+
+  const parsed = parseInput(input);
+  if ("ok" in parsed) return parsed;
+
+  const { supabase, error: authError } = await requireUser();
+  if (authError) return { ok: false, error: authError };
+
+  const occurredAt = parsed.occurredAt
+    ? new Date(parsed.occurredAt).toISOString()
+    : new Date().toISOString();
+
+  const { error } = await supabase
+    .from("activities")
+    .update({
+      organization_id: parsed.organizationId ?? null,
+      lead_id: parsed.leadId ?? null,
+      activity_type: parsed.activityType,
+      subject: parsed.subject ?? null,
+      body: parsed.body ?? null,
+      occurred_at: occurredAt,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", activityId);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidateTargets(parsed);
+  return { ok: true };
+}
+
+export async function deleteActivity(
+  activityId: string,
+  targets?: { organizationId?: string | null; leadId?: string | null },
+): Promise<ActionResult> {
+  if (!activityId) return { ok: false, error: "Missing activity id." };
+
+  const { supabase, error: authError } = await requireUser();
+  if (authError) return { ok: false, error: authError };
+
+  const { error } = await supabase
+    .from("activities")
+    .delete()
+    .eq("id", activityId);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidateTargets(targets ?? {});
+  return { ok: true };
+}

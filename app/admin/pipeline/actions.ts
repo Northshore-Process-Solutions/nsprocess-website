@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import {
   LEAD_SOURCES,
   LEAD_STAGES,
+  isCustomerStage,
   type LeadSource,
   type LeadStage,
 } from "@/lib/leads";
@@ -338,8 +339,13 @@ async function upsertPrimaryContactForOrg(
 
 export async function convertWonLeadToCrm(
   leadId: string,
+  targetStage: LeadStage = "won",
 ): Promise<ActionResult> {
   if (!leadId) return { ok: false, error: "Missing lead id." };
+
+  const nextStage: LeadStage = isCustomerStage(targetStage)
+    ? targetStage
+    : "won";
 
   const { supabase, error: authError } = await requireUser();
   if (authError) return { ok: false, error: authError };
@@ -366,13 +372,22 @@ export async function convertWonLeadToCrm(
     const { error } = await supabase
       .from("leads")
       .update({
-        stage: "won",
+        stage: nextStage,
         lost_reason: null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", leadId);
 
     if (error) return { ok: false, error: error.message };
+
+    await supabase
+      .from("activities")
+      .update({
+        organization_id: lead.organization_id,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("lead_id", leadId)
+      .is("organization_id", null);
 
     revalidatePath("/admin/pipeline");
     revalidatePath("/admin");
@@ -455,13 +470,23 @@ export async function convertWonLeadToCrm(
     .update({
       organization_id: organizationId,
       contact_id: contactResult.contactId,
-      stage: "won",
+      stage: nextStage,
       lost_reason: null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", leadId);
 
   if (error) return { ok: false, error: error.message };
+
+  // Keep activity history attached when the lead becomes a CRM customer.
+  await supabase
+    .from("activities")
+    .update({
+      organization_id: organizationId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("lead_id", leadId)
+    .is("organization_id", null);
 
   revalidatePath("/admin/pipeline");
   revalidatePath("/admin");
@@ -486,8 +511,8 @@ export async function createLead(input: LeadInput): Promise<ActionResult> {
     return { ok: false, error: error?.message ?? "Failed to create lead." };
   }
 
-  if (parsed.stage === "won") {
-    return convertWonLeadToCrm(data.id);
+  if (isCustomerStage(parsed.stage)) {
+    return convertWonLeadToCrm(data.id, parsed.stage);
   }
 
   revalidatePath("/admin/pipeline");
@@ -516,8 +541,8 @@ export async function updateLead(
 
   if (error) return { ok: false, error: error.message };
 
-  if (parsed.stage === "won") {
-    return convertWonLeadToCrm(leadId);
+  if (isCustomerStage(parsed.stage)) {
+    return convertWonLeadToCrm(leadId, parsed.stage);
   }
 
   revalidatePath("/admin/pipeline");
@@ -533,8 +558,8 @@ export async function updateLeadStage(
     return { ok: false, error: "Invalid stage." };
   }
 
-  if (stage === "won") {
-    return convertWonLeadToCrm(leadId);
+  if (isCustomerStage(stage)) {
+    return convertWonLeadToCrm(leadId, stage);
   }
 
   const { supabase, error: authError } = await requireUser();

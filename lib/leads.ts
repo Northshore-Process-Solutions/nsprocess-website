@@ -1,8 +1,10 @@
 export type LeadStage =
   | "new_inquiry"
+  | "follow_up"
   | "review_booked"
   | "review_completed"
   | "proposal_sent"
+  | "deposit_received"
   | "won"
   | "lost";
 
@@ -36,10 +38,12 @@ export const LEAD_STAGES: Array<{
   label: string;
 }> = [
   { value: "new_inquiry", label: "New inquiry" },
-  { value: "review_booked", label: "Review booked" },
-  { value: "review_completed", label: "Review completed" },
+  { value: "follow_up", label: "Follow-up / scheduling" },
+  { value: "review_booked", label: "Consult booked" },
+  { value: "review_completed", label: "Consult completed" },
   { value: "proposal_sent", label: "Proposal sent" },
-  { value: "won", label: "Won" },
+  { value: "deposit_received", label: "Deposit received" },
+  { value: "won", label: "Project kicked off" },
   { value: "lost", label: "Lost" },
 ];
 
@@ -52,6 +56,11 @@ export const LEAD_SOURCES: Array<{
   { value: "manual", label: "Manual" },
   { value: "other", label: "Other" },
 ];
+
+/** Stages that mean the lead became a paying customer. */
+export function isCustomerStage(stage: LeadStage) {
+  return stage === "deposit_received" || stage === "won";
+}
 
 export function leadStageLabel(stage: LeadStage) {
   return LEAD_STAGES.find((item) => item.value === stage)?.label ?? stage;

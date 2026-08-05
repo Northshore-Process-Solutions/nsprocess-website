@@ -4,6 +4,7 @@ import { AdminNav } from "@/components/admin/admin-nav";
 import { OrganizationDetail } from "@/components/admin/organization-detail";
 import { SignOutButton } from "@/components/admin/sign-out-button";
 import { Logo } from "@/components/logo";
+import type { ActivityRow } from "@/lib/activities";
 import {
   mapOrganizationToCrmRow,
   type OrganizationRow,
@@ -85,10 +86,32 @@ export default async function OrganizationPage({
     throw new Error(`Failed to load linked leads: ${leadsError.message}`);
   }
 
+  const leads = (leadsData ?? []) as LeadRow[];
+  const leadIds = leads.map((lead) => lead.id);
+
+  let activitiesQuery = supabase
+    .from("activities")
+    .select("*")
+    .order("occurred_at", { ascending: false });
+
+  if (leadIds.length > 0) {
+    activitiesQuery = activitiesQuery.or(
+      `organization_id.eq.${id},lead_id.in.(${leadIds.join(",")})`,
+    );
+  } else {
+    activitiesQuery = activitiesQuery.eq("organization_id", id);
+  }
+
+  const { data: activitiesData, error: activitiesError } = await activitiesQuery;
+
+  if (activitiesError) {
+    throw new Error(`Failed to load activities: ${activitiesError.message}`);
+  }
+
   const organization = mapOrganizationToCrmRow(
     data as unknown as OrganizationRow,
   );
-  const leads = (leadsData ?? []) as LeadRow[];
+  const activities = (activitiesData ?? []) as ActivityRow[];
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -100,7 +123,11 @@ export default async function OrganizationPage({
         <SignOutButton />
       </header>
 
-      <OrganizationDetail leads={leads} organization={organization} />
+      <OrganizationDetail
+        activities={activities}
+        leads={leads}
+        organization={organization}
+      />
     </main>
   );
 }

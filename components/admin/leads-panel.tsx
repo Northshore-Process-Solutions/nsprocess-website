@@ -8,9 +8,16 @@ import { deleteLead } from "@/app/admin/pipeline/actions";
 import { LeadForm } from "@/components/admin/lead-form";
 import { LeadsTable } from "@/components/admin/leads-table";
 import { Button } from "@/components/ui/button";
+import type { ActivityRow } from "@/lib/activities";
 import type { LeadRow } from "@/lib/leads";
 
-export function LeadsPanel({ rows }: { rows: LeadRow[] }) {
+export function LeadsPanel({
+  rows,
+  activitiesByLeadId = {},
+}: {
+  rows: LeadRow[];
+  activitiesByLeadId?: Record<string, ActivityRow[]>;
+}) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
   const [mode, setMode] = useState<"create" | "edit">("create");
@@ -56,8 +63,9 @@ export function LeadsPanel({ rows }: { rows: LeadRow[] }) {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
-          Move Process Review inquiries from first contact to won or lost.
-          Marking a lead Won adds them to CRM as a customer.
+          Track each inquiry from first contact through consult, proposal,
+          deposit, and project kickoff. Deposit received or project kickoff
+          adds them to CRM as a customer.
         </p>
         <Button onClick={openCreate} type="button" variant="accent">
           <Plus aria-hidden className="size-4" />
@@ -84,6 +92,9 @@ export function LeadsPanel({ rows }: { rows: LeadRow[] }) {
       />
 
       <LeadForm
+        activities={
+          selectedRow ? (activitiesByLeadId[selectedRow.id] ?? []) : []
+        }
         initialRow={selectedRow}
         key={`${mode}-${selectedRow?.id ?? "new"}-${formOpen ? "open" : "closed"}`}
         mode={mode}

@@ -5,6 +5,7 @@ import { AdminNav } from "@/components/admin/admin-nav";
 import { LeadsPanel } from "@/components/admin/leads-panel";
 import { SignOutButton } from "@/components/admin/sign-out-button";
 import { Logo } from "@/components/logo";
+import type { ActivityRow } from "@/lib/activities";
 import { LEAD_STAGES, type LeadRow, type LeadStage } from "@/lib/leads";
 import { createClient } from "@/lib/supabase/server";
 
@@ -40,6 +41,34 @@ export default async function PipelinePage({ searchParams }: PipelinePageProps) 
       ? leads
       : leads.filter((lead) => lead.stage === stageFilter);
 
+  const leadIds = leads.map((lead) => lead.id);
+  let activities: ActivityRow[] = [];
+
+  if (leadIds.length > 0) {
+    const { data: activitiesData, error: activitiesError } = await supabase
+      .from("activities")
+      .select("*")
+      .in("lead_id", leadIds)
+      .order("occurred_at", { ascending: false });
+
+    if (activitiesError) {
+      throw new Error(`Failed to load activities: ${activitiesError.message}`);
+    }
+
+    activities = (activitiesData ?? []) as ActivityRow[];
+  }
+
+  const activitiesByLeadId = activities.reduce<Record<string, ActivityRow[]>>(
+    (acc, activity) => {
+      if (!activity.lead_id) return acc;
+      const current = acc[activity.lead_id] ?? [];
+      current.push(activity);
+      acc[activity.lead_id] = current;
+      return acc;
+    },
+    {},
+  );
+
   const openCount = leads.filter(
     (lead) => lead.stage !== "won" && lead.stage !== "lost",
   ).length;
@@ -57,7 +86,8 @@ export default async function PipelinePage({ searchParams }: PipelinePageProps) 
             Pipeline
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Free Process Review leads from your website and manual follow-up.
+            From inquiry and scheduling through consult, proposal, deposit, and
+            project kickoff.
           </p>
         </div>
         <SignOutButton />
@@ -113,7 +143,7 @@ export default async function PipelinePage({ searchParams }: PipelinePageProps) 
         })}
       </nav>
 
-      <LeadsPanel rows={rows} />
+      <LeadsPanel activitiesByLeadId={activitiesByLeadId} rows={rows} />
     </main>
   );
 }

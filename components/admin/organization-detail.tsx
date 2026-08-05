@@ -14,8 +14,10 @@ import {
 import { useState } from "react";
 
 import { deleteOrganization } from "@/app/admin/actions";
+import { ActivityPanel } from "@/components/admin/activity-panel";
 import { OrganizationForm } from "@/components/admin/organization-form";
 import { Button } from "@/components/ui/button";
+import type { ActivityRow } from "@/lib/activities";
 import {
   relationshipTypeLabel,
   type CrmTableRow,
@@ -36,9 +38,11 @@ const statusStyles: Record<string, string> = {
 
 const stageStyles: Record<string, string> = {
   new_inquiry: "bg-sky-50 text-sky-800 border-sky-200",
+  follow_up: "bg-cyan-50 text-cyan-800 border-cyan-200",
   review_booked: "bg-indigo-50 text-indigo-800 border-indigo-200",
   review_completed: "bg-violet-50 text-violet-800 border-violet-200",
   proposal_sent: "bg-amber-50 text-amber-900 border-amber-200",
+  deposit_received: "bg-teal-50 text-teal-800 border-teal-200",
   won: "bg-emerald-50 text-emerald-800 border-emerald-200",
   lost: "bg-red-50 text-red-800 border-red-200",
 };
@@ -46,11 +50,13 @@ const stageStyles: Record<string, string> = {
 type OrganizationDetailProps = {
   organization: CrmTableRow;
   leads: LeadRow[];
+  activities: ActivityRow[];
 };
 
 export function OrganizationDetail({
   organization,
   leads,
+  activities,
 }: OrganizationDetailProps) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
@@ -263,6 +269,11 @@ export function OrganizationDetail({
           </dl>
         </section>
       </div>
+
+      <ActivityPanel
+        activities={activities}
+        organizationId={organization.id}
+      />
 
       <section className="rounded-2xl border border-border bg-card p-6 shadow-soft">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
