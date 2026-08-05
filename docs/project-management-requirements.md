@@ -20,7 +20,7 @@ Principle: Lightweight — enough to run delivery without becoming a full PM sui
 1. As a delivery owner, I should be able to see all projects in one list so that I know what is in flight and what is finished.
 2. As a delivery owner, I should be able to filter projects by status so that I can focus on active work.
 3. As a delivery owner, I should be able to see each project’s priority so that I know what to work on first.
-4. As a delivery owner, I should be able to see the next action and its due date on each project so that I know what is due soon without opening every project.
+4. As a delivery owner, I should see the next action auto-filled from the soonest open task or upcoming event so that I know what is due without maintaining a separate field.
 5. As a delivery owner, I should be able to see how many open tasks a project has so that I can spot overloaded or stalled work.
 6. As an owner, I should be able to see portfolio KPIs (in progress, overdue next actions, projects past target end) so that I can triage risk quickly.
 7. As a delivery owner, I should be able to open a project from an Actions column so that row content stays scannable and non-interactive.
@@ -31,7 +31,7 @@ Principle: Lightweight — enough to run delivery without becoming a full PM sui
 9. As a delivery owner, I should be able to set priority (low / normal / high) so that urgency is visible in the portfolio and on the project.
 10. As a delivery owner, I should be able to record start date and target end date so that I know whether delivery is on track.
 11. As a delivery owner, I should be able to capture scope / internal summary so that context survives beyond the original inquiry.
-12. As a delivery owner, I should be able to set a next action and next-action due date so that every project has a clear “what’s next.”
+12. As a delivery owner, when I add or complete tasks or schedule events, the project next action should update automatically so that the portfolio stays current.
 
 ### Customer context
 

@@ -80,11 +80,6 @@ export function CrmTable({
                       </a>
                     ) : null}
                   </div>
-                  {row.notes ? (
-                    <p className="mt-2 max-w-xs text-xs leading-5 text-muted-foreground">
-                      {row.notes}
-                    </p>
-                  ) : null}
                 </td>
                 <td className="px-4 py-4">
                   <div className="flex flex-wrap gap-1.5">

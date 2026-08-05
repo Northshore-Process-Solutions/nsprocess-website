@@ -80,6 +80,16 @@ function ProjectViewAction({ row }: { row: ProjectWithOrganization }) {
               value={row.next_action || "—"}
             />
             <PreviewField
+              label="Source"
+              value={
+                row.next_action_source === "task"
+                  ? "Task"
+                  : row.next_action_source === "event"
+                    ? "Event"
+                    : "—"
+              }
+            />
+            <PreviewField
               label="Open tasks"
               value={String(row.open_task_count ?? 0)}
             />
@@ -254,11 +264,21 @@ export function ProjectsTable({ rows }: ProjectsTableProps) {
                             overdueAction && "font-semibold text-red-700",
                           )}
                         >
+                          {row.next_action_source === "task"
+                            ? "Task"
+                            : row.next_action_source === "event"
+                              ? "Event"
+                              : null}
+                          {row.next_action_source && row.next_action_at
+                            ? " · "
+                            : null}
                           {row.next_action_at
                             ? new Date(
                                 `${row.next_action_at}T12:00:00`,
                               ).toLocaleDateString()
-                            : "No due date"}
+                            : row.next_action
+                              ? "No date"
+                              : "Add a task or event"}
                           {overdueAction ? " · Overdue" : ""}
                         </p>
                       </td>

@@ -32,6 +32,7 @@ import {
   PROJECT_STATUSES,
   projectPriorityLabel,
   projectStatusLabel,
+  resolveProjectNextAction,
   type ProjectPriority,
   type ProjectTaskRow,
   type ProjectWithOrganization,
@@ -225,10 +226,6 @@ export function ProjectDetail({
   );
   const [startedAt, setStartedAt] = useState(project.started_at ?? "");
   const [targetEndAt, setTargetEndAt] = useState(project.target_end_at ?? "");
-  const [nextAction, setNextAction] = useState(project.next_action ?? "");
-  const [nextActionAt, setNextActionAt] = useState(
-    project.next_action_at ?? "",
-  );
   const [scope, setScope] = useState(project.scope ?? "");
   const [notes, setNotes] = useState(project.notes ?? "");
   const [loading, setLoading] = useState(false);
@@ -261,7 +258,11 @@ export function ProjectDetail({
   );
   const nextEvent = upcoming[0] ?? events[events.length - 1] ?? null;
   const openTaskCount = tasks.filter((task) => !task.is_done).length;
-  const overdueAction = isNextActionOverdue(project);
+  const resolvedNext = resolveProjectNextAction({ tasks, events });
+  const overdueAction = isNextActionOverdue({
+    next_action_at: resolvedNext.at,
+    status: project.status,
+  });
   const pastTarget = isProjectPastTarget(project);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -276,8 +277,6 @@ export function ProjectDetail({
       priority,
       startedAt: startedAt || undefined,
       targetEndAt: targetEndAt || undefined,
-      nextAction: nextAction || undefined,
-      nextActionAt: nextActionAt || undefined,
       scope: scope || undefined,
       notes: notes || undefined,
     };
@@ -374,7 +373,7 @@ export function ProjectDetail({
               overdueAction && "text-red-700",
             )}
           >
-            {project.next_action || "Not set"}
+            {resolvedNext.label || "Add a task or schedule an event"}
           </p>
           <p
             className={cn(
@@ -382,11 +381,14 @@ export function ProjectDetail({
               overdueAction && "font-semibold text-red-700",
             )}
           >
-            {project.next_action_at
-              ? new Date(
-                  `${project.next_action_at}T12:00:00`,
-                ).toLocaleDateString()
-              : "No due date"}
+            {resolvedNext.source
+              ? resolvedNext.source === "task"
+                ? "From task"
+                : "From event"
+              : "Auto from tasks & events"}
+            {resolvedNext.at
+              ? ` · ${new Date(`${resolvedNext.at}T12:00:00`).toLocaleDateString()}`
+              : ""}
             {overdueAction ? " · Overdue" : ""}
           </p>
         </div>
@@ -525,7 +527,8 @@ export function ProjectDetail({
           <div>
             <h2 className="text-lg font-semibold">Details</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Control status, dates, and what comes next.
+              Status, dates, and scope. Next action comes from your soonest open
+              task or upcoming event.
             </p>
           </div>
 
@@ -602,26 +605,6 @@ export function ProjectDetail({
               />
             </label>
           </div>
-
-          <label className="block space-y-2 text-sm font-semibold">
-            Next action
-            <input
-              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              onChange={(event) => setNextAction(event.target.value)}
-              placeholder="e.g. Send process map draft"
-              value={nextAction}
-            />
-          </label>
-
-          <label className="block space-y-2 text-sm font-semibold">
-            Next action due
-            <input
-              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              onChange={(event) => setNextActionAt(event.target.value)}
-              type="date"
-              value={nextActionAt}
-            />
-          </label>
 
           <label className="block space-y-2 text-sm font-semibold">
             Scope

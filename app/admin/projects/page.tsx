@@ -7,6 +7,7 @@ import { Logo } from "@/components/logo";
 import {
   isNextActionOverdue,
   isProjectPastTarget,
+  resolveProjectNextAction,
   type ProjectTaskRow,
   type ProjectWithOrganization,
 } from "@/lib/projects";
@@ -20,9 +21,12 @@ export default async function ProjectsPage() {
     redirect("/admin/login");
   }
 
+  const nowIso = new Date().toISOString();
+
   const [
     { data, error },
     { data: tasksData, error: tasksError },
+    { data: eventsData, error: eventsError },
   ] = await Promise.all([
     supabase
       .from("projects")
@@ -38,8 +42,13 @@ export default async function ProjectsPage() {
       .order("created_at", { ascending: false }),
     supabase
       .from("project_tasks")
-      .select("id, project_id, is_done")
+      .select("id, project_id, title, is_done, due_at, sort_order, created_at")
       .eq("is_done", false),
+    supabase
+      .from("calendar_events")
+      .select("id, project_id, title, starts_at, ends_at")
+      .not("project_id", "is", null)
+      .gte("starts_at", nowIso),
   ]);
 
   if (error) {
@@ -48,20 +57,56 @@ export default async function ProjectsPage() {
   if (tasksError) {
     throw new Error(`Failed to load tasks: ${tasksError.message}`);
   }
+  if (eventsError) {
+    throw new Error(`Failed to load events: ${eventsError.message}`);
+  }
 
-  const openCountByProject = ((tasksData ?? []) as Pick<
-    ProjectTaskRow,
-    "id" | "project_id" | "is_done"
-  >[]).reduce<Record<string, number>>((acc, task) => {
-    acc[task.project_id] = (acc[task.project_id] ?? 0) + 1;
+  const tasksByProject = (
+    (tasksData ?? []) as ProjectTaskRow[]
+  ).reduce<Record<string, ProjectTaskRow[]>>((acc, task) => {
+    const current = acc[task.project_id] ?? [];
+    current.push(task);
+    acc[task.project_id] = current;
+    return acc;
+  }, {});
+
+  const eventsByProject = (
+    (eventsData ?? []) as Array<{
+      id: string;
+      project_id: string;
+      title: string;
+      starts_at: string;
+      ends_at: string | null;
+    }>
+  ).reduce<
+    Record<
+      string,
+      Array<{ title: string; starts_at: string; ends_at: string | null }>
+    >
+  >((acc, event) => {
+    const current = acc[event.project_id] ?? [];
+    current.push(event);
+    acc[event.project_id] = current;
     return acc;
   }, {});
 
   const projects = ((data ?? []) as ProjectWithOrganization[]).map(
-    (project) => ({
-      ...project,
-      open_task_count: openCountByProject[project.id] ?? 0,
-    }),
+    (project) => {
+      const projectTasks = tasksByProject[project.id] ?? [];
+      const projectEvents = eventsByProject[project.id] ?? [];
+      const next = resolveProjectNextAction({
+        tasks: projectTasks,
+        events: projectEvents,
+      });
+
+      return {
+        ...project,
+        open_task_count: projectTasks.length,
+        next_action: next.label,
+        next_action_at: next.at,
+        next_action_source: next.source,
+      };
+    },
   );
 
   const inProgress = projects.filter(

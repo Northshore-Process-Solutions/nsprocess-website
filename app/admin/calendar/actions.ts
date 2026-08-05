@@ -7,6 +7,7 @@ import {
   type CalendarEventType,
 } from "@/lib/calendar";
 import { createClient } from "@/lib/supabase/server";
+import { syncNextActionForEventTargets } from "@/app/admin/projects/actions";
 
 export type CalendarEventInput = {
   title: string;
@@ -165,6 +166,10 @@ export async function createCalendarEvent(
   }
 
   await maybeMarkConsultBooked(supabase, parsed);
+  await syncNextActionForEventTargets(supabase, {
+    projectId: parsed.projectId,
+    leadId: parsed.leadId,
+  });
   revalidateCalendar(parsed);
   return { ok: true, id: data.id };
 }
@@ -180,6 +185,12 @@ export async function updateCalendarEvent(
 
   const { supabase, error: authError } = await requireUser();
   if (authError) return { ok: false, error: authError };
+
+  const { data: existing } = await supabase
+    .from("calendar_events")
+    .select("project_id, lead_id")
+    .eq("id", eventId)
+    .maybeSingle();
 
   const { error } = await supabase
     .from("calendar_events")
@@ -202,6 +213,16 @@ export async function updateCalendarEvent(
   if (error) return { ok: false, error: error.message };
 
   await maybeMarkConsultBooked(supabase, parsed);
+  await syncNextActionForEventTargets(supabase, {
+    projectId: parsed.projectId ?? existing?.project_id,
+    leadId: parsed.leadId ?? existing?.lead_id,
+  });
+  if (existing?.project_id && existing.project_id !== parsed.projectId) {
+    await syncNextActionForEventTargets(supabase, {
+      projectId: existing.project_id,
+      leadId: existing.lead_id,
+    });
+  }
   revalidateCalendar(parsed);
   return { ok: true, id: eventId };
 }
@@ -219,6 +240,12 @@ export async function deleteCalendarEvent(
   const { supabase, error: authError } = await requireUser();
   if (authError) return { ok: false, error: authError };
 
+  const { data: existing } = await supabase
+    .from("calendar_events")
+    .select("project_id, lead_id")
+    .eq("id", eventId)
+    .maybeSingle();
+
   const { error } = await supabase
     .from("calendar_events")
     .delete()
@@ -226,6 +253,10 @@ export async function deleteCalendarEvent(
 
   if (error) return { ok: false, error: error.message };
 
+  await syncNextActionForEventTargets(supabase, {
+    projectId: targets?.projectId ?? existing?.project_id,
+    leadId: targets?.leadId ?? existing?.lead_id,
+  });
   revalidateCalendar(targets ?? {});
   return { ok: true };
 }

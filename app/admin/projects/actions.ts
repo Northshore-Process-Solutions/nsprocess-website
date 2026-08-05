@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import {
   PROJECT_PRIORITIES,
   PROJECT_STATUSES,
+  resolveProjectNextAction,
   type ProjectPriority,
   type ProjectStatus,
 } from "@/lib/projects";
@@ -16,8 +17,6 @@ export type ProjectInput = {
   priority: ProjectPriority;
   startedAt?: string;
   targetEndAt?: string;
-  nextAction?: string;
-  nextActionAt?: string;
   scope?: string;
   notes?: string;
 };
@@ -71,19 +70,12 @@ function parseInput(input: ProjectInput): ProjectInput | ActionResult {
     return { ok: false, error: "Target end date must be YYYY-MM-DD." };
   }
 
-  const nextActionAt = clean(input.nextActionAt);
-  if (nextActionAt && !isDateOnly(nextActionAt)) {
-    return { ok: false, error: "Next action date must be YYYY-MM-DD." };
-  }
-
   return {
     name,
     status: input.status,
     priority: input.priority,
     startedAt: startedAt ?? undefined,
     targetEndAt: targetEndAt ?? undefined,
-    nextAction: clean(input.nextAction) ?? undefined,
-    nextActionAt: nextActionAt ?? undefined,
     scope: clean(input.scope) ?? undefined,
     notes: clean(input.notes) ?? undefined,
   };
@@ -94,6 +86,78 @@ function revalidateProject(id: string) {
   revalidatePath(`/admin/projects/${id}`);
   revalidatePath("/admin");
   revalidatePath("/admin/pipeline");
+}
+
+type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
+
+/** Recalculate next_action from open tasks + upcoming events. */
+export async function syncProjectNextAction(
+  supabase: SupabaseClient,
+  projectId: string,
+) {
+  if (!projectId) return;
+
+  const nowIso = new Date().toISOString();
+
+  const [
+    { data: tasks },
+    { data: events },
+  ] = await Promise.all([
+    supabase
+      .from("project_tasks")
+      .select("title, is_done, due_at, sort_order, created_at")
+      .eq("project_id", projectId)
+      .eq("is_done", false),
+    supabase
+      .from("calendar_events")
+      .select("title, starts_at, ends_at")
+      .eq("project_id", projectId)
+      .gte("starts_at", nowIso),
+  ]);
+
+  const next = resolveProjectNextAction({
+    tasks: tasks ?? [],
+    events: events ?? [],
+  });
+
+  await supabase
+    .from("projects")
+    .update({
+      next_action: next.label,
+      next_action_at: next.at,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", projectId);
+}
+
+/** Sync every project tied to this event's project and/or lead. */
+export async function syncNextActionForEventTargets(
+  supabase: SupabaseClient,
+  targets: {
+    projectId?: string | null;
+    leadId?: string | null;
+  },
+) {
+  const projectIds = new Set<string>();
+  const projectId = clean(targets.projectId);
+  const leadId = clean(targets.leadId);
+
+  if (projectId) projectIds.add(projectId);
+
+  if (leadId) {
+    const { data } = await supabase
+      .from("projects")
+      .select("id")
+      .eq("lead_id", leadId);
+    for (const row of data ?? []) {
+      projectIds.add(row.id as string);
+    }
+  }
+
+  for (const id of projectIds) {
+    await syncProjectNextAction(supabase, id);
+    revalidateProject(id);
+  }
 }
 
 export async function updateProject(
@@ -114,8 +178,6 @@ export async function updateProject(
       priority: parsed.priority,
       started_at: parsed.startedAt ?? null,
       target_end_at: parsed.targetEndAt ?? null,
-      next_action: parsed.nextAction ?? null,
-      next_action_at: parsed.nextActionAt ?? null,
       scope: parsed.scope ?? null,
       notes: parsed.notes ?? null,
       updated_at: new Date().toISOString(),
@@ -126,6 +188,7 @@ export async function updateProject(
     return { ok: false, error: error.message };
   }
 
+  await syncProjectNextAction(auth.supabase, id);
   revalidateProject(id);
   return { ok: true };
 }
@@ -161,6 +224,7 @@ export async function createProjectTask(
 
   if (error) return { ok: false, error: error.message };
 
+  await syncProjectNextAction(auth.supabase, projectId);
   revalidateProject(projectId);
   return { ok: true };
 }
@@ -188,6 +252,7 @@ export async function toggleProjectTask(
 
   if (error) return { ok: false, error: error.message };
 
+  await syncProjectNextAction(auth.supabase, projectId);
   revalidateProject(projectId);
   return { ok: true };
 }
@@ -211,6 +276,7 @@ export async function deleteProjectTask(
 
   if (error) return { ok: false, error: error.message };
 
+  await syncProjectNextAction(auth.supabase, projectId);
   revalidateProject(projectId);
   return { ok: true };
 }

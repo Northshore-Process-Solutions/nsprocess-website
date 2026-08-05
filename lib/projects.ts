@@ -41,6 +41,13 @@ export type ProjectWithOrganization = ProjectRow & {
     name: string;
   } | null;
   open_task_count?: number;
+  next_action_source?: "task" | "event" | null;
+};
+
+export type ResolvedNextAction = {
+  label: string | null;
+  at: string | null;
+  source: "task" | "event" | null;
 };
 
 export const PROJECT_STATUSES: Array<{
@@ -81,6 +88,113 @@ export function defaultProjectName(businessName: string) {
   return `${businessName} — Process Improvement`;
 }
 
+function pad2(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+function dateOnlyRank(value: string) {
+  return new Date(`${value}T12:00:00`).getTime();
+}
+
+function toDateKey(isoOrDate: string) {
+  const date = new Date(isoOrDate);
+  if (Number.isNaN(date.getTime())) return null;
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+}
+
+/**
+ * Next action = soonest open task (by due date) or upcoming event (by start).
+ * Undated open tasks only win when nothing dated is pending.
+ */
+export function resolveProjectNextAction(input: {
+  tasks: Array<{
+    title: string;
+    is_done: boolean;
+    due_at: string | null;
+    sort_order?: number;
+    created_at?: string;
+  }>;
+  events: Array<{
+    title: string;
+    starts_at: string;
+    ends_at?: string | null;
+  }>;
+  now?: Date;
+}): ResolvedNextAction {
+  const now = input.now ?? new Date();
+  const nowMs = now.getTime();
+
+  type Candidate = {
+    label: string;
+    at: string | null;
+    source: "task" | "event";
+    rank: number;
+  };
+
+  const candidates: Candidate[] = [];
+
+  for (const task of input.tasks) {
+    if (task.is_done) continue;
+    const title = task.title.trim();
+    if (!title) continue;
+
+    if (task.due_at) {
+      candidates.push({
+        label: title,
+        at: task.due_at,
+        source: "task",
+        rank: dateOnlyRank(task.due_at),
+      });
+    } else {
+      candidates.push({
+        label: title,
+        at: null,
+        source: "task",
+        rank:
+          Number.MAX_SAFE_INTEGER -
+          1_000_000 +
+          (task.sort_order ?? 0),
+      });
+    }
+  }
+
+  for (const event of input.events) {
+    const endMs = event.ends_at
+      ? new Date(event.ends_at).getTime()
+      : new Date(event.starts_at).getTime();
+    if (Number.isNaN(endMs) || endMs < nowMs) continue;
+
+    const title = event.title.trim();
+    if (!title) continue;
+
+    const startMs = new Date(event.starts_at).getTime();
+    if (Number.isNaN(startMs)) continue;
+
+    candidates.push({
+      label: title,
+      at: toDateKey(event.starts_at),
+      source: "event",
+      rank: startMs,
+    });
+  }
+
+  if (candidates.length === 0) {
+    return { label: null, at: null, source: null };
+  }
+
+  candidates.sort((a, b) => {
+    if (a.rank !== b.rank) return a.rank - b.rank;
+    return a.label.localeCompare(b.label);
+  });
+
+  const next = candidates[0];
+  return {
+    label: next.label,
+    at: next.at,
+    source: next.source,
+  };
+}
+
 export function isProjectPastTarget(project: {
   target_end_at: string | null;
   status: ProjectStatus;
@@ -90,7 +204,7 @@ export function isProjectPastTarget(project: {
     return false;
   }
   const today = new Date();
-  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const todayKey = `${today.getFullYear()}-${pad2(today.getMonth() + 1)}-${pad2(today.getDate())}`;
   return project.target_end_at < todayKey;
 }
 
@@ -103,6 +217,6 @@ export function isNextActionOverdue(project: {
     return false;
   }
   const today = new Date();
-  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const todayKey = `${today.getFullYear()}-${pad2(today.getMonth() + 1)}-${pad2(today.getDate())}`;
   return project.next_action_at < todayKey;
 }
