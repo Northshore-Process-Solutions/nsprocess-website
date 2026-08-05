@@ -57,6 +57,7 @@ export function LeadsPanel({ rows }: { rows: LeadRow[] }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           Move Process Review inquiries from first contact to won or lost.
+          Marking a lead Won adds them to CRM as a customer.
         </p>
         <Button onClick={openCreate} type="button" variant="accent">
           <Plus aria-hidden className="size-4" />
@@ -74,7 +75,11 @@ export function LeadsPanel({ rows }: { rows: LeadRow[] }) {
         deletingId={deletingId}
         onDelete={handleDelete}
         onEdit={openEdit}
-        onStageChanged={() => router.refresh()}
+        onError={(message) => setError(message)}
+        onStageChanged={() => {
+          setError(null);
+          router.refresh();
+        }}
         rows={rows}
       />
 

@@ -28,6 +28,8 @@ export type LeadInput = {
 export type ActionResult = {
   ok: boolean;
   error?: string;
+  organizationId?: string;
+  alreadyLinked?: boolean;
 };
 
 function clean(value?: string | null) {
@@ -121,6 +123,350 @@ function toDbPayload(input: LeadInput) {
   };
 }
 
+function splitContactName(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) {
+    return { firstName: null as string | null, lastName: null as string | null };
+  }
+  if (parts.length === 1) {
+    return { firstName: parts[0], lastName: null as string | null };
+  }
+  return {
+    firstName: parts[0],
+    lastName: parts.slice(1).join(" "),
+  };
+}
+
+function buildCustomerNotes(lead: {
+  notes: string | null;
+  message: string | null;
+  title: string;
+}) {
+  const parts = [
+    `Converted from Process Review pipeline (${lead.title}).`,
+    lead.message ? `Original inquiry: ${lead.message}` : null,
+    lead.notes,
+  ].filter(Boolean);
+
+  return parts.join("\n\n");
+}
+
+async function ensureCustomerRelationship(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  organizationId: string,
+) {
+  const { data: existing, error: lookupError } = await supabase
+    .from("organization_relationships")
+    .select("id, relationship_type")
+    .eq("organization_id", organizationId);
+
+  if (lookupError) {
+    return { error: lookupError.message };
+  }
+
+  const customer = (existing ?? []).find(
+    (row) => row.relationship_type === "customer",
+  );
+
+  if (customer) {
+    const { error } = await supabase
+      .from("organization_relationships")
+      .update({ lifecycle_stage: "active" })
+      .eq("id", customer.id);
+
+    return { error: error?.message ?? null };
+  }
+
+  // Replace other single-type relationships with customer for this org.
+  if ((existing ?? []).length > 0) {
+    const { error: deleteError } = await supabase
+      .from("organization_relationships")
+      .delete()
+      .eq("organization_id", organizationId);
+
+    if (deleteError) {
+      return { error: deleteError.message };
+    }
+  }
+
+  const { error } = await supabase.from("organization_relationships").insert({
+    organization_id: organizationId,
+    relationship_type: "customer",
+    lifecycle_stage: "active",
+  });
+
+  return { error: error?.message ?? null };
+}
+
+async function findExistingOrganizationId(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  lead: {
+    business_name: string;
+    email: string;
+  },
+) {
+  const { data: byEmail } = await supabase
+    .from("organizations")
+    .select("id")
+    .ilike("email", lead.email)
+    .limit(1)
+    .maybeSingle();
+
+  if (byEmail?.id) return byEmail.id;
+
+  const { data: byName } = await supabase
+    .from("organizations")
+    .select("id")
+    .ilike("name", lead.business_name)
+    .limit(1)
+    .maybeSingle();
+
+  if (byName?.id) return byName.id;
+
+  const { data: contact } = await supabase
+    .from("contacts")
+    .select("id")
+    .ilike("email", lead.email)
+    .limit(1)
+    .maybeSingle();
+
+  if (!contact?.id) return null;
+
+  const { data: link } = await supabase
+    .from("organization_contacts")
+    .select("organization_id")
+    .eq("contact_id", contact.id)
+    .limit(1)
+    .maybeSingle();
+
+  return link?.organization_id ?? null;
+}
+
+async function upsertPrimaryContactForOrg(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  organizationId: string,
+  input: {
+    contactName: string;
+    email: string;
+    phone: string | null;
+    existingContactId?: string | null;
+  },
+) {
+  const { firstName, lastName } = splitContactName(input.contactName);
+  let contactId = input.existingContactId ?? null;
+
+  if (!contactId) {
+    const { data: byEmail } = await supabase
+      .from("contacts")
+      .select("id")
+      .ilike("email", input.email)
+      .limit(1)
+      .maybeSingle();
+    contactId = byEmail?.id ?? null;
+  }
+
+  if (contactId) {
+    const { error } = await supabase
+      .from("contacts")
+      .update({
+        first_name: firstName,
+        last_name: lastName,
+        email: input.email,
+        phone: input.phone,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", contactId);
+
+    if (error) return { error: error.message, contactId: null };
+  } else {
+    const { data, error } = await supabase
+      .from("contacts")
+      .insert({
+        first_name: firstName,
+        last_name: lastName,
+        email: input.email,
+        phone: input.phone,
+      })
+      .select("id")
+      .single();
+
+    if (error || !data) {
+      return {
+        error: error?.message ?? "Failed to create contact.",
+        contactId: null,
+      };
+    }
+
+    contactId = data.id;
+  }
+
+  const { data: existingLink, error: linkLookupError } = await supabase
+    .from("organization_contacts")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("contact_id", contactId)
+    .maybeSingle();
+
+  if (linkLookupError) {
+    return { error: linkLookupError.message, contactId: null };
+  }
+
+  if (existingLink) {
+    const { error } = await supabase
+      .from("organization_contacts")
+      .update({ is_primary: true })
+      .eq("id", existingLink.id);
+
+    if (error) return { error: error.message, contactId: null };
+  } else {
+    await supabase
+      .from("organization_contacts")
+      .update({ is_primary: false })
+      .eq("organization_id", organizationId);
+
+    const { error } = await supabase.from("organization_contacts").insert({
+      organization_id: organizationId,
+      contact_id: contactId,
+      is_primary: true,
+    });
+
+    if (error) return { error: error.message, contactId: null };
+  }
+
+  return { error: null, contactId };
+}
+
+export async function convertWonLeadToCrm(
+  leadId: string,
+): Promise<ActionResult> {
+  if (!leadId) return { ok: false, error: "Missing lead id." };
+
+  const { supabase, error: authError } = await requireUser();
+  if (authError) return { ok: false, error: authError };
+
+  const { data: lead, error: leadError } = await supabase
+    .from("leads")
+    .select("*")
+    .eq("id", leadId)
+    .single();
+
+  if (leadError || !lead) {
+    return { ok: false, error: leadError?.message ?? "Lead not found." };
+  }
+
+  if (lead.organization_id) {
+    const relationshipResult = await ensureCustomerRelationship(
+      supabase,
+      lead.organization_id,
+    );
+    if (relationshipResult.error) {
+      return { ok: false, error: relationshipResult.error };
+    }
+
+    const { error } = await supabase
+      .from("leads")
+      .update({
+        stage: "won",
+        lost_reason: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", leadId);
+
+    if (error) return { ok: false, error: error.message };
+
+    revalidatePath("/admin/pipeline");
+    revalidatePath("/admin");
+    return {
+      ok: true,
+      organizationId: lead.organization_id,
+      alreadyLinked: true,
+    };
+  }
+
+  let organizationId = await findExistingOrganizationId(supabase, {
+    business_name: lead.business_name,
+    email: lead.email,
+  });
+
+  if (organizationId) {
+    const { error } = await supabase
+      .from("organizations")
+      .update({
+        status: "active",
+        email: lead.email,
+        phone: lead.phone,
+        notes: buildCustomerNotes(lead),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", organizationId);
+
+    if (error) return { ok: false, error: error.message };
+  } else {
+    const { data: organization, error } = await supabase
+      .from("organizations")
+      .insert({
+        name: lead.business_name,
+        email: lead.email,
+        phone: lead.phone,
+        status: "active",
+        notes: buildCustomerNotes(lead),
+      })
+      .select("id")
+      .single();
+
+    if (error || !organization) {
+      return {
+        ok: false,
+        error: error?.message ?? "Failed to create organization.",
+      };
+    }
+
+    organizationId = organization.id;
+  }
+
+  const relationshipResult = await ensureCustomerRelationship(
+    supabase,
+    organizationId,
+  );
+  if (relationshipResult.error) {
+    return { ok: false, error: relationshipResult.error };
+  }
+
+  const contactResult = await upsertPrimaryContactForOrg(
+    supabase,
+    organizationId,
+    {
+      contactName: lead.contact_name,
+      email: lead.email,
+      phone: lead.phone,
+      existingContactId: lead.contact_id,
+    },
+  );
+  if (contactResult.error || !contactResult.contactId) {
+    return {
+      ok: false,
+      error: contactResult.error ?? "Failed to link contact.",
+    };
+  }
+
+  const { error } = await supabase
+    .from("leads")
+    .update({
+      organization_id: organizationId,
+      contact_id: contactResult.contactId,
+      stage: "won",
+      lost_reason: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", leadId);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/admin/pipeline");
+  revalidatePath("/admin");
+  return { ok: true, organizationId };
+}
+
 export async function createLead(input: LeadInput): Promise<ActionResult> {
   const parsed = parseInput(input);
   if ("ok" in parsed) return parsed;
@@ -128,8 +474,19 @@ export async function createLead(input: LeadInput): Promise<ActionResult> {
   const { supabase, error: authError } = await requireUser();
   if (authError) return { ok: false, error: authError };
 
-  const { error } = await supabase.from("leads").insert(toDbPayload(parsed));
-  if (error) return { ok: false, error: error.message };
+  const { data, error } = await supabase
+    .from("leads")
+    .insert(toDbPayload(parsed))
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    return { ok: false, error: error?.message ?? "Failed to create lead." };
+  }
+
+  if (parsed.stage === "won") {
+    return convertWonLeadToCrm(data.id);
+  }
 
   revalidatePath("/admin/pipeline");
   return { ok: true };
@@ -157,6 +514,10 @@ export async function updateLead(
 
   if (error) return { ok: false, error: error.message };
 
+  if (parsed.stage === "won") {
+    return convertWonLeadToCrm(leadId);
+  }
+
   revalidatePath("/admin/pipeline");
   return { ok: true };
 }
@@ -168,6 +529,10 @@ export async function updateLeadStage(
   if (!leadId) return { ok: false, error: "Missing lead id." };
   if (!LEAD_STAGES.some((item) => item.value === stage)) {
     return { ok: false, error: "Invalid stage." };
+  }
+
+  if (stage === "won") {
+    return convertWonLeadToCrm(leadId);
   }
 
   const { supabase, error: authError } = await requireUser();

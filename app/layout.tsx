@@ -43,7 +43,8 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   icons: {
-    icon: "/favicon.svg",
+    icon: [{ url: "/transparentLogo.png", type: "image/png" }],
+    apple: "/transparentLogo.png",
   },
 };
 
