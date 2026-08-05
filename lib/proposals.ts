@@ -71,11 +71,34 @@ export const PROPOSAL_STATUSES: Array<{
   { value: "expired", label: "Expired" },
 ];
 
+export const PROPOSAL_LINE_SLOT_COUNT = 10;
+
 export const DEFAULT_PROPOSAL_TERMS = `Payment: A deposit of the stated percentage is due upon acceptance to reserve the engagement. Remaining balance follows the line items or milestone schedule.
 
 Scope: Work is limited to the items listed in this proposal. Changes may adjust timeline and investment.
 
 Validity: This proposal is valid through the date shown above unless extended in writing. Kickoff is confirmed after deposit is received.`;
+
+/** Drop leading "Business — " when title repeats the client name. */
+export function proposalDisplayTitle(
+  title: string,
+  clientBusinessName: string,
+) {
+  const trimmedTitle = title.trim();
+  const business = clientBusinessName.trim();
+  if (!business) return trimmedTitle;
+
+  const prefix = `${business} — `;
+  const prefixDash = `${business} - `;
+  if (trimmedTitle.startsWith(prefix)) {
+    return trimmedTitle.slice(prefix.length).trim() || trimmedTitle;
+  }
+  if (trimmedTitle.startsWith(prefixDash)) {
+    return trimmedTitle.slice(prefixDash.length).trim() || trimmedTitle;
+  }
+  if (trimmedTitle === business) return "Process Improvement Proposal";
+  return trimmedTitle;
+}
 
 export function proposalStatusLabel(status: ProposalStatus | string) {
   return (

@@ -60,7 +60,7 @@ export default async function NewProposalPage({
                 clientContactName: lead.contact_name,
                 clientEmail: lead.email,
                 clientPhone: lead.phone,
-                title: `${lead.business_name} — Process Improvement Proposal`,
+                title: "Process Improvement Proposal",
               }
             : undefined
         }
