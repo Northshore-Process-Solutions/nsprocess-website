@@ -10,9 +10,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^4.0.30",
     "@radix-ui/react-slot": "latest",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.112.0",
+    "ai": "^7.0.52",
     "class-variance-authority": "latest",
     "clsx": "latest",
     "framer-motion": "latest",

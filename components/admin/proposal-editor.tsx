@@ -2,9 +2,17 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, FileDown, FileSignature, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  FileDown,
+  FileSignature,
+  Plus,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { draftProposalScope } from "@/app/admin/ai/actions";
 import {
   createProposal,
   markProposalSent,
@@ -50,6 +58,7 @@ export function ProposalEditor({
   );
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [drafting, setDrafting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -159,6 +168,29 @@ export function ProposalEditor({
     }
 
     router.refresh();
+  }
+
+  async function onDraftScope() {
+    setDrafting(true);
+    setError(null);
+    setSaved(false);
+
+    const result = await draftProposalScope({
+      businessName: values.clientBusinessName,
+      contactName: values.clientContactName,
+      title: values.title,
+      notes: values.notes,
+      existingScope: values.scopeSummary,
+    });
+
+    setDrafting(false);
+
+    if (!result.ok || !result.text) {
+      setError(result.error ?? "Failed to draft scope.");
+      return;
+    }
+
+    updateField("scopeSummary", result.text);
   }
 
   async function onMarkSent() {
@@ -370,17 +402,30 @@ export function ProposalEditor({
       </section>
 
       <section className="space-y-4 rounded-2xl border border-border bg-card p-5 shadow-soft">
-        <label className="block space-y-2 text-sm font-semibold">
-          Scope summary
-          <textarea
-            className="min-h-28 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            onChange={(event) =>
-              updateField("scopeSummary", event.target.value)
-            }
-            placeholder="What we will do, outcomes, and boundaries."
-            value={values.scopeSummary}
-          />
-        </label>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-sm font-semibold">Scope summary</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Tip: put consult notes in Internal notes below, then draft with
+              AI.
+            </p>
+          </div>
+          <Button
+            disabled={drafting}
+            onClick={onDraftScope}
+            type="button"
+            variant="outline"
+          >
+            <Sparkles aria-hidden className="size-4" />
+            {drafting ? "Drafting…" : "Draft with AI"}
+          </Button>
+        </div>
+        <textarea
+          className="min-h-28 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          onChange={(event) => updateField("scopeSummary", event.target.value)}
+          placeholder="What we will do, outcomes, and boundaries."
+          value={values.scopeSummary}
+        />
       </section>
 
       <section className="space-y-4 rounded-2xl border border-border bg-card p-5 shadow-soft">
