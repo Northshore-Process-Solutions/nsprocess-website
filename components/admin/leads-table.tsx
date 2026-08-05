@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 import { CalendarDays, Eye, Mail } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 
+import { ActionHoverTooltip } from "@/components/admin/action-hover-tooltip";
 import { Button } from "@/components/ui/button";
+import {
+  formatActivityWhen,
+  latestEmailActivity,
+  type ActivityRow,
+} from "@/lib/activities";
 import {
   calendarEventTypeLabel,
   formatEventTime,
@@ -33,9 +37,76 @@ const stageStyles: Record<LeadStage, string> = {
 type LeadsTableProps = {
   rows: LeadRow[];
   eventsByLeadId?: Record<string, CalendarEventRow[]>;
+  activitiesByLeadId?: Record<string, ActivityRow[]>;
   onView: (row: LeadRow) => void;
   onReply: (row: LeadRow) => void;
 };
+
+function EmailPreview({ activity }: { activity: ActivityRow | null }) {
+  if (!activity) {
+    return <p className="mt-1 text-sm text-muted-foreground">None logged</p>;
+  }
+
+  return (
+    <div className="mt-1">
+      <p className="truncate text-sm font-semibold">
+        {activity.subject || "Email"}
+      </p>
+      <p className="mt-0.5 text-xs text-muted-foreground">
+        {formatActivityWhen(activity.occurred_at)}
+      </p>
+    </div>
+  );
+}
+
+function LeadEmailAction({
+  lead,
+  activities,
+  onReply,
+}: {
+  lead: LeadRow;
+  activities: ActivityRow[];
+  onReply: (row: LeadRow) => void;
+}) {
+  const lastSent = latestEmailActivity(activities, "sent");
+  const lastReceived = latestEmailActivity(activities, "received");
+  const hasEmail = Boolean(lastSent || lastReceived);
+
+  return (
+    <ActionHoverTooltip
+      content={
+        <>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              Last sent
+            </p>
+            <EmailPreview activity={lastSent} />
+          </div>
+          <div className="mt-3 border-t border-border pt-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              Last received
+            </p>
+            <EmailPreview activity={lastReceived} />
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Click to compose an email.
+          </p>
+        </>
+      }
+    >
+      <Button
+        aria-label={`Email ${lead.business_name}`}
+        className={cn(hasEmail && "border-accent/40 text-accent")}
+        onClick={() => onReply(lead)}
+        size="icon"
+        type="button"
+        variant="outline"
+      >
+        <Mail aria-hidden className="size-4" />
+      </Button>
+    </ActionHoverTooltip>
+  );
+}
 
 function LeadCalendarAction({
   lead,
@@ -44,117 +115,46 @@ function LeadCalendarAction({
   lead: LeadRow;
   events: CalendarEventRow[];
 }) {
-  const triggerRef = useRef<HTMLDivElement>(null);
-  const [open, setOpen] = useState(false);
-  const [coords, setCoords] = useState<{
-    top: number;
-    left: number;
-    placeBelow: boolean;
-  } | null>(null);
-
   const upcoming = events.filter(
     (event) => new Date(event.starts_at).getTime() >= Date.now(),
   );
   const previewEvents = (upcoming.length > 0 ? upcoming : events).slice(0, 5);
   const hasEvents = events.length > 0;
 
-  function updatePosition() {
-    const rect = triggerRef.current?.getBoundingClientRect();
-    if (!rect) return;
-
-    const width = 256;
-    const left = Math.min(
-      Math.max(8, rect.right - width),
-      window.innerWidth - width - 8,
-    );
-    const placeBelow = rect.top < 140;
-
-    setCoords({
-      top: placeBelow ? rect.bottom + 8 : rect.top - 8,
-      left,
-      placeBelow,
-    });
-  }
-
-  useEffect(() => {
-    if (!open) return;
-
-    updatePosition();
-    function handleReposition() {
-      updatePosition();
-    }
-
-    window.addEventListener("scroll", handleReposition, true);
-    window.addEventListener("resize", handleReposition);
-    return () => {
-      window.removeEventListener("scroll", handleReposition, true);
-      window.removeEventListener("resize", handleReposition);
-    };
-  }, [open]);
-
-  const tooltip =
-    open && coords && typeof document !== "undefined"
-      ? createPortal(
-          <div
-            className="pointer-events-none fixed z-[80] w-64 rounded-2xl border border-border bg-card p-3 text-left shadow-card"
-            role="tooltip"
-            style={{
-              top: coords.top,
-              left: coords.left,
-              transform: coords.placeBelow ? "none" : "translateY(-100%)",
-            }}
-          >
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-              {upcoming.length > 0 ? "Upcoming events" : "Booked events"}
-            </p>
-            {previewEvents.length === 0 ? (
-              <p className="mt-2 text-sm text-muted-foreground">
-                No events yet. Click to schedule.
-              </p>
-            ) : (
-              <ul className="mt-2 space-y-2">
-                {previewEvents.map((event) => (
-                  <li key={event.id}>
-                    <p className="truncate text-sm font-semibold">
-                      {event.title}
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {calendarEventTypeLabel(event.event_type)} ·{" "}
-                      {new Date(event.starts_at).toLocaleDateString()}{" "}
-                      {formatEventTime(event.starts_at)}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {events.length > previewEvents.length ? (
-              <p className="mt-2 text-xs text-muted-foreground">
-                +{events.length - previewEvents.length} more
-              </p>
-            ) : null}
-          </div>,
-          document.body,
-        )
-      : null;
-
   return (
-    <div
-      className="relative"
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-          setOpen(false);
-        }
-      }}
-      onFocus={() => {
-        updatePosition();
-        setOpen(true);
-      }}
-      onMouseEnter={() => {
-        updatePosition();
-        setOpen(true);
-      }}
-      onMouseLeave={() => setOpen(false)}
-      ref={triggerRef}
+    <ActionHoverTooltip
+      content={
+        <>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            {upcoming.length > 0 ? "Upcoming events" : "Booked events"}
+          </p>
+          {previewEvents.length === 0 ? (
+            <p className="mt-2 text-sm text-muted-foreground">
+              No events yet. Click to schedule.
+            </p>
+          ) : (
+            <ul className="mt-2 space-y-2">
+              {previewEvents.map((event) => (
+                <li key={event.id}>
+                  <p className="truncate text-sm font-semibold">
+                    {event.title}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {calendarEventTypeLabel(event.event_type)} ·{" "}
+                    {new Date(event.starts_at).toLocaleDateString()}{" "}
+                    {formatEventTime(event.starts_at)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+          {events.length > previewEvents.length ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              +{events.length - previewEvents.length} more
+            </p>
+          ) : null}
+        </>
+      }
     >
       <Button
         asChild
@@ -168,21 +168,21 @@ function LeadCalendarAction({
           <CalendarDays aria-hidden className="size-4" />
         </Link>
       </Button>
-      {tooltip}
-    </div>
+    </ActionHoverTooltip>
   );
 }
 
 export function LeadsTable({
   rows,
   eventsByLeadId = {},
+  activitiesByLeadId = {},
   onView,
   onReply,
 }: LeadsTableProps) {
   if (rows.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
-        <p className="text-lg font-semibold">No leads in this stage</p>
+        <p className="text-lg font-semibold">No leads yet</p>
         <p className="mt-2 text-sm text-muted-foreground">
           Website Process Review requests and manual leads will show up here.
         </p>
@@ -242,15 +242,11 @@ export function LeadsTable({
               </td>
               <td className="px-4 py-4">
                 <div className="flex gap-2">
-                  <Button
-                    aria-label={`Email ${row.business_name}`}
-                    onClick={() => onReply(row)}
-                    size="icon"
-                    type="button"
-                    variant="outline"
-                  >
-                    <Mail aria-hidden className="size-4" />
-                  </Button>
+                  <LeadEmailAction
+                    activities={activitiesByLeadId[row.id] ?? []}
+                    lead={row}
+                    onReply={onReply}
+                  />
                   <LeadCalendarAction
                     events={eventsByLeadId[row.id] ?? []}
                     lead={row}

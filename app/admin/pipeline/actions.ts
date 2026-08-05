@@ -644,6 +644,7 @@ export async function replyToLead(
     lead_id: lead.id,
     organization_id: lead.organization_id,
     activity_type: "email",
+    email_direction: "sent",
     subject,
     body,
     occurred_at: new Date().toISOString(),

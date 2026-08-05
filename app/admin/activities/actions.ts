@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import {
   ACTIVITY_TYPES,
   type ActivityType,
+  type EmailDirection,
 } from "@/lib/activities";
 import { createClient } from "@/lib/supabase/server";
 
@@ -12,6 +13,7 @@ export type ActivityInput = {
   organizationId?: string | null;
   leadId?: string | null;
   activityType: ActivityType;
+  emailDirection?: EmailDirection | null;
   subject?: string;
   body?: string;
   occurredAt?: string;
@@ -50,6 +52,17 @@ function parseInput(input: ActivityInput): ActivityInput | ActionResult {
     return { ok: false, error: "Invalid activity type." };
   }
 
+  let emailDirection: EmailDirection | null = null;
+  if (input.activityType === "email") {
+    if (
+      input.emailDirection !== "sent" &&
+      input.emailDirection !== "received"
+    ) {
+      return { ok: false, error: "Choose sent or received for email." };
+    }
+    emailDirection = input.emailDirection;
+  }
+
   const occurredAt = clean(input.occurredAt);
   if (occurredAt) {
     const parsed = new Date(occurredAt);
@@ -62,6 +75,7 @@ function parseInput(input: ActivityInput): ActivityInput | ActionResult {
     organizationId,
     leadId,
     activityType: input.activityType,
+    emailDirection,
     subject: clean(input.subject) ?? undefined,
     body: clean(input.body) ?? undefined,
     occurredAt: occurredAt ?? undefined,
@@ -96,6 +110,7 @@ export async function createActivity(
     organization_id: parsed.organizationId ?? null,
     lead_id: parsed.leadId ?? null,
     activity_type: parsed.activityType,
+    email_direction: parsed.emailDirection ?? null,
     subject: parsed.subject ?? null,
     body: parsed.body ?? null,
     occurred_at: occurredAt,
@@ -129,6 +144,7 @@ export async function updateActivity(
       organization_id: parsed.organizationId ?? null,
       lead_id: parsed.leadId ?? null,
       activity_type: parsed.activityType,
+      email_direction: parsed.emailDirection ?? null,
       subject: parsed.subject ?? null,
       body: parsed.body ?? null,
       occurred_at: occurredAt,

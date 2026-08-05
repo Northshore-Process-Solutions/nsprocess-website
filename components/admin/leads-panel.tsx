@@ -86,12 +86,7 @@ export function LeadsPanel({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
-          Track each inquiry from first contact through consult, proposal,
-          deposit, and project kickoff. Deposit received or project kickoff
-          adds them to CRM as a customer.
-        </p>
+      <div className="flex justify-end">
         <Button onClick={openCreate} type="button" variant="accent">
           <Plus aria-hidden className="size-4" />
           Add lead
@@ -105,6 +100,7 @@ export function LeadsPanel({
       ) : null}
 
       <LeadsTable
+        activitiesByLeadId={activitiesByLeadId}
         eventsByLeadId={eventsByLeadId}
         onReply={openReply}
         onView={openView}

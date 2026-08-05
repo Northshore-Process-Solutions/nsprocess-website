@@ -22,6 +22,7 @@ import {
   emptyActivityFormValues,
   type ActivityRow,
   type ActivityType,
+  type EmailDirection,
 } from "@/lib/activities";
 import { cn } from "@/lib/utils";
 
@@ -69,6 +70,8 @@ export function ActivityPanel({
       organizationId,
       leadId,
       activityType: values.activityType,
+      emailDirection:
+        values.activityType === "email" ? values.emailDirection : null,
       subject: values.subject,
       body: values.body,
       occurredAt: values.occurredAt,
@@ -165,18 +168,51 @@ export function ActivityPanel({
                 ))}
               </select>
             </label>
-            <label className="space-y-2 text-sm font-semibold">
-              When
-              <input
-                className="min-h-11 w-full rounded-2xl border border-input bg-card px-4 py-3 text-base font-normal outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
-                onChange={(event) =>
-                  updateField("occurredAt", event.target.value)
-                }
-                required
-                type="datetime-local"
-                value={values.occurredAt}
-              />
-            </label>
+            {values.activityType === "email" ? (
+              <label className="space-y-2 text-sm font-semibold">
+                Direction
+                <select
+                  className="min-h-11 w-full rounded-2xl border border-input bg-card px-4 py-3 text-base font-normal outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
+                  onChange={(event) =>
+                    updateField(
+                      "emailDirection",
+                      event.target.value as EmailDirection,
+                    )
+                  }
+                  value={values.emailDirection}
+                >
+                  <option value="sent">Sent</option>
+                  <option value="received">Received</option>
+                </select>
+              </label>
+            ) : (
+              <label className="space-y-2 text-sm font-semibold">
+                When
+                <input
+                  className="min-h-11 w-full rounded-2xl border border-input bg-card px-4 py-3 text-base font-normal outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
+                  onChange={(event) =>
+                    updateField("occurredAt", event.target.value)
+                  }
+                  required
+                  type="datetime-local"
+                  value={values.occurredAt}
+                />
+              </label>
+            )}
+            {values.activityType === "email" ? (
+              <label className="space-y-2 text-sm font-semibold sm:col-span-2">
+                When
+                <input
+                  className="min-h-11 w-full rounded-2xl border border-input bg-card px-4 py-3 text-base font-normal outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
+                  onChange={(event) =>
+                    updateField("occurredAt", event.target.value)
+                  }
+                  required
+                  type="datetime-local"
+                  value={values.occurredAt}
+                />
+              </label>
+            ) : null}
           </div>
           <label className="block space-y-2 text-sm font-semibold">
             Subject
@@ -229,6 +265,14 @@ export function ActivityPanel({
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                           {activityTypeLabel(activity.activity_type)}
+                          {activity.activity_type === "email"
+                            ? ` · ${
+                                (activity.email_direction ?? "sent") ===
+                                "received"
+                                  ? "Received"
+                                  : "Sent"
+                              }`
+                            : ""}
                         </span>
                         <span className="text-xs text-muted-foreground">
                           {new Date(activity.occurred_at).toLocaleString()}
