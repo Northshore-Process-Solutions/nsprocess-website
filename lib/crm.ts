@@ -191,3 +191,28 @@ export function crmRowToFormValues(row: CrmTableRow) {
     contactTitle: row.contactTitle ?? "",
   };
 }
+
+export function matchesCrmSearch(row: CrmTableRow, query: string) {
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) return true;
+
+  const haystack = [
+    row.name,
+    row.email,
+    row.phone,
+    row.organizationEmail,
+    row.organizationPhone,
+    row.primaryContact,
+    row.contactTitle,
+    row.category,
+    row.notes,
+    row.location,
+    row.website,
+    ...row.relationshipTypes,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return haystack.includes(normalized);
+}

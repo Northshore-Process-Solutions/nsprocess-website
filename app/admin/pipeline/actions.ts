@@ -376,6 +376,7 @@ export async function convertWonLeadToCrm(
 
     revalidatePath("/admin/pipeline");
     revalidatePath("/admin");
+    revalidatePath(`/admin/organizations/${lead.organization_id}`);
     return {
       ok: true,
       organizationId: lead.organization_id,
@@ -464,6 +465,7 @@ export async function convertWonLeadToCrm(
 
   revalidatePath("/admin/pipeline");
   revalidatePath("/admin");
+  revalidatePath(`/admin/organizations/${organizationId}`);
   return { ok: true, organizationId };
 }
 

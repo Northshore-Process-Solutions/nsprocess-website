@@ -163,7 +163,7 @@ export function LeadsTable({
                     {linkedToCrm ? (
                       <Link
                         className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100"
-                        href="/admin"
+                        href={`/admin/organizations/${row.organization_id}`}
                       >
                         <Building2 aria-hidden className="size-3.5" />
                         In CRM

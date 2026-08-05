@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ExternalLink, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,8 @@ type CrmTableProps = {
   onEdit: (row: CrmTableRow) => void;
   onDelete: (row: CrmTableRow) => void;
   deletingId?: string | null;
+  emptyTitle?: string;
+  emptyMessage?: string;
 };
 
 export function CrmTable({
@@ -23,14 +26,14 @@ export function CrmTable({
   onEdit,
   onDelete,
   deletingId = null,
+  emptyTitle = "No organizations yet",
+  emptyMessage = "Use Add organization to create your first vendor or customer record.",
 }: CrmTableProps) {
   if (rows.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
-        <p className="text-lg font-semibold">No organizations yet</p>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Use Add organization to create your first vendor or customer record.
-        </p>
+        <p className="text-lg font-semibold">{emptyTitle}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{emptyMessage}</p>
       </div>
     );
   }
@@ -58,7 +61,12 @@ export function CrmTable({
                 key={row.id}
               >
                 <td className="px-4 py-4">
-                  <div className="font-semibold text-foreground">{row.name}</div>
+                  <Link
+                    className="font-semibold text-foreground transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    href={`/admin/organizations/${row.id}`}
+                  >
+                    {row.name}
+                  </Link>
                   {row.website ? (
                     <a
                       className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"

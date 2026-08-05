@@ -1,14 +1,14 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { deleteOrganization } from "@/app/admin/actions";
 import { CrmTable } from "@/components/admin/crm-table";
 import { OrganizationForm } from "@/components/admin/organization-form";
 import { Button } from "@/components/ui/button";
-import type { CrmTableRow } from "@/lib/crm";
+import { matchesCrmSearch, type CrmTableRow } from "@/lib/crm";
 
 export function CrmPanel({ rows }: { rows: CrmTableRow[] }) {
   const router = useRouter();
@@ -17,6 +17,12 @@ export function CrmPanel({ rows }: { rows: CrmTableRow[] }) {
   const [selectedRow, setSelectedRow] = useState<CrmTableRow | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+
+  const filteredRows = useMemo(
+    () => rows.filter((row) => matchesCrmSearch(row, query)),
+    [rows, query],
+  );
 
   function openCreate() {
     setMode("create");
@@ -57,13 +63,28 @@ export function CrmPanel({ rows }: { rows: CrmTableRow[] }) {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
-          Add, edit, or delete organizations directly from this table.
+          Search, open, edit, or delete organizations from this directory.
         </p>
         <Button onClick={openCreate} type="button" variant="accent">
           <Plus aria-hidden className="size-4" />
           Add organization
         </Button>
       </div>
+
+      <label className="relative block">
+        <span className="sr-only">Search organizations</span>
+        <Search
+          aria-hidden
+          className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+        />
+        <input
+          className="min-h-11 w-full rounded-2xl border border-input bg-background py-3 pl-11 pr-4 text-base outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search by name, contact, email, phone, category…"
+          type="search"
+          value={query}
+        />
+      </label>
 
       {error ? (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-900">
@@ -73,9 +94,15 @@ export function CrmPanel({ rows }: { rows: CrmTableRow[] }) {
 
       <CrmTable
         deletingId={deletingId}
+        emptyMessage={
+          query.trim()
+            ? "No organizations match your search."
+            : "Use Add organization to create your first vendor or customer record."
+        }
+        emptyTitle={query.trim() ? "No matches" : "No organizations yet"}
         onDelete={handleDelete}
         onEdit={openEdit}
-        rows={rows}
+        rows={filteredRows}
       />
 
       <OrganizationForm
