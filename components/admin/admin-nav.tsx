@@ -5,13 +5,14 @@ import { cn } from "@/lib/utils";
 const links = [
   { href: "/admin", label: "CRM", key: "crm" as const },
   { href: "/admin/pipeline", label: "Pipeline", key: "pipeline" as const },
+  { href: "/admin/calendar", label: "Calendar", key: "calendar" as const },
   { href: "/admin/tools", label: "Stack", key: "stack" as const },
 ];
 
 export function AdminNav({
   current,
 }: {
-  current: "crm" | "pipeline" | "stack";
+  current: "crm" | "pipeline" | "stack" | "calendar";
 }) {
   return (
     <nav aria-label="Admin sections" className="mt-6 flex flex-wrap gap-2">
