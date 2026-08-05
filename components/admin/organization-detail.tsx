@@ -16,6 +16,7 @@ import { useState } from "react";
 import { deleteOrganization } from "@/app/admin/actions";
 import { ActivityPanel } from "@/components/admin/activity-panel";
 import { OrganizationForm } from "@/components/admin/organization-form";
+import { PurchasesPanel } from "@/components/admin/purchases-panel";
 import { Button } from "@/components/ui/button";
 import type { ActivityRow } from "@/lib/activities";
 import {
@@ -31,6 +32,7 @@ import {
   projectStatusLabel,
   type ProjectRow,
 } from "@/lib/projects";
+import type { PurchaseWithRelations } from "@/lib/purchases";
 import { cn } from "@/lib/utils";
 
 const statusStyles: Record<string, string> = {
@@ -64,6 +66,7 @@ type OrganizationDetailProps = {
   leads: LeadRow[];
   projects: ProjectRow[];
   activities: ActivityRow[];
+  purchases: PurchaseWithRelations[];
 };
 
 export function OrganizationDetail({
@@ -71,6 +74,7 @@ export function OrganizationDetail({
   leads,
   projects,
   activities,
+  purchases,
 }: OrganizationDetailProps) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
@@ -288,6 +292,31 @@ export function OrganizationDetail({
         activities={activities}
         organizationId={organization.id}
       />
+
+      <section className="rounded-2xl border border-border bg-card p-6 shadow-soft">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Purchases</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Spend linked to this business or its projects.
+            </p>
+          </div>
+          <Button asChild variant="outline">
+            <Link href="/admin/purchases">Open Purchases</Link>
+          </Button>
+        </div>
+        <PurchasesPanel
+          businesses={[{ id: organization.id, name: organization.name }]}
+          defaults={{ organizationId: organization.id }}
+          projects={projects.map((project) => ({
+            id: project.id,
+            name: project.name,
+            organization_id: project.organization_id,
+          }))}
+          rows={purchases}
+          showLinks
+        />
+      </section>
 
       <section className="rounded-2xl border border-border bg-card p-6 shadow-soft">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

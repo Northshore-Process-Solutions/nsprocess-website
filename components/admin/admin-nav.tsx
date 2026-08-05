@@ -7,13 +7,20 @@ const links = [
   { href: "/admin/pipeline", label: "Pipeline", key: "pipeline" as const },
   { href: "/admin/projects", label: "Projects", key: "projects" as const },
   { href: "/admin/calendar", label: "Calendar", key: "calendar" as const },
+  { href: "/admin/purchases", label: "Purchases", key: "purchases" as const },
   { href: "/admin/tools", label: "Stack", key: "stack" as const },
 ];
 
 export function AdminNav({
   current,
 }: {
-  current: "crm" | "pipeline" | "projects" | "stack" | "calendar";
+  current:
+    | "crm"
+    | "pipeline"
+    | "projects"
+    | "stack"
+    | "calendar"
+    | "purchases";
 }) {
   return (
     <nav aria-label="Admin sections" className="mt-6 flex flex-wrap gap-2">

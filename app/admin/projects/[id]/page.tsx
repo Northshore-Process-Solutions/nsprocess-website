@@ -8,6 +8,7 @@ import type { ActivityRow } from "@/lib/activities";
 import type { CalendarEventWithRelations } from "@/lib/calendar";
 import type { LeadRow } from "@/lib/leads";
 import type { ProjectTaskRow, ProjectWithOrganization } from "@/lib/projects";
+import type { PurchaseWithRelations } from "@/lib/purchases";
 import { createClient } from "@/lib/supabase/server";
 
 type ProjectPageProps = {
@@ -59,6 +60,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     { data: activitiesData, error: activitiesError },
     { data: eventsData, error: eventsError },
     { data: tasksData, error: tasksError },
+    { data: purchasesData, error: purchasesError },
   ] = await Promise.all([
     leadPromise,
     supabase
@@ -99,6 +101,23 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       .order("is_done", { ascending: true })
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true }),
+    supabase
+      .from("purchases")
+      .select(
+        `
+        *,
+        organizations (
+          id,
+          name
+        ),
+        projects (
+          id,
+          name
+        )
+      `,
+      )
+      .eq("project_id", id)
+      .order("purchased_at", { ascending: false }),
   ]);
 
   if (leadError) {
@@ -112,6 +131,9 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   }
   if (tasksError) {
     throw new Error(`Failed to load tasks: ${tasksError.message}`);
+  }
+  if (purchasesError) {
+    throw new Error(`Failed to load purchases: ${purchasesError.message}`);
   }
 
   // Deduplicate if both project_id and lead_id match the same row.
@@ -129,6 +151,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     ).values(),
   );
   const tasks = (tasksData ?? []) as ProjectTaskRow[];
+  const purchases = (purchasesData ?? []) as PurchaseWithRelations[];
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -145,6 +168,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         events={events}
         lead={(leadData as LeadRow | null) ?? null}
         project={project}
+        purchases={purchases}
         tasks={tasks}
       />
     </main>

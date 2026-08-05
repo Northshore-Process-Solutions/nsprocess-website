@@ -17,6 +17,7 @@ import {
 } from "@/components/admin/calendar-event-dialog";
 import { LeadReplyDialog } from "@/components/admin/lead-reply-dialog";
 import { ProjectTasksPanel } from "@/components/admin/project-tasks-panel";
+import { PurchasesPanel } from "@/components/admin/purchases-panel";
 import { Button } from "@/components/ui/button";
 import type { ActivityRow } from "@/lib/activities";
 import {
@@ -37,6 +38,7 @@ import {
   type ProjectTaskRow,
   type ProjectWithOrganization,
 } from "@/lib/projects";
+import type { PurchaseWithRelations } from "@/lib/purchases";
 import { cn } from "@/lib/utils";
 
 const statusStyles: Record<string, string> = {
@@ -67,6 +69,7 @@ type ProjectDetailProps = {
   activities: ActivityRow[];
   events: CalendarEventWithRelations[];
   tasks: ProjectTaskRow[];
+  purchases: PurchaseWithRelations[];
 };
 
 function isPastEvent(event: CalendarEventWithRelations, now = Date.now()) {
@@ -217,6 +220,7 @@ export function ProjectDetail({
   activities,
   events,
   tasks,
+  purchases,
 }: ProjectDetailProps) {
   const router = useRouter();
   const [name, setName] = useState(project.name);
@@ -631,6 +635,40 @@ export function ProjectDetail({
           </Button>
         </form>
       </div>
+
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-soft">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold">Purchases</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Spend tied to this engagement — promo, equipment, or supplies.
+          </p>
+        </div>
+        <PurchasesPanel
+          businesses={
+            project.organizations
+              ? [
+                  {
+                    id: project.organizations.id,
+                    name: project.organizations.name,
+                  },
+                ]
+              : []
+          }
+          defaults={{
+            organizationId: project.organization_id,
+            projectId: project.id,
+          }}
+          projects={[
+            {
+              id: project.id,
+              name: project.name,
+              organization_id: project.organization_id,
+            },
+          ]}
+          rows={purchases}
+          showLinks={false}
+        />
+      </section>
 
       <LeadReplyDialog
         lead={lead}

@@ -11,6 +11,7 @@ import {
 } from "@/lib/crm";
 import type { LeadRow } from "@/lib/leads";
 import type { ProjectRow } from "@/lib/projects";
+import type { PurchaseWithRelations } from "@/lib/purchases";
 import { createClient } from "@/lib/supabase/server";
 
 type OrganizationPageProps = {
@@ -103,6 +104,7 @@ export default async function OrganizationPage({
   const leads = (leadsData ?? []) as LeadRow[];
   const projects = (projectsData ?? []) as ProjectRow[];
   const leadIds = leads.map((lead) => lead.id);
+  const projectIds = projects.map((project) => project.id);
 
   let activitiesQuery = supabase
     .from("activities")
@@ -117,16 +119,55 @@ export default async function OrganizationPage({
     activitiesQuery = activitiesQuery.eq("organization_id", id);
   }
 
-  const { data: activitiesData, error: activitiesError } = await activitiesQuery;
+  let purchasesQuery = supabase
+    .from("purchases")
+    .select(
+      `
+      *,
+      organizations (
+        id,
+        name
+      ),
+      projects (
+        id,
+        name
+      )
+    `,
+    )
+    .order("purchased_at", { ascending: false });
+
+  if (projectIds.length > 0) {
+    purchasesQuery = purchasesQuery.or(
+      `organization_id.eq.${id},project_id.in.(${projectIds.join(",")})`,
+    );
+  } else {
+    purchasesQuery = purchasesQuery.eq("organization_id", id);
+  }
+
+  const [
+    { data: activitiesData, error: activitiesError },
+    { data: purchasesData, error: purchasesError },
+  ] = await Promise.all([activitiesQuery, purchasesQuery]);
 
   if (activitiesError) {
     throw new Error(`Failed to load activities: ${activitiesError.message}`);
+  }
+  if (purchasesError) {
+    throw new Error(`Failed to load purchases: ${purchasesError.message}`);
   }
 
   const organization = mapOrganizationToCrmRow(
     data as unknown as OrganizationRow,
   );
   const activities = (activitiesData ?? []) as ActivityRow[];
+  const purchases = Array.from(
+    new Map(
+      ((purchasesData ?? []) as PurchaseWithRelations[]).map((row) => [
+        row.id,
+        row,
+      ]),
+    ).values(),
+  );
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -143,6 +184,7 @@ export default async function OrganizationPage({
         leads={leads}
         organization={organization}
         projects={projects}
+        purchases={purchases}
       />
     </main>
   );
