@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Building2, Mail, Pencil, Trash2, UserPlus } from "lucide-react";
+import { Building2, Eye, Mail, UserPlus } from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -31,20 +31,16 @@ const stageStyles: Record<LeadStage, string> = {
 
 type LeadsTableProps = {
   rows: LeadRow[];
-  onEdit: (row: LeadRow) => void;
+  onView: (row: LeadRow) => void;
   onReply: (row: LeadRow) => void;
-  onDelete: (row: LeadRow) => void;
-  deletingId?: string | null;
   onStageChanged: () => void;
   onError?: (message: string) => void;
 };
 
 export function LeadsTable({
   rows,
-  onEdit,
+  onView,
   onReply,
-  onDelete,
-  deletingId = null,
   onStageChanged,
   onError,
 }: LeadsTableProps) {
@@ -207,23 +203,13 @@ export function LeadsTable({
                         <Mail aria-hidden className="size-4" />
                       </Button>
                       <Button
-                        aria-label={`Edit ${row.business_name}`}
-                        onClick={() => onEdit(row)}
+                        aria-label={`View ${row.business_name}`}
+                        onClick={() => onView(row)}
                         size="icon"
                         type="button"
                         variant="outline"
                       >
-                        <Pencil aria-hidden className="size-4" />
-                      </Button>
-                      <Button
-                        aria-label={`Delete ${row.business_name}`}
-                        disabled={deletingId === row.id}
-                        onClick={() => onDelete(row)}
-                        size="icon"
-                        type="button"
-                        variant="outline"
-                      >
-                        <Trash2 aria-hidden className="size-4" />
+                        <Eye aria-hidden className="size-4" />
                       </Button>
                     </div>
                   </td>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { deleteLead } from "@/app/admin/pipeline/actions";
+import { LeadDetailDialog } from "@/components/admin/lead-detail-dialog";
 import { LeadForm } from "@/components/admin/lead-form";
 import { LeadReplyDialog } from "@/components/admin/lead-reply-dialog";
 import { LeadsTable } from "@/components/admin/leads-table";
@@ -21,6 +22,7 @@ export function LeadsPanel({
 }) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [replyOpen, setReplyOpen] = useState(false);
   const [mode, setMode] = useState<"create" | "edit">("create");
   const [selectedRow, setSelectedRow] = useState<LeadRow | null>(null);
@@ -32,13 +34,22 @@ export function LeadsPanel({
     setMode("create");
     setSelectedRow(null);
     setError(null);
+    setDetailOpen(false);
     setFormOpen(true);
+  }
+
+  function openView(row: LeadRow) {
+    setSelectedRow(row);
+    setError(null);
+    setFormOpen(false);
+    setDetailOpen(true);
   }
 
   function openEdit(row: LeadRow) {
     setMode("edit");
     setSelectedRow(row);
     setError(null);
+    setDetailOpen(false);
     setFormOpen(true);
   }
 
@@ -65,6 +76,8 @@ export function LeadsPanel({
       return;
     }
 
+    setDetailOpen(false);
+    setSelectedRow(null);
     router.refresh();
   }
 
@@ -89,16 +102,28 @@ export function LeadsPanel({
       ) : null}
 
       <LeadsTable
-        deletingId={deletingId}
-        onDelete={handleDelete}
-        onEdit={openEdit}
         onError={(message) => setError(message)}
         onReply={openReply}
         onStageChanged={() => {
           setError(null);
           router.refresh();
         }}
+        onView={openView}
         rows={rows}
+      />
+
+      <LeadDetailDialog
+        activities={
+          selectedRow ? (activitiesByLeadId[selectedRow.id] ?? []) : []
+        }
+        deleting={Boolean(selectedRow && deletingId === selectedRow.id)}
+        lead={selectedRow}
+        onClose={() => {
+          setDetailOpen(false);
+        }}
+        onDelete={handleDelete}
+        onEdit={openEdit}
+        open={detailOpen}
       />
 
       <LeadForm
@@ -108,9 +133,15 @@ export function LeadsPanel({
         initialRow={selectedRow}
         key={`${mode}-${selectedRow?.id ?? "new"}-${formOpen ? "open" : "closed"}`}
         mode={mode}
-        onClose={() => setFormOpen(false)}
+        onClose={() => {
+          setFormOpen(false);
+          if (mode === "edit" && selectedRow) {
+            setDetailOpen(true);
+          }
+        }}
         onSaved={() => {
           setFormOpen(false);
+          setDetailOpen(false);
           router.refresh();
         }}
         open={formOpen}
