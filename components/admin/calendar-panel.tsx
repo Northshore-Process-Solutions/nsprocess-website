@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -14,13 +13,14 @@ import { Button } from "@/components/ui/button";
 import {
   addMonths,
   calendarEventTypeLabel,
+  currentYearMonth,
   dayKey,
   formatEventTime,
   formatMonthLabel,
   getMonthGridDays,
   isSameDay,
   monthKey,
-  startOfMonth,
+  parseMonthParam,
   toDateTimeLocalValue,
   type CalendarEventType,
   type CalendarEventWithRelations,
@@ -52,16 +52,17 @@ export function CalendarPanel({
   organizations,
   initialLeadId,
 }: {
-  month: Date;
+  month: string;
   events: CalendarEventWithRelations[];
   leads: CalendarLeadOption[];
   organizations: CalendarOrgOption[];
   initialLeadId?: string | null;
 }) {
   const router = useRouter();
-  const monthStart = startOfMonth(month);
+  const yearMonth = useMemo(() => parseMonthParam(month), [month]);
   const today = new Date();
-  const days = useMemo(() => getMonthGridDays(monthStart), [monthStart]);
+  const todayMonth = currentYearMonth();
+  const days = useMemo(() => getMonthGridDays(yearMonth), [yearMonth]);
 
   const eventsByDay = useMemo(() => {
     return events.reduce<Record<string, CalendarEventWithRelations[]>>(
@@ -93,8 +94,13 @@ export function CalendarPanel({
     };
   });
 
-  const prevMonth = addMonths(monthStart, -1);
-  const nextMonth = addMonths(monthStart, 1);
+  const prevMonth = addMonths(yearMonth, -1);
+  const nextMonth = addMonths(yearMonth, 1);
+
+  function goToMonth(target: { year: number; month: number }) {
+    setDialogOpen(false);
+    router.push(`/admin/calendar?month=${monthKey(target)}`);
+  }
 
   function openCreate(day?: Date) {
     const lead = initialLeadId
@@ -133,29 +139,35 @@ export function CalendarPanel({
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          <Button asChild size="icon" type="button" variant="outline">
-            <Link
-              aria-label="Previous month"
-              href={`/admin/calendar?month=${monthKey(prevMonth)}`}
-            >
-              <ChevronLeft aria-hidden className="size-4" />
-            </Link>
+          <Button
+            aria-label="Previous month"
+            onClick={() => goToMonth(prevMonth)}
+            size="icon"
+            type="button"
+            variant="outline"
+          >
+            <ChevronLeft aria-hidden className="size-4" />
           </Button>
-          <Button asChild size="icon" type="button" variant="outline">
-            <Link
-              aria-label="Next month"
-              href={`/admin/calendar?month=${monthKey(nextMonth)}`}
-            >
-              <ChevronRight aria-hidden className="size-4" />
-            </Link>
+          <Button
+            aria-label="Next month"
+            onClick={() => goToMonth(nextMonth)}
+            size="icon"
+            type="button"
+            variant="outline"
+          >
+            <ChevronRight aria-hidden className="size-4" />
           </Button>
           <h2 className="ml-2 text-xl font-bold tracking-tight">
-            {formatMonthLabel(monthStart)}
+            {formatMonthLabel(yearMonth)}
           </h2>
         </div>
         <div className="flex gap-2">
-          <Button asChild type="button" variant="outline">
-            <Link href={`/admin/calendar?month=${monthKey(today)}`}>Today</Link>
+          <Button
+            onClick={() => goToMonth(todayMonth)}
+            type="button"
+            variant="outline"
+          >
+            Today
           </Button>
           <Button onClick={() => openCreate()} type="button" variant="accent">
             <Plus aria-hidden className="size-4" />
@@ -178,7 +190,7 @@ export function CalendarPanel({
         <div className="grid grid-cols-7">
           {days.map((day) => {
             const key = dayKey(day);
-            const inMonth = day.getMonth() === monthStart.getMonth();
+            const inMonth = day.getMonth() === yearMonth.month - 1;
             const dayEvents = eventsByDay[key] ?? [];
             const isToday = isSameDay(day, today);
 

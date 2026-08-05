@@ -5,7 +5,8 @@ import { CalendarPanel } from "@/components/admin/calendar-panel";
 import { SignOutButton } from "@/components/admin/sign-out-button";
 import { Logo } from "@/components/logo";
 import {
-  addMonths,
+  getMonthQueryRange,
+  monthKey,
   parseMonthParam,
   type CalendarEventWithRelations,
 } from "@/lib/calendar";
@@ -20,7 +21,7 @@ type CalendarPageProps = {
 
 export default async function CalendarPage({ searchParams }: CalendarPageProps) {
   const params = await searchParams;
-  const month = parseMonthParam(params?.month);
+  const yearMonth = parseMonthParam(params?.month);
   const leadId = params?.leadId ?? null;
 
   const supabase = await createClient();
@@ -30,11 +31,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
     redirect("/admin/login");
   }
 
-  const rangeStart = new Date(month.getFullYear(), month.getMonth(), 1);
-  rangeStart.setDate(rangeStart.getDate() - rangeStart.getDay());
-  const rangeEnd = addMonths(month, 1);
-  rangeEnd.setDate(rangeEnd.getDate() + (6 - rangeEnd.getDay()));
-  rangeEnd.setHours(23, 59, 59, 999);
+  const { rangeStart, rangeEnd } = getMonthQueryRange(yearMonth);
 
   const [
     { data: eventsData, error: eventsError },
@@ -57,8 +54,8 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
         )
       `,
       )
-      .gte("starts_at", rangeStart.toISOString())
-      .lte("starts_at", rangeEnd.toISOString())
+      .gte("starts_at", rangeStart)
+      .lte("starts_at", rangeEnd)
       .order("starts_at", { ascending: true }),
     supabase
       .from("leads")
@@ -102,7 +99,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
         events={events}
         initialLeadId={leadId}
         leads={leadsData ?? []}
-        month={month}
+        month={monthKey(yearMonth)}
         organizations={orgsData ?? []}
       />
     </main>
