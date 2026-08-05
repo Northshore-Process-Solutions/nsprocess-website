@@ -383,6 +383,37 @@ async function ensureProjectForCustomer(
   return { error: null as string | null, projectId: project.id as string };
 }
 
+async function attachLeadHistoryToProject(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  input: {
+    projectId: string;
+    organizationId: string;
+    leadId: string;
+  },
+) {
+  const now = new Date().toISOString();
+
+  await supabase
+    .from("activities")
+    .update({
+      project_id: input.projectId,
+      organization_id: input.organizationId,
+      updated_at: now,
+    })
+    .eq("lead_id", input.leadId)
+    .is("project_id", null);
+
+  await supabase
+    .from("calendar_events")
+    .update({
+      project_id: input.projectId,
+      organization_id: input.organizationId,
+      updated_at: now,
+    })
+    .eq("lead_id", input.leadId)
+    .is("project_id", null);
+}
+
 export async function convertWonLeadToCrm(
   leadId: string,
   targetStage: LeadStage = "won",
@@ -447,9 +478,16 @@ export async function convertWonLeadToCrm(
       };
     }
 
+    await attachLeadHistoryToProject(supabase, {
+      projectId: projectResult.projectId,
+      organizationId: lead.organization_id,
+      leadId,
+    });
+
     revalidatePath("/admin/pipeline");
     revalidatePath("/admin");
     revalidatePath("/admin/projects");
+    revalidatePath("/admin/calendar");
     revalidatePath(`/admin/organizations/${lead.organization_id}`);
     revalidatePath(`/admin/projects/${projectResult.projectId}`);
     return {
@@ -561,9 +599,16 @@ export async function convertWonLeadToCrm(
     };
   }
 
+  await attachLeadHistoryToProject(supabase, {
+    projectId: projectResult.projectId,
+    organizationId,
+    leadId,
+  });
+
   revalidatePath("/admin/pipeline");
   revalidatePath("/admin");
   revalidatePath("/admin/projects");
+  revalidatePath("/admin/calendar");
   revalidatePath(`/admin/organizations/${organizationId}`);
   revalidatePath(`/admin/projects/${projectResult.projectId}`);
   return {
@@ -679,7 +724,7 @@ export async function deleteLead(leadId: string): Promise<ActionResult> {
 
 export async function replyToLead(
   leadId: string,
-  input: { subject: string; body: string },
+  input: { subject: string; body: string; projectId?: string | null },
 ): Promise<ActionResult> {
   if (!leadId) return { ok: false, error: "Missing lead id." };
 
@@ -705,6 +750,16 @@ export async function replyToLead(
   const to = clean(lead.email);
   if (!to) return { ok: false, error: "Lead does not have an email address." };
 
+  let projectId = clean(input.projectId);
+  if (!projectId) {
+    const { data: project } = await supabase
+      .from("projects")
+      .select("id")
+      .eq("lead_id", leadId)
+      .maybeSingle();
+    projectId = project?.id ?? null;
+  }
+
   const mailResult = await sendAppEmail({
     to,
     subject,
@@ -719,6 +774,7 @@ export async function replyToLead(
   const { error: activityError } = await supabase.from("activities").insert({
     lead_id: lead.id,
     organization_id: lead.organization_id,
+    project_id: projectId,
     activity_type: "email",
     email_direction: "sent",
     subject,
@@ -734,8 +790,12 @@ export async function replyToLead(
   }
 
   revalidatePath("/admin/pipeline");
+  revalidatePath("/admin/projects");
   if (lead.organization_id) {
     revalidatePath(`/admin/organizations/${lead.organization_id}`);
+  }
+  if (projectId) {
+    revalidatePath(`/admin/projects/${projectId}`);
   }
 
   return { ok: true };

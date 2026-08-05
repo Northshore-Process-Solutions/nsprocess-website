@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 export type ActivityInput = {
   organizationId?: string | null;
   leadId?: string | null;
+  projectId?: string | null;
   activityType: ActivityType;
   emailDirection?: EmailDirection | null;
   subject?: string;
@@ -43,9 +44,13 @@ async function requireUser() {
 function parseInput(input: ActivityInput): ActivityInput | ActionResult {
   const organizationId = clean(input.organizationId) ?? null;
   const leadId = clean(input.leadId) ?? null;
+  const projectId = clean(input.projectId) ?? null;
 
-  if (!organizationId && !leadId) {
-    return { ok: false, error: "Activity must belong to a lead or organization." };
+  if (!organizationId && !leadId && !projectId) {
+    return {
+      ok: false,
+      error: "Activity must belong to a lead, organization, or project.",
+    };
   }
 
   if (!ACTIVITY_TYPES.some((item) => item.value === input.activityType)) {
@@ -74,6 +79,7 @@ function parseInput(input: ActivityInput): ActivityInput | ActionResult {
   return {
     organizationId,
     leadId,
+    projectId,
     activityType: input.activityType,
     emailDirection,
     subject: clean(input.subject) ?? undefined,
@@ -85,11 +91,16 @@ function parseInput(input: ActivityInput): ActivityInput | ActionResult {
 function revalidateTargets(input: {
   organizationId?: string | null;
   leadId?: string | null;
+  projectId?: string | null;
 }) {
   revalidatePath("/admin");
   revalidatePath("/admin/pipeline");
+  revalidatePath("/admin/projects");
   if (input.organizationId) {
     revalidatePath(`/admin/organizations/${input.organizationId}`);
+  }
+  if (input.projectId) {
+    revalidatePath(`/admin/projects/${input.projectId}`);
   }
 }
 
@@ -109,6 +120,7 @@ export async function createActivity(
   const { error } = await supabase.from("activities").insert({
     organization_id: parsed.organizationId ?? null,
     lead_id: parsed.leadId ?? null,
+    project_id: parsed.projectId ?? null,
     activity_type: parsed.activityType,
     email_direction: parsed.emailDirection ?? null,
     subject: parsed.subject ?? null,
@@ -143,6 +155,7 @@ export async function updateActivity(
     .update({
       organization_id: parsed.organizationId ?? null,
       lead_id: parsed.leadId ?? null,
+      project_id: parsed.projectId ?? null,
       activity_type: parsed.activityType,
       email_direction: parsed.emailDirection ?? null,
       subject: parsed.subject ?? null,
@@ -160,7 +173,11 @@ export async function updateActivity(
 
 export async function deleteActivity(
   activityId: string,
-  targets?: { organizationId?: string | null; leadId?: string | null },
+  targets?: {
+    organizationId?: string | null;
+    leadId?: string | null;
+    projectId?: string | null;
+  },
 ): Promise<ActionResult> {
   if (!activityId) return { ok: false, error: "Missing activity id." };
 

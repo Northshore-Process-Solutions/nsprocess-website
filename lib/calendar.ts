@@ -9,6 +9,7 @@ export type CalendarEventRow = {
   id: string;
   organization_id: string | null;
   lead_id: string | null;
+  project_id: string | null;
   title: string;
   event_type: CalendarEventType;
   starts_at: string;
@@ -63,6 +64,7 @@ export function emptyCalendarEventFormValues(defaults?: {
   startsAt?: string;
   leadId?: string | null;
   organizationId?: string | null;
+  projectId?: string | null;
   title?: string;
   eventType?: CalendarEventType;
 }) {
@@ -88,6 +90,7 @@ export function emptyCalendarEventFormValues(defaults?: {
     notes: "",
     leadId: defaults?.leadId ?? "",
     organizationId: defaults?.organizationId ?? "",
+    projectId: defaults?.projectId ?? "",
   };
 }
 

@@ -13,6 +13,7 @@ import {
 type LeadReplyDialogProps = {
   open: boolean;
   lead: LeadRow | null;
+  projectId?: string | null;
   onClose: () => void;
   onSent: () => void;
 };
@@ -46,6 +47,7 @@ function DetailItem({
 export function LeadReplyDialog({
   open,
   lead,
+  projectId = null,
   onClose,
   onSent,
 }: LeadReplyDialogProps) {
@@ -53,20 +55,23 @@ export function LeadReplyDialog({
 
   return (
     <LeadReplyDialogInner
-      key={lead.id}
+      key={`${lead.id}-${projectId ?? "none"}`}
       lead={lead}
       onClose={onClose}
       onSent={onSent}
+      projectId={projectId}
     />
   );
 }
 
 function LeadReplyDialogInner({
   lead,
+  projectId,
   onClose,
   onSent,
 }: {
   lead: LeadRow;
+  projectId?: string | null;
   onClose: () => void;
   onSent: () => void;
 }) {
@@ -80,7 +85,11 @@ function LeadReplyDialogInner({
     setLoading(true);
     setError(null);
 
-    const result = await replyToLead(lead.id, { subject, body });
+    const result = await replyToLead(lead.id, {
+      subject,
+      body,
+      projectId,
+    });
     setLoading(false);
 
     if (!result.ok) {

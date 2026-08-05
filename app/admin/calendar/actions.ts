@@ -17,6 +17,7 @@ export type CalendarEventInput = {
   notes?: string;
   leadId?: string | null;
   organizationId?: string | null;
+  projectId?: string | null;
 };
 
 export type ActionResult = {
@@ -65,11 +66,12 @@ function parseInput(input: CalendarEventInput): CalendarEventInput | ActionResul
 
   const leadId = clean(input.leadId);
   const organizationId = clean(input.organizationId);
+  const projectId = clean(input.projectId);
 
-  if (!leadId && !organizationId) {
+  if (!leadId && !organizationId && !projectId) {
     return {
       ok: false,
-      error: "Link the event to a lead or organization.",
+      error: "Link the event to a lead, organization, or project.",
     };
   }
 
@@ -82,17 +84,23 @@ function parseInput(input: CalendarEventInput): CalendarEventInput | ActionResul
     notes: clean(input.notes) ?? undefined,
     leadId,
     organizationId,
+    projectId,
   };
 }
 
 function revalidateCalendar(targets?: {
   leadId?: string | null;
   organizationId?: string | null;
+  projectId?: string | null;
 }) {
   revalidatePath("/admin/calendar");
   revalidatePath("/admin/pipeline");
+  revalidatePath("/admin/projects");
   if (targets?.organizationId) {
     revalidatePath(`/admin/organizations/${targets.organizationId}`);
+  }
+  if (targets?.projectId) {
+    revalidatePath(`/admin/projects/${targets.projectId}`);
   }
 }
 
@@ -147,6 +155,7 @@ export async function createCalendarEvent(
       notes: parsed.notes ?? null,
       lead_id: parsed.leadId ?? null,
       organization_id: parsed.organizationId ?? null,
+      project_id: parsed.projectId ?? null,
     })
     .select("id")
     .single();
@@ -185,6 +194,7 @@ export async function updateCalendarEvent(
       notes: parsed.notes ?? null,
       lead_id: parsed.leadId ?? null,
       organization_id: parsed.organizationId ?? null,
+      project_id: parsed.projectId ?? null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", eventId);
@@ -198,7 +208,11 @@ export async function updateCalendarEvent(
 
 export async function deleteCalendarEvent(
   eventId: string,
-  targets?: { leadId?: string | null; organizationId?: string | null },
+  targets?: {
+    leadId?: string | null;
+    organizationId?: string | null;
+    projectId?: string | null;
+  },
 ): Promise<ActionResult> {
   if (!eventId) return { ok: false, error: "Missing event id." };
 

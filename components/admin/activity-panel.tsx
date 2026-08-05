@@ -38,6 +38,7 @@ type ActivityPanelProps = {
   activities: ActivityRow[];
   organizationId?: string | null;
   leadId?: string | null;
+  projectId?: string | null;
   compact?: boolean;
 };
 
@@ -45,6 +46,7 @@ export function ActivityPanel({
   activities,
   organizationId = null,
   leadId = null,
+  projectId = null,
   compact = false,
 }: ActivityPanelProps) {
   const router = useRouter();
@@ -69,6 +71,7 @@ export function ActivityPanel({
     const result = await createActivity({
       organizationId,
       leadId,
+      projectId,
       activityType: values.activityType,
       emailDirection:
         values.activityType === "email" ? values.emailDirection : null,
@@ -99,6 +102,7 @@ export function ActivityPanel({
     const result = await deleteActivity(activity.id, {
       organizationId: activity.organization_id,
       leadId: activity.lead_id,
+      projectId: activity.project_id,
     });
 
     setDeletingId(null);
@@ -124,7 +128,8 @@ export function ActivityPanel({
             Activity log
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Log emails, calls, meetings, and notes for this workflow.
+            Log emails, calls, meetings, and notes
+            {projectId ? " for this project" : " for this workflow"}.
           </p>
         </div>
         <Button

@@ -5,6 +5,7 @@ export type ActivityRow = {
   id: string;
   organization_id: string | null;
   lead_id: string | null;
+  project_id: string | null;
   activity_type: ActivityType;
   email_direction: EmailDirection | null;
   subject: string | null;

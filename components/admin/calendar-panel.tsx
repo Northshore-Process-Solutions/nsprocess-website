@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
+import { ActionHoverTooltip } from "@/components/admin/action-hover-tooltip";
 import {
   CalendarEventDialog,
   type CalendarLeadOption,
@@ -44,6 +45,88 @@ const typeStyles: Record<string, string> = {
   follow_up: "bg-amber-100 text-amber-950",
   other: "bg-stone-100 text-stone-800",
 };
+
+function PreviewField({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        {label}
+      </p>
+      <div className="mt-1 text-sm font-medium text-foreground">{value}</div>
+    </div>
+  );
+}
+
+function formatEventWhen(event: CalendarEventWithRelations) {
+  const start = new Date(event.starts_at);
+  const dateLabel = start.toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+  const startTime = formatEventTime(event.starts_at);
+  if (!event.ends_at) {
+    return `${dateLabel} · ${startTime}`;
+  }
+  return `${dateLabel} · ${startTime} – ${formatEventTime(event.ends_at)}`;
+}
+
+function CalendarEventHoverPreview({
+  event,
+}: {
+  event: CalendarEventWithRelations;
+}) {
+  const notes = event.notes?.trim();
+  const contact = event.leads?.contact_name?.trim();
+  const business = event.leads?.business_name?.trim();
+  const organization = event.organizations?.name?.trim();
+
+  return (
+    <>
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          Event preview
+        </p>
+        <p className="mt-1 text-base font-bold tracking-tight">{event.title}</p>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          {calendarEventTypeLabel(event.event_type)}
+        </p>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <PreviewField label="When" value={formatEventWhen(event)} />
+        <PreviewField
+          label="Location"
+          value={event.location?.trim() || "—"}
+        />
+        <PreviewField
+          label="Business"
+          value={business || organization || "—"}
+        />
+        <PreviewField label="Contact" value={contact || "—"} />
+      </div>
+
+      {notes ? (
+        <div className="mt-3 border-t border-border pt-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            Notes
+          </p>
+          <p className="mt-1 line-clamp-4 text-sm leading-5 text-muted-foreground">
+            {notes}
+          </p>
+        </div>
+      ) : null}
+
+      <p className="mt-3 text-xs text-muted-foreground">Click to edit.</p>
+    </>
+  );
+}
 
 export function CalendarPanel({
   month,
@@ -218,21 +301,26 @@ export function CalendarPanel({
                 </button>
                 <div className="space-y-1">
                   {dayEvents.slice(0, 3).map((event) => (
-                    <button
-                      className={cn(
-                        "block w-full truncate rounded-md px-1.5 py-1 text-left text-[11px] font-semibold",
-                        typeStyles[event.event_type] ?? typeStyles.other,
-                      )}
+                    <ActionHoverTooltip
+                      content={<CalendarEventHoverPreview event={event} />}
                       key={event.id}
-                      onClick={() => openEdit(event)}
-                      type="button"
+                      width={288}
                     >
-                      {formatEventTime(event.starts_at)}{" "}
-                      {calendarEventTypeLabel(event.event_type)}
-                      {event.leads?.business_name
-                        ? ` · ${event.leads.business_name}`
-                        : ""}
-                    </button>
+                      <button
+                        className={cn(
+                          "block w-full truncate rounded-md px-1.5 py-1 text-left text-[11px] font-semibold",
+                          typeStyles[event.event_type] ?? typeStyles.other,
+                        )}
+                        onClick={() => openEdit(event)}
+                        type="button"
+                      >
+                        {formatEventTime(event.starts_at)}{" "}
+                        {calendarEventTypeLabel(event.event_type)}
+                        {event.leads?.business_name
+                          ? ` · ${event.leads.business_name}`
+                          : ""}
+                      </button>
+                    </ActionHoverTooltip>
                   ))}
                   {dayEvents.length > 3 ? (
                     <p className="px-1 text-[11px] font-medium text-muted-foreground">
@@ -257,33 +345,38 @@ export function CalendarPanel({
           <ul className="mt-4 space-y-3">
             {events.map((event) => (
               <li key={event.id}>
-                <button
-                  className="flex w-full items-start justify-between gap-3 rounded-2xl border border-border px-4 py-3 text-left transition hover:bg-secondary/40"
-                  onClick={() => openEdit(event)}
-                  type="button"
+                <ActionHoverTooltip
+                  content={<CalendarEventHoverPreview event={event} />}
+                  width={288}
                 >
-                  <div>
-                    <p className="font-semibold">{event.title}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {calendarEventTypeLabel(event.event_type)} ·{" "}
-                      {new Date(event.starts_at).toLocaleString()}
-                      {event.leads?.business_name
-                        ? ` · ${event.leads.business_name}`
-                        : ""}
-                      {event.organizations?.name && !event.leads
-                        ? ` · ${event.organizations.name}`
-                        : ""}
-                    </p>
-                  </div>
-                  <span
-                    className={cn(
-                      "rounded-full px-2.5 py-1 text-xs font-semibold",
-                      typeStyles[event.event_type] ?? typeStyles.other,
-                    )}
+                  <button
+                    className="flex w-full items-start justify-between gap-3 rounded-2xl border border-border px-4 py-3 text-left transition hover:bg-secondary/40"
+                    onClick={() => openEdit(event)}
+                    type="button"
                   >
-                    {calendarEventTypeLabel(event.event_type)}
-                  </span>
-                </button>
+                    <div>
+                      <p className="font-semibold">{event.title}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {calendarEventTypeLabel(event.event_type)} ·{" "}
+                        {new Date(event.starts_at).toLocaleString()}
+                        {event.leads?.business_name
+                          ? ` · ${event.leads.business_name}`
+                          : ""}
+                        {event.organizations?.name && !event.leads
+                          ? ` · ${event.organizations.name}`
+                          : ""}
+                      </p>
+                    </div>
+                    <span
+                      className={cn(
+                        "rounded-full px-2.5 py-1 text-xs font-semibold",
+                        typeStyles[event.event_type] ?? typeStyles.other,
+                      )}
+                    >
+                      {calendarEventTypeLabel(event.event_type)}
+                    </span>
+                  </button>
+                </ActionHoverTooltip>
               </li>
             ))}
           </ul>

@@ -36,6 +36,7 @@ type CalendarEventDialogProps = {
     startsAt?: string;
     leadId?: string | null;
     organizationId?: string | null;
+    projectId?: string | null;
     title?: string;
     eventType?: CalendarEventType;
   };
@@ -91,6 +92,7 @@ function CalendarEventDialogInner({
         notes: event.notes ?? "",
         leadId: event.lead_id ?? "",
         organizationId: event.organization_id ?? "",
+        projectId: event.project_id ?? "",
       };
     }
 
@@ -121,6 +123,7 @@ function CalendarEventDialogInner({
       notes: values.notes,
       leadId: values.leadId || null,
       organizationId: values.organizationId || null,
+      projectId: values.projectId || null,
     };
 
     const result =
@@ -151,6 +154,7 @@ function CalendarEventDialogInner({
     const result = await deleteCalendarEvent(event.id, {
       leadId: event.lead_id,
       organizationId: event.organization_id,
+      projectId: event.project_id,
     });
 
     setDeleting(false);
