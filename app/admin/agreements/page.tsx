@@ -1,30 +1,30 @@
 import { redirect } from "next/navigation";
-import { FileText, Send } from "lucide-react";
+import { FileText, PenLine } from "lucide-react";
 
 import { AdminNav } from "@/components/admin/admin-nav";
+import { AgreementsPanel } from "@/components/admin/agreements-panel";
 import { BillingSubnav } from "@/components/admin/billing-subnav";
-import { ProposalsPanel } from "@/components/admin/proposals-panel";
 import { SignOutButton } from "@/components/admin/sign-out-button";
 import { Logo } from "@/components/logo";
 import {
-  formatProposalMoney,
-  PROPOSAL_STATUSES,
-  type ProposalStatus,
-  type ProposalWithItems,
-} from "@/lib/proposals";
+  AGREEMENT_STATUSES,
+  type AgreementStatus,
+  type AgreementWithItems,
+} from "@/lib/agreements";
+import { formatMoney } from "@/lib/billing";
 import { createClient } from "@/lib/supabase/server";
 
-type ProposalsPageProps = {
+type AgreementsPageProps = {
   searchParams?: Promise<{
     status?: string;
   }>;
 };
 
-export default async function ProposalsPage({
+export default async function AgreementsPage({
   searchParams,
-}: ProposalsPageProps) {
+}: AgreementsPageProps) {
   const params = await searchParams;
-  const statusFilter = (params?.status ?? "all") as ProposalStatus | "all";
+  const statusFilter = (params?.status ?? "all") as AgreementStatus | "all";
 
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
@@ -34,13 +34,13 @@ export default async function ProposalsPage({
   }
 
   const { data, error } = await supabase
-    .from("proposals")
+    .from("agreements")
     .select(
       `
       *,
-      proposal_items (
+      agreement_items (
         id,
-        proposal_id,
+        agreement_id,
         description,
         quantity,
         unit_price,
@@ -48,10 +48,10 @@ export default async function ProposalsPage({
         sort_order,
         created_at
       ),
-      leads (
+      proposals (
         id,
-        business_name,
-        stage
+        proposal_number,
+        title
       ),
       organizations (
         id,
@@ -62,18 +62,18 @@ export default async function ProposalsPage({
     .order("issued_at", { ascending: false });
 
   if (error) {
-    throw new Error(`Failed to load proposals: ${error.message}`);
+    throw new Error(`Failed to load agreements: ${error.message}`);
   }
 
-  const proposals = (data ?? []) as ProposalWithItems[];
+  const agreements = (data ?? []) as AgreementWithItems[];
   const rows =
     statusFilter === "all"
-      ? proposals
-      : proposals.filter((row) => row.status === statusFilter);
+      ? agreements
+      : agreements.filter((row) => row.status === statusFilter);
 
-  const draftCount = proposals.filter((row) => row.status === "draft").length;
-  const sentCount = proposals.filter((row) => row.status === "sent").length;
-  const pipelineValue = proposals
+  const draftCount = agreements.filter((row) => row.status === "draft").length;
+  const signedCount = agreements.filter((row) => row.status === "signed").length;
+  const openValue = agreements
     .filter((row) => row.status === "draft" || row.status === "sent")
     .reduce((sum, row) => sum + Number(row.total_amount ?? 0), 0);
 
@@ -84,13 +84,13 @@ export default async function ProposalsPage({
           <Logo />
           <AdminNav current="billing" />
           <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">
-            Proposals
+            Agreements
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Draft scope and investment after a consult, then print a PDF for the
-            client.
+            Turn accepted proposals into signed agreements and print PDFs for
+            clients.
           </p>
-          <BillingSubnav current="proposals" />
+          <BillingSubnav current="agreements" />
         </div>
         <SignOutButton />
       </header>
@@ -107,25 +107,23 @@ export default async function ProposalsPage({
         </div>
         <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
           <div className="flex items-center gap-3">
-            <Send aria-hidden className="size-5 text-accent" />
+            <PenLine aria-hidden className="size-5 text-accent" />
             <div>
-              <p className="text-sm text-muted-foreground">Sent</p>
-              <p className="text-2xl font-bold">{sentCount}</p>
+              <p className="text-sm text-muted-foreground">Signed</p>
+              <p className="text-2xl font-bold">{signedCount}</p>
             </div>
           </div>
         </div>
         <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
           <div>
-            <p className="text-sm text-muted-foreground">Open pipeline value</p>
-            <p className="text-2xl font-bold">
-              {formatProposalMoney(pipelineValue)}
-            </p>
+            <p className="text-sm text-muted-foreground">Open value</p>
+            <p className="text-2xl font-bold">{formatMoney(openValue)}</p>
           </div>
         </div>
       </section>
 
       <nav
-        aria-label="Proposal status filters"
+        aria-label="Agreement status filters"
         className="mb-5 flex flex-wrap gap-2"
       >
         <a
@@ -134,12 +132,12 @@ export default async function ProposalsPage({
               ? "rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
               : "rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-secondary hover:text-foreground"
           }
-          href="/admin/proposals"
+          href="/admin/agreements"
         >
-          All ({proposals.length})
+          All ({agreements.length})
         </a>
-        {PROPOSAL_STATUSES.map((status) => {
-          const count = proposals.filter(
+        {AGREEMENT_STATUSES.map((status) => {
+          const count = agreements.filter(
             (row) => row.status === status.value,
           ).length;
           const active = statusFilter === status.value;
@@ -150,7 +148,7 @@ export default async function ProposalsPage({
                   ? "rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
                   : "rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-secondary hover:text-foreground"
               }
-              href={`/admin/proposals?status=${status.value}`}
+              href={`/admin/agreements?status=${status.value}`}
               key={status.value}
             >
               {status.label} ({count})
@@ -159,7 +157,7 @@ export default async function ProposalsPage({
         })}
       </nav>
 
-      <ProposalsPanel rows={rows} />
+      <AgreementsPanel rows={rows} />
     </main>
   );
 }

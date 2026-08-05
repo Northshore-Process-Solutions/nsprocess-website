@@ -311,14 +311,24 @@ export function OrganizationDetail({
       <section className="rounded-2xl border border-border bg-card p-6 shadow-soft">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold">Proposals</h2>
+            <h2 className="text-lg font-semibold">Billing</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Scope and investment documents linked to this business.
+              Proposals linked to this business. Open Billing for agreements,
+              invoices, and statements.
             </p>
           </div>
-          <Button asChild variant="outline">
-            <Link href="/admin/proposals">Open Proposals</Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline">
+              <Link
+                href={`/admin/statements?organizationId=${organization.id}`}
+              >
+                Statement
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/admin/billing">Open Billing</Link>
+            </Button>
+          </div>
         </div>
 
         {proposals.length === 0 ? (

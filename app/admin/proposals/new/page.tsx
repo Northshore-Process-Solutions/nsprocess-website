@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { AdminNav } from "@/components/admin/admin-nav";
+import { BillingSubnav } from "@/components/admin/billing-subnav";
 import { ProposalEditor } from "@/components/admin/proposal-editor";
 import { SignOutButton } from "@/components/admin/sign-out-button";
 import { Logo } from "@/components/logo";
@@ -45,7 +46,8 @@ export default async function NewProposalPage({
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <Logo />
-          <AdminNav current="proposals" />
+          <AdminNav current="billing" />
+          <BillingSubnav current="proposals" />
         </div>
         <SignOutButton />
       </header>

@@ -139,4 +139,12 @@ body {
     padding: 0 !important;
     page-break-inside: avoid;
   }
+
+  .invoice-pdf {
+    box-shadow: none !important;
+    break-inside: avoid;
+    max-width: none !important;
+    padding: 0 !important;
+    page-break-inside: avoid;
+  }
 }

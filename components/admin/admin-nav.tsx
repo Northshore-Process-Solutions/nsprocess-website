@@ -5,25 +5,23 @@ import { cn } from "@/lib/utils";
 const links = [
   { href: "/admin", label: "CRM", key: "crm" as const },
   { href: "/admin/pipeline", label: "Pipeline", key: "pipeline" as const },
-  { href: "/admin/proposals", label: "Proposals", key: "proposals" as const },
+  { href: "/admin/billing", label: "Billing", key: "billing" as const },
   { href: "/admin/projects", label: "Projects", key: "projects" as const },
   { href: "/admin/calendar", label: "Calendar", key: "calendar" as const },
   { href: "/admin/purchases", label: "Purchases", key: "purchases" as const },
   { href: "/admin/tools", label: "Stack", key: "stack" as const },
 ];
 
-export function AdminNav({
-  current,
-}: {
-  current:
-    | "crm"
-    | "pipeline"
-    | "proposals"
-    | "projects"
-    | "stack"
-    | "calendar"
-    | "purchases";
-}) {
+export type AdminNavKey =
+  | "crm"
+  | "pipeline"
+  | "billing"
+  | "projects"
+  | "stack"
+  | "calendar"
+  | "purchases";
+
+export function AdminNav({ current }: { current: AdminNavKey }) {
   return (
     <nav aria-label="Admin sections" className="mt-6 flex flex-wrap gap-2">
       {links.map((link) => {

@@ -2,54 +2,49 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, FileDown, FileSignature, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, FileDown, Plus, Receipt, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
-  createProposal,
-  markProposalSent,
-  updateProposal,
-  type ProposalInput,
-} from "@/app/admin/proposals/actions";
+  createAgreement,
+  markAgreementSigned,
+  updateAgreement,
+  type AgreementInput,
+} from "@/app/admin/agreements/actions";
 import { Button } from "@/components/ui/button";
 import {
-  computeProposalTotals,
-  emptyProposalFormValues,
-  formatProposalMoney,
-  PROPOSAL_STATUSES,
-  proposalToFormValues,
-  type ProposalItemInput,
-  type ProposalStatus,
-  type ProposalWithItems,
-} from "@/lib/proposals";
+  AGREEMENT_STATUSES,
+  agreementToFormValues,
+  emptyAgreementFormValues,
+  type AgreementStatus,
+  type AgreementWithItems,
+} from "@/lib/agreements";
+import {
+  computeLineTotal,
+  computeTotals,
+  formatMoney,
+  type LineItemInput,
+} from "@/lib/billing";
 
-type ProposalEditorProps = {
+type AgreementEditorProps = {
   mode: "create" | "edit";
-  initialProposal?: ProposalWithItems | null;
-  defaults?: {
-    clientBusinessName?: string;
-    clientContactName?: string | null;
-    clientEmail?: string | null;
-    clientPhone?: string | null;
-    leadId?: string | null;
-    organizationId?: string | null;
-    title?: string;
-  };
+  initialAgreement?: AgreementWithItems | null;
+  defaults?: Parameters<typeof emptyAgreementFormValues>[0];
 };
 
-export function ProposalEditor({
+export function AgreementEditor({
   mode,
-  initialProposal = null,
+  initialAgreement = null,
   defaults,
-}: ProposalEditorProps) {
+}: AgreementEditorProps) {
   const router = useRouter();
   const [values, setValues] = useState(() =>
-    mode === "edit" && initialProposal
-      ? proposalToFormValues(initialProposal)
-      : emptyProposalFormValues(defaults),
+    mode === "edit" && initialAgreement
+      ? agreementToFormValues(initialAgreement)
+      : emptyAgreementFormValues(defaults),
   );
   const [loading, setLoading] = useState(false);
-  const [sending, setSending] = useState(false);
+  const [signing, setSigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -58,15 +53,17 @@ export function ProposalEditor({
       quantity: Number(item.quantity) || 0,
       unitPrice: Number(item.unitPrice) || 0,
     }));
+    return computeTotals(parsedItems);
+  }, [values.items]);
+
+  const depositAmount = useMemo(() => {
     const deposit =
       values.depositPercent.trim() === ""
         ? null
         : Number(values.depositPercent);
-    return computeProposalTotals(
-      parsedItems,
-      Number.isNaN(deposit as number) ? null : deposit,
-    );
-  }, [values.items, values.depositPercent]);
+    if (deposit === null || Number.isNaN(deposit)) return null;
+    return Math.round(totals.total * (deposit / 100) * 100) / 100;
+  }, [totals.total, values.depositPercent]);
 
   function updateField<K extends keyof typeof values>(
     key: K,
@@ -78,7 +75,7 @@ export function ProposalEditor({
 
   function updateItem(
     index: number,
-    key: keyof ProposalItemInput,
+    key: keyof LineItemInput,
     value: string,
   ) {
     setValues((current) => ({
@@ -112,10 +109,11 @@ export function ProposalEditor({
     setSaved(false);
   }
 
-  function toPayload(): ProposalInput {
+  function toPayload(): AgreementInput {
     return {
       title: values.title,
       status: values.status,
+      proposalId: values.proposalId || null,
       leadId: values.leadId || null,
       organizationId: values.organizationId || null,
       clientBusinessName: values.clientBusinessName,
@@ -123,11 +121,11 @@ export function ProposalEditor({
       clientEmail: values.clientEmail || undefined,
       clientPhone: values.clientPhone || undefined,
       issuedAt: values.issuedAt,
-      validUntil: values.validUntil || undefined,
       scopeSummary: values.scopeSummary || undefined,
       terms: values.terms || undefined,
       notes: values.notes || undefined,
       depositPercent: values.depositPercent || undefined,
+      signerName: values.signerName || undefined,
       items: values.items,
     };
   }
@@ -140,20 +138,20 @@ export function ProposalEditor({
 
     const payload = toPayload();
     const result =
-      mode === "edit" && initialProposal
-        ? await updateProposal(initialProposal.id, payload)
-        : await createProposal(payload);
+      mode === "edit" && initialAgreement
+        ? await updateAgreement(initialAgreement.id, payload)
+        : await createAgreement(payload);
 
     setLoading(false);
 
     if (!result.ok) {
-      setError(result.error ?? "Failed to save proposal.");
+      setError(result.error ?? "Failed to save agreement.");
       return;
     }
 
     setSaved(true);
     if (mode === "create" && result.id) {
-      router.push(`/admin/proposals/${result.id}`);
+      router.push(`/admin/agreements/${result.id}`);
       router.refresh();
       return;
     }
@@ -161,31 +159,34 @@ export function ProposalEditor({
     router.refresh();
   }
 
-  async function onMarkSent() {
-    if (!initialProposal) return;
-    setSending(true);
+  async function onMarkSigned() {
+    if (!initialAgreement) return;
+    setSigning(true);
     setError(null);
 
-    // Persist current edits first
-    const saveResult = await updateProposal(initialProposal.id, {
+    const saveResult = await updateAgreement(initialAgreement.id, {
       ...toPayload(),
-      status: "sent",
+      status: "signed",
+      signerName: values.signerName,
     });
     if (!saveResult.ok) {
-      setSending(false);
-      setError(saveResult.error ?? "Failed to save before sending.");
+      setSigning(false);
+      setError(saveResult.error ?? "Failed to save before signing.");
       return;
     }
 
-    const result = await markProposalSent(initialProposal.id);
-    setSending(false);
+    const result = await markAgreementSigned(
+      initialAgreement.id,
+      values.signerName,
+    );
+    setSigning(false);
 
     if (!result.ok) {
-      setError(result.error ?? "Failed to mark sent.");
+      setError(result.error ?? "Failed to mark signed.");
       return;
     }
 
-    updateField("status", "sent");
+    updateField("status", "signed");
     setSaved(true);
     router.refresh();
   }
@@ -196,30 +197,30 @@ export function ProposalEditor({
         <div>
           <Link
             className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground transition hover:text-foreground"
-            href="/admin/proposals"
+            href="/admin/agreements"
           >
             <ArrowLeft aria-hidden className="size-4" />
-            Back to Proposals
+            Back to Agreements
           </Link>
           <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-            {mode === "create" ? "New proposal" : values.title || "Proposal"}
+            {mode === "create" ? "New agreement" : values.title || "Agreement"}
           </h1>
-          {initialProposal ? (
+          {initialAgreement ? (
             <p className="mt-2 text-muted-foreground">
-              {initialProposal.proposal_number}
+              {initialAgreement.agreement_number}
             </p>
           ) : (
             <p className="mt-2 text-muted-foreground">
-              Draft scope, pricing, and a printable PDF for the client.
+              Draft scope, pricing, and a printable agreement for the client.
             </p>
           )}
         </div>
         <div className="flex flex-wrap gap-2">
-          {initialProposal ? (
+          {initialAgreement ? (
             <>
               <Button asChild type="button" variant="outline">
                 <Link
-                  href={`/admin/proposals/${initialProposal.id}/pdf`}
+                  href={`/admin/agreements/${initialAgreement.id}/pdf`}
                   target="_blank"
                 >
                   <FileDown aria-hidden className="size-4" />
@@ -228,23 +229,30 @@ export function ProposalEditor({
               </Button>
               <Button asChild type="button" variant="outline">
                 <Link
-                  href={`/admin/agreements/new?proposalId=${initialProposal.id}`}
+                  href={`/admin/invoices/new?agreementId=${initialAgreement.id}&mode=deposit`}
                 >
-                  <FileSignature aria-hidden className="size-4" />
-                  Create agreement
+                  <Receipt aria-hidden className="size-4" />
+                  Deposit invoice
+                </Link>
+              </Button>
+              <Button asChild type="button" variant="outline">
+                <Link
+                  href={`/admin/invoices/new?agreementId=${initialAgreement.id}&mode=full`}
+                >
+                  Full invoice
                 </Link>
               </Button>
               <Button
-                disabled={sending || values.status === "sent"}
-                onClick={onMarkSent}
+                disabled={signing || values.status === "signed"}
+                onClick={onMarkSigned}
                 type="button"
                 variant="outline"
               >
-                {sending
+                {signing
                   ? "Marking…"
-                  : values.status === "sent"
-                    ? "Already sent"
-                    : "Mark sent"}
+                  : values.status === "signed"
+                    ? "Already signed"
+                    : "Mark signed"}
               </Button>
             </>
           ) : null}
@@ -280,11 +288,11 @@ export function ProposalEditor({
           <select
             className="min-h-11 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
             onChange={(event) =>
-              updateField("status", event.target.value as ProposalStatus)
+              updateField("status", event.target.value as AgreementStatus)
             }
             value={values.status}
           >
-            {PROPOSAL_STATUSES.map((status) => (
+            {AGREEMENT_STATUSES.map((status) => (
               <option key={status.value} value={status.value}>
                 {status.label}
               </option>
@@ -317,12 +325,12 @@ export function ProposalEditor({
           />
         </label>
         <label className="space-y-2 text-sm font-semibold">
-          Valid until
+          Signer name
           <input
             className="min-h-11 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            onChange={(event) => updateField("validUntil", event.target.value)}
-            type="date"
-            value={values.validUntil}
+            onChange={(event) => updateField("signerName", event.target.value)}
+            placeholder="Client signatory"
+            value={values.signerName}
           />
         </label>
       </section>
@@ -394,8 +402,10 @@ export function ProposalEditor({
 
         <div className="space-y-3">
           {values.items.map((item, index) => {
-            const lineTotal =
-              (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0);
+            const lineTotal = computeLineTotal(
+              Number(item.quantity) || 0,
+              Number(item.unitPrice) || 0,
+            );
             return (
               <div
                 className="grid gap-3 rounded-xl border border-border bg-background p-3 sm:grid-cols-[1fr_5rem_7rem_6rem_auto]"
@@ -441,7 +451,7 @@ export function ProposalEditor({
                 <div className="space-y-1 text-xs font-semibold">
                   Total
                   <p className="flex min-h-10 items-center text-sm font-medium">
-                    {formatProposalMoney(lineTotal)}
+                    {formatMoney(lineTotal)}
                   </p>
                 </div>
                 <div className="flex items-end">
@@ -464,18 +474,14 @@ export function ProposalEditor({
         <div className="flex flex-col items-end gap-1 border-t border-border pt-4 text-sm">
           <p>
             <span className="text-muted-foreground">Subtotal / total:</span>{" "}
-            <span className="font-semibold">
-              {formatProposalMoney(totals.total)}
-            </span>
+            <span className="font-semibold">{formatMoney(totals.total)}</span>
           </p>
-          {totals.depositAmount !== null ? (
+          {depositAmount !== null ? (
             <p>
               <span className="text-muted-foreground">
                 Deposit ({values.depositPercent}%):
               </span>{" "}
-              <span className="font-semibold">
-                {formatProposalMoney(totals.depositAmount)}
-              </span>
+              <span className="font-semibold">{formatMoney(depositAmount)}</span>
             </p>
           ) : null}
         </div>

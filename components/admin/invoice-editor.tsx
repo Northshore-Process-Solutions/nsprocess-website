@@ -2,54 +2,61 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, FileDown, FileSignature, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, FileDown, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
-  createProposal,
-  markProposalSent,
-  updateProposal,
-  type ProposalInput,
-} from "@/app/admin/proposals/actions";
+  createInvoice,
+  markInvoicePaid,
+  markInvoiceSent,
+  updateInvoice,
+  type InvoiceInput,
+} from "@/app/admin/invoices/actions";
 import { Button } from "@/components/ui/button";
+import { computeTotals, formatMoney, type LineItemInput } from "@/lib/billing";
 import {
-  computeProposalTotals,
-  emptyProposalFormValues,
-  formatProposalMoney,
-  PROPOSAL_STATUSES,
-  proposalToFormValues,
-  type ProposalItemInput,
-  type ProposalStatus,
-  type ProposalWithItems,
-} from "@/lib/proposals";
+  emptyInvoiceFormValues,
+  INVOICE_STATUSES,
+  INVOICE_TYPES,
+  invoiceToFormValues,
+  type InvoiceStatus,
+  type InvoiceType,
+  type InvoiceWithItems,
+} from "@/lib/invoices";
 
-type ProposalEditorProps = {
+type InvoiceEditorProps = {
   mode: "create" | "edit";
-  initialProposal?: ProposalWithItems | null;
+  initialInvoice?: InvoiceWithItems | null;
   defaults?: {
+    title?: string;
+    invoiceType?: InvoiceType;
     clientBusinessName?: string;
     clientContactName?: string | null;
     clientEmail?: string | null;
     clientPhone?: string | null;
     leadId?: string | null;
     organizationId?: string | null;
-    title?: string;
+    agreementId?: string | null;
+    proposalId?: string | null;
+    projectId?: string | null;
+    items?: LineItemInput[];
   };
 };
 
-export function ProposalEditor({
+export function InvoiceEditor({
   mode,
-  initialProposal = null,
+  initialInvoice = null,
   defaults,
-}: ProposalEditorProps) {
+}: InvoiceEditorProps) {
   const router = useRouter();
   const [values, setValues] = useState(() =>
-    mode === "edit" && initialProposal
-      ? proposalToFormValues(initialProposal)
-      : emptyProposalFormValues(defaults),
+    mode === "edit" && initialInvoice
+      ? invoiceToFormValues(initialInvoice)
+      : emptyInvoiceFormValues(defaults),
   );
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -58,15 +65,13 @@ export function ProposalEditor({
       quantity: Number(item.quantity) || 0,
       unitPrice: Number(item.unitPrice) || 0,
     }));
-    const deposit =
-      values.depositPercent.trim() === ""
-        ? null
-        : Number(values.depositPercent);
-    return computeProposalTotals(
-      parsedItems,
-      Number.isNaN(deposit as number) ? null : deposit,
-    );
-  }, [values.items, values.depositPercent]);
+    return computeTotals(parsedItems);
+  }, [values.items]);
+
+  const balanceDue = useMemo(() => {
+    const paid = Number(values.amountPaid) || 0;
+    return Math.max(0, Math.round((totals.total - paid) * 100) / 100);
+  }, [totals.total, values.amountPaid]);
 
   function updateField<K extends keyof typeof values>(
     key: K,
@@ -78,7 +83,7 @@ export function ProposalEditor({
 
   function updateItem(
     index: number,
-    key: keyof ProposalItemInput,
+    key: keyof LineItemInput,
     value: string,
   ) {
     setValues((current) => ({
@@ -112,22 +117,24 @@ export function ProposalEditor({
     setSaved(false);
   }
 
-  function toPayload(): ProposalInput {
+  function toPayload(): InvoiceInput {
     return {
       title: values.title,
+      invoiceType: values.invoiceType,
       status: values.status,
+      agreementId: values.agreementId || null,
+      proposalId: values.proposalId || null,
       leadId: values.leadId || null,
       organizationId: values.organizationId || null,
+      projectId: values.projectId || null,
       clientBusinessName: values.clientBusinessName,
       clientContactName: values.clientContactName || undefined,
       clientEmail: values.clientEmail || undefined,
       clientPhone: values.clientPhone || undefined,
       issuedAt: values.issuedAt,
-      validUntil: values.validUntil || undefined,
-      scopeSummary: values.scopeSummary || undefined,
-      terms: values.terms || undefined,
+      dueAt: values.dueAt || undefined,
       notes: values.notes || undefined,
-      depositPercent: values.depositPercent || undefined,
+      amountPaid: values.amountPaid || undefined,
       items: values.items,
     };
   }
@@ -140,20 +147,20 @@ export function ProposalEditor({
 
     const payload = toPayload();
     const result =
-      mode === "edit" && initialProposal
-        ? await updateProposal(initialProposal.id, payload)
-        : await createProposal(payload);
+      mode === "edit" && initialInvoice
+        ? await updateInvoice(initialInvoice.id, payload)
+        : await createInvoice(payload);
 
     setLoading(false);
 
     if (!result.ok) {
-      setError(result.error ?? "Failed to save proposal.");
+      setError(result.error ?? "Failed to save invoice.");
       return;
     }
 
     setSaved(true);
     if (mode === "create" && result.id) {
-      router.push(`/admin/proposals/${result.id}`);
+      router.push(`/admin/invoices/${result.id}`);
       router.refresh();
       return;
     }
@@ -162,12 +169,11 @@ export function ProposalEditor({
   }
 
   async function onMarkSent() {
-    if (!initialProposal) return;
+    if (!initialInvoice) return;
     setSending(true);
     setError(null);
 
-    // Persist current edits first
-    const saveResult = await updateProposal(initialProposal.id, {
+    const saveResult = await updateInvoice(initialInvoice.id, {
       ...toPayload(),
       status: "sent",
     });
@@ -177,7 +183,7 @@ export function ProposalEditor({
       return;
     }
 
-    const result = await markProposalSent(initialProposal.id);
+    const result = await markInvoiceSent(initialInvoice.id);
     setSending(false);
 
     if (!result.ok) {
@@ -190,61 +196,92 @@ export function ProposalEditor({
     router.refresh();
   }
 
+  async function onMarkPaid() {
+    if (!initialInvoice) return;
+    setPaying(true);
+    setError(null);
+
+    const saveResult = await updateInvoice(initialInvoice.id, toPayload());
+    if (!saveResult.ok) {
+      setPaying(false);
+      setError(saveResult.error ?? "Failed to save before marking paid.");
+      return;
+    }
+
+    const paidAmount = Number(values.amountPaid) || totals.total;
+    const result = await markInvoicePaid(initialInvoice.id, paidAmount);
+    setPaying(false);
+
+    if (!result.ok) {
+      setError(result.error ?? "Failed to mark paid.");
+      return;
+    }
+
+    updateField("status", "paid");
+    updateField("amountPaid", String(paidAmount || totals.total));
+    setSaved(true);
+    router.refresh();
+  }
+
   return (
     <form className="space-y-5" onSubmit={onSave}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <Link
             className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground transition hover:text-foreground"
-            href="/admin/proposals"
+            href="/admin/invoices"
           >
             <ArrowLeft aria-hidden className="size-4" />
-            Back to Proposals
+            Back to Invoices
           </Link>
           <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-            {mode === "create" ? "New proposal" : values.title || "Proposal"}
+            {mode === "create" ? "New invoice" : values.title || "Invoice"}
           </h1>
-          {initialProposal ? (
+          {initialInvoice ? (
             <p className="mt-2 text-muted-foreground">
-              {initialProposal.proposal_number}
+              {initialInvoice.invoice_number}
             </p>
           ) : (
             <p className="mt-2 text-muted-foreground">
-              Draft scope, pricing, and a printable PDF for the client.
+              Draft line items, due date, and a printable PDF for the client.
             </p>
           )}
         </div>
         <div className="flex flex-wrap gap-2">
-          {initialProposal ? (
+          {initialInvoice ? (
             <>
               <Button asChild type="button" variant="outline">
                 <Link
-                  href={`/admin/proposals/${initialProposal.id}/pdf`}
+                  href={`/admin/invoices/${initialInvoice.id}/pdf`}
                   target="_blank"
                 >
                   <FileDown aria-hidden className="size-4" />
                   Open PDF
                 </Link>
               </Button>
-              <Button asChild type="button" variant="outline">
-                <Link
-                  href={`/admin/agreements/new?proposalId=${initialProposal.id}`}
-                >
-                  <FileSignature aria-hidden className="size-4" />
-                  Create agreement
-                </Link>
-              </Button>
               <Button
-                disabled={sending || values.status === "sent"}
+                disabled={sending || values.status === "sent" || values.status === "paid"}
                 onClick={onMarkSent}
                 type="button"
                 variant="outline"
               >
                 {sending
                   ? "Marking…"
-                  : values.status === "sent"
+                  : values.status === "sent" || values.status === "paid"
                     ? "Already sent"
                     : "Mark sent"}
+              </Button>
+              <Button
+                disabled={paying || values.status === "paid"}
+                onClick={onMarkPaid}
+                type="button"
+                variant="outline"
+              >
+                {paying
+                  ? "Marking…"
+                  : values.status === "paid"
+                    ? "Already paid"
+                    : "Mark paid"}
               </Button>
             </>
           ) : null}
@@ -276,35 +313,36 @@ export function ProposalEditor({
           />
         </label>
         <label className="space-y-2 text-sm font-semibold">
-          Status
+          Type
           <select
             className="min-h-11 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
             onChange={(event) =>
-              updateField("status", event.target.value as ProposalStatus)
+              updateField("invoiceType", event.target.value as InvoiceType)
             }
-            value={values.status}
+            value={values.invoiceType}
           >
-            {PROPOSAL_STATUSES.map((status) => (
-              <option key={status.value} value={status.value}>
-                {status.label}
+            {INVOICE_TYPES.map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
               </option>
             ))}
           </select>
         </label>
         <label className="space-y-2 text-sm font-semibold">
-          Deposit %
-          <input
+          Status
+          <select
             className="min-h-11 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            inputMode="decimal"
-            max="100"
-            min="0"
             onChange={(event) =>
-              updateField("depositPercent", event.target.value)
+              updateField("status", event.target.value as InvoiceStatus)
             }
-            step="1"
-            type="number"
-            value={values.depositPercent}
-          />
+            value={values.status}
+          >
+            {INVOICE_STATUSES.map((status) => (
+              <option key={status.value} value={status.value}>
+                {status.label}
+              </option>
+            ))}
+          </select>
         </label>
         <label className="space-y-2 text-sm font-semibold">
           Issued
@@ -317,12 +355,23 @@ export function ProposalEditor({
           />
         </label>
         <label className="space-y-2 text-sm font-semibold">
-          Valid until
+          Due
           <input
             className="min-h-11 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            onChange={(event) => updateField("validUntil", event.target.value)}
+            onChange={(event) => updateField("dueAt", event.target.value)}
             type="date"
-            value={values.validUntil}
+            value={values.dueAt}
+          />
+        </label>
+        <label className="space-y-2 text-sm font-semibold">
+          Amount paid
+          <input
+            className="min-h-11 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            min="0"
+            onChange={(event) => updateField("amountPaid", event.target.value)}
+            step="0.01"
+            type="number"
+            value={values.amountPaid}
           />
         </label>
       </section>
@@ -365,20 +414,6 @@ export function ProposalEditor({
             className="min-h-11 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
             onChange={(event) => updateField("clientPhone", event.target.value)}
             value={values.clientPhone}
-          />
-        </label>
-      </section>
-
-      <section className="space-y-4 rounded-2xl border border-border bg-card p-5 shadow-soft">
-        <label className="block space-y-2 text-sm font-semibold">
-          Scope summary
-          <textarea
-            className="min-h-28 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            onChange={(event) =>
-              updateField("scopeSummary", event.target.value)
-            }
-            placeholder="What we will do, outcomes, and boundaries."
-            value={values.scopeSummary}
           />
         </label>
       </section>
@@ -441,7 +476,7 @@ export function ProposalEditor({
                 <div className="space-y-1 text-xs font-semibold">
                   Total
                   <p className="flex min-h-10 items-center text-sm font-medium">
-                    {formatProposalMoney(lineTotal)}
+                    {formatMoney(lineTotal)}
                   </p>
                 </div>
                 <div className="flex items-end">
@@ -464,38 +499,28 @@ export function ProposalEditor({
         <div className="flex flex-col items-end gap-1 border-t border-border pt-4 text-sm">
           <p>
             <span className="text-muted-foreground">Subtotal / total:</span>{" "}
+            <span className="font-semibold">{formatMoney(totals.total)}</span>
+          </p>
+          <p>
+            <span className="text-muted-foreground">Amount paid:</span>{" "}
             <span className="font-semibold">
-              {formatProposalMoney(totals.total)}
+              {formatMoney(values.amountPaid)}
             </span>
           </p>
-          {totals.depositAmount !== null ? (
-            <p>
-              <span className="text-muted-foreground">
-                Deposit ({values.depositPercent}%):
-              </span>{" "}
-              <span className="font-semibold">
-                {formatProposalMoney(totals.depositAmount)}
-              </span>
-            </p>
-          ) : null}
+          <p>
+            <span className="text-muted-foreground">Balance due:</span>{" "}
+            <span className="font-semibold">{formatMoney(balanceDue)}</span>
+          </p>
         </div>
       </section>
 
-      <section className="grid gap-4 rounded-2xl border border-border bg-card p-5 shadow-soft lg:grid-cols-2">
-        <label className="space-y-2 text-sm font-semibold">
-          Terms
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-soft">
+        <label className="block space-y-2 text-sm font-semibold">
+          Notes
           <textarea
-            className="min-h-40 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            onChange={(event) => updateField("terms", event.target.value)}
-            value={values.terms}
-          />
-        </label>
-        <label className="space-y-2 text-sm font-semibold">
-          Internal notes
-          <textarea
-            className="min-h-40 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="min-h-28 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
             onChange={(event) => updateField("notes", event.target.value)}
-            placeholder="Not shown on the PDF."
+            placeholder="Payment instructions or internal notes."
             value={values.notes}
           />
         </label>

@@ -1,20 +1,19 @@
 import { notFound, redirect } from "next/navigation";
 
 import { AdminNav } from "@/components/admin/admin-nav";
-import { BillingSubnav } from "@/components/admin/billing-subnav";
-import { ProposalEditor } from "@/components/admin/proposal-editor";
+import { AgreementEditor } from "@/components/admin/agreement-editor";
 import { SignOutButton } from "@/components/admin/sign-out-button";
 import { Logo } from "@/components/logo";
-import type { ProposalWithItems } from "@/lib/proposals";
+import type { AgreementWithItems } from "@/lib/agreements";
 import { createClient } from "@/lib/supabase/server";
 
-type ProposalPageProps = {
+type AgreementPageProps = {
   params: Promise<{
     id: string;
   }>;
 };
 
-export default async function ProposalPage({ params }: ProposalPageProps) {
+export default async function AgreementPage({ params }: AgreementPageProps) {
   const { id } = await params;
 
   const supabase = await createClient();
@@ -25,13 +24,13 @@ export default async function ProposalPage({ params }: ProposalPageProps) {
   }
 
   const { data, error } = await supabase
-    .from("proposals")
+    .from("agreements")
     .select(
       `
       *,
-      proposal_items (
+      agreement_items (
         id,
-        proposal_id,
+        agreement_id,
         description,
         quantity,
         unit_price,
@@ -39,10 +38,10 @@ export default async function ProposalPage({ params }: ProposalPageProps) {
         sort_order,
         created_at
       ),
-      leads (
+      proposals (
         id,
-        business_name,
-        stage
+        proposal_number,
+        title
       ),
       organizations (
         id,
@@ -54,7 +53,7 @@ export default async function ProposalPage({ params }: ProposalPageProps) {
     .maybeSingle();
 
   if (error) {
-    throw new Error(`Failed to load proposal: ${error.message}`);
+    throw new Error(`Failed to load agreement: ${error.message}`);
   }
 
   if (!data) {
@@ -67,13 +66,12 @@ export default async function ProposalPage({ params }: ProposalPageProps) {
         <div>
           <Logo />
           <AdminNav current="billing" />
-          <BillingSubnav current="proposals" />
         </div>
         <SignOutButton />
       </header>
 
-      <ProposalEditor
-        initialProposal={data as ProposalWithItems}
+      <AgreementEditor
+        initialAgreement={data as AgreementWithItems}
         mode="edit"
       />
     </main>
