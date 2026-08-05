@@ -98,15 +98,17 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
                   aria-hidden="true"
                   className="pointer-events-none absolute -left-[9999px] h-0 w-0 overflow-hidden opacity-0"
                 >
-                  <label>
-                    Company website
-                    <input
-                      autoComplete="off"
-                      name="company_website"
-                      tabIndex={-1}
-                      type="text"
-                    />
-                  </label>
+                  <label htmlFor="hp_nsps_field">Leave blank</label>
+                  <input
+                    autoComplete="off"
+                    data-1p-ignore="true"
+                    data-form-type="other"
+                    data-lpignore="true"
+                    id="hp_nsps_field"
+                    name="hp_nsps_field"
+                    tabIndex={-1}
+                    type="text"
+                  />
                 </div>
                 <div className="grid gap-5 sm:grid-cols-2">
                   <label className="space-y-2 text-sm font-semibold">

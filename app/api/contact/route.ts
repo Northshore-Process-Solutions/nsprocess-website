@@ -58,8 +58,10 @@ export async function POST(request: Request) {
   const formData = await request.formData();
 
   // Honeypot: real users never see/fill this field.
-  const honeypot = getField(formData, "company_website");
+  // Keep the name non-semantic so browsers/password managers do not autofill it.
+  const honeypot = getField(formData, "hp_nsps_field");
   if (honeypot) {
+    console.warn("Contact form honeypot tripped; dropping submission");
     return redirectToContact(request, "sent");
   }
 
