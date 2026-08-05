@@ -3,12 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { cn } from "@/lib/utils";
+
 export function ActionHoverTooltip({
   children,
   content,
+  width = 256,
+  className,
 }: {
   children: React.ReactNode;
   content: React.ReactNode;
+  width?: number;
+  className?: string;
 }) {
   const triggerRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -22,12 +28,11 @@ export function ActionHoverTooltip({
     const rect = triggerRef.current?.getBoundingClientRect();
     if (!rect) return;
 
-    const width = 256;
     const left = Math.min(
       Math.max(8, rect.right - width),
       window.innerWidth - width - 8,
     );
-    const placeBelow = rect.top < 140;
+    const placeBelow = rect.top < 160;
 
     setCoords({
       top: placeBelow ? rect.bottom + 8 : rect.top - 8,
@@ -50,17 +55,21 @@ export function ActionHoverTooltip({
       window.removeEventListener("scroll", handleReposition, true);
       window.removeEventListener("resize", handleReposition);
     };
-  }, [open]);
+  }, [open, width]);
 
   const tooltip =
     open && coords && typeof document !== "undefined"
       ? createPortal(
           <div
-            className="pointer-events-none fixed z-[80] w-64 rounded-2xl border border-border bg-card p-3 text-left shadow-card"
+            className={cn(
+              "pointer-events-none fixed z-[80] rounded-2xl border border-border bg-card p-3 text-left shadow-card",
+              className,
+            )}
             role="tooltip"
             style={{
               top: coords.top,
               left: coords.left,
+              width,
               transform: coords.placeBelow ? "none" : "translateY(-100%)",
             }}
           >

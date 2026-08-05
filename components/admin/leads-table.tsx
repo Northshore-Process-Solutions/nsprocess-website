@@ -108,6 +108,107 @@ function LeadEmailAction({
   );
 }
 
+function PreviewField({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        {label}
+      </p>
+      <div className="mt-1 text-sm font-medium text-foreground">{value}</div>
+    </div>
+  );
+}
+
+function LeadViewAction({
+  lead,
+  onView,
+}: {
+  lead: LeadRow;
+  onView: (row: LeadRow) => void;
+}) {
+  const message = lead.message?.trim();
+
+  return (
+    <ActionHoverTooltip
+      content={
+        <>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              Lead preview
+            </p>
+            <p className="mt-1 text-base font-bold tracking-tight">
+              {lead.business_name}
+            </p>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {lead.contact_name}
+            </p>
+          </div>
+
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <PreviewField
+              label="Stage"
+              value={
+                <span
+                  className={cn(
+                    "inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold",
+                    stageStyles[lead.stage],
+                  )}
+                >
+                  {leadStageLabel(lead.stage)}
+                </span>
+              }
+            />
+            <PreviewField
+              label="Source"
+              value={leadSourceLabel(lead.source)}
+            />
+            <PreviewField
+              label="Created"
+              value={new Date(lead.created_at).toLocaleDateString()}
+            />
+            <PreviewField
+              label="Follow-up"
+              value={lead.next_follow_up_at || "—"}
+            />
+          </div>
+
+          <div className="mt-3 border-t border-border pt-3">
+            <PreviewField
+              label="Inquiry"
+              value={
+                <p className="line-clamp-3 font-normal leading-5 text-foreground/90">
+                  {message || "No inquiry message."}
+                </p>
+              }
+            />
+          </div>
+
+          <p className="mt-3 text-xs text-muted-foreground">
+            Click to open full lead.
+          </p>
+        </>
+      }
+      width={288}
+    >
+      <Button
+        aria-label={`View ${lead.business_name}`}
+        onClick={() => onView(lead)}
+        size="icon"
+        type="button"
+        variant="outline"
+      >
+        <Eye aria-hidden className="size-4" />
+      </Button>
+    </ActionHoverTooltip>
+  );
+}
+
 function LeadCalendarAction({
   lead,
   events,
@@ -251,15 +352,7 @@ export function LeadsTable({
                     events={eventsByLeadId[row.id] ?? []}
                     lead={row}
                   />
-                  <Button
-                    aria-label={`View ${row.business_name}`}
-                    onClick={() => onView(row)}
-                    size="icon"
-                    type="button"
-                    variant="outline"
-                  >
-                    <Eye aria-hidden className="size-4" />
-                  </Button>
+                  <LeadViewAction lead={row} onView={onView} />
                 </div>
               </td>
             </tr>
