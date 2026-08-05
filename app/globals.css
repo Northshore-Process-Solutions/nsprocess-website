@@ -117,9 +117,17 @@ body {
 }
 
 @media print {
+  @page {
+    size: letter;
+    margin: 0.4in;
+  }
+
+  html,
   body {
     background: white !important;
     color: #102033 !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
   .print\:hidden {
@@ -128,7 +136,15 @@ body {
 
   .proposal-pdf {
     box-shadow: none !important;
+    break-inside: avoid;
     max-width: none !important;
     padding: 0 !important;
+    page-break-inside: avoid;
+  }
+
+  .proposal-pdf,
+  .proposal-pdf * {
+    orphans: 2;
+    widows: 2;
   }
 }
