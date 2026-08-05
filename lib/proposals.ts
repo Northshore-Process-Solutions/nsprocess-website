@@ -71,9 +71,11 @@ export const PROPOSAL_STATUSES: Array<{
   { value: "expired", label: "Expired" },
 ];
 
-export const DEFAULT_PROPOSAL_TERMS = `Payment: Deposit of the stated percentage is due upon acceptance. Remaining balance follows the line items or milestone schedule.
-Scope: Limited to items listed here; changes may adjust timeline and investment.
-Validity: Valid through the date above unless extended in writing. Kickoff is confirmed after deposit.`;
+export const DEFAULT_PROPOSAL_TERMS = `Payment: A deposit of the stated percentage is due upon acceptance to reserve the engagement. Remaining balance follows the line items or milestone schedule.
+
+Scope: Work is limited to the items listed in this proposal. Changes may adjust timeline and investment.
+
+Validity: This proposal is valid through the date shown above unless extended in writing. Kickoff is confirmed after deposit is received.`;
 
 export function proposalStatusLabel(status: ProposalStatus | string) {
   return (
