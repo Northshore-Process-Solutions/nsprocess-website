@@ -33,6 +33,11 @@ import {
   type ProjectRow,
 } from "@/lib/projects";
 import type { PurchaseWithRelations } from "@/lib/purchases";
+import {
+  formatProposalMoney,
+  proposalStatusLabel,
+  type ProposalWithItems,
+} from "@/lib/proposals";
 import { cn } from "@/lib/utils";
 
 const statusStyles: Record<string, string> = {
@@ -61,12 +66,21 @@ const projectStatusStyles: Record<string, string> = {
   cancelled: "bg-red-50 text-red-800 border-red-200",
 };
 
+const proposalStatusStyles: Record<string, string> = {
+  draft: "bg-slate-100 text-slate-700 border-slate-200",
+  sent: "bg-amber-50 text-amber-900 border-amber-200",
+  accepted: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  declined: "bg-red-50 text-red-800 border-red-200",
+  expired: "bg-stone-100 text-stone-700 border-stone-200",
+};
+
 type OrganizationDetailProps = {
   organization: CrmTableRow;
   leads: LeadRow[];
   projects: ProjectRow[];
   activities: ActivityRow[];
   purchases: PurchaseWithRelations[];
+  proposals: ProposalWithItems[];
 };
 
 export function OrganizationDetail({
@@ -75,6 +89,7 @@ export function OrganizationDetail({
   projects,
   activities,
   purchases,
+  proposals,
 }: OrganizationDetailProps) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
@@ -292,6 +307,81 @@ export function OrganizationDetail({
         activities={activities}
         organizationId={organization.id}
       />
+
+      <section className="rounded-2xl border border-border bg-card p-6 shadow-soft">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Proposals</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Scope and investment documents linked to this business.
+            </p>
+          </div>
+          <Button asChild variant="outline">
+            <Link href="/admin/proposals">Open Proposals</Link>
+          </Button>
+        </div>
+
+        {proposals.length === 0 ? (
+          <div className="mt-6 rounded-2xl border border-dashed border-border p-8 text-center">
+            <p className="font-semibold">No proposals yet</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Create one from Pipeline after a consult.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-6 overflow-x-auto">
+            <table className="min-w-full border-collapse text-left text-sm">
+              <thead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                <tr>
+                  <th className="px-2 py-2 font-semibold">Proposal</th>
+                  <th className="px-2 py-2 font-semibold">Status</th>
+                  <th className="px-2 py-2 font-semibold">Total</th>
+                  <th className="px-2 py-2 font-semibold">Issued</th>
+                </tr>
+              </thead>
+              <tbody>
+                {proposals.map((proposal) => (
+                  <tr
+                    className="border-t border-border align-top"
+                    key={proposal.id}
+                  >
+                    <td className="px-2 py-3">
+                      <Link
+                        className="font-medium text-accent hover:underline"
+                        href={`/admin/proposals/${proposal.id}`}
+                      >
+                        {proposal.title}
+                      </Link>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {proposal.proposal_number}
+                      </p>
+                    </td>
+                    <td className="px-2 py-3">
+                      <span
+                        className={cn(
+                          "inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
+                          proposalStatusStyles[proposal.status] ??
+                            proposalStatusStyles.draft,
+                        )}
+                      >
+                        {proposalStatusLabel(proposal.status)}
+                      </span>
+                    </td>
+                    <td className="px-2 py-3 whitespace-nowrap">
+                      {formatProposalMoney(proposal.total_amount)}
+                    </td>
+                    <td className="px-2 py-3 whitespace-nowrap">
+                      {new Date(
+                        `${proposal.issued_at}T12:00:00`,
+                      ).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       <section className="rounded-2xl border border-border bg-card p-6 shadow-soft">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

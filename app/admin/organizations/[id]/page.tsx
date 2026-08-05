@@ -12,6 +12,7 @@ import {
 import type { LeadRow } from "@/lib/leads";
 import type { ProjectRow } from "@/lib/projects";
 import type { PurchaseWithRelations } from "@/lib/purchases";
+import type { ProposalWithItems } from "@/lib/proposals";
 import { createClient } from "@/lib/supabase/server";
 
 type OrganizationPageProps = {
@@ -144,16 +145,47 @@ export default async function OrganizationPage({
     purchasesQuery = purchasesQuery.eq("organization_id", id);
   }
 
+  let proposalsQuery = supabase
+    .from("proposals")
+    .select(
+      `
+      *,
+      proposal_items (
+        id,
+        proposal_id,
+        description,
+        quantity,
+        unit_price,
+        line_total,
+        sort_order,
+        created_at
+      )
+    `,
+    )
+    .order("issued_at", { ascending: false });
+
+  if (leadIds.length > 0) {
+    proposalsQuery = proposalsQuery.or(
+      `organization_id.eq.${id},lead_id.in.(${leadIds.join(",")})`,
+    );
+  } else {
+    proposalsQuery = proposalsQuery.eq("organization_id", id);
+  }
+
   const [
     { data: activitiesData, error: activitiesError },
     { data: purchasesData, error: purchasesError },
-  ] = await Promise.all([activitiesQuery, purchasesQuery]);
+    { data: proposalsData, error: proposalsError },
+  ] = await Promise.all([activitiesQuery, purchasesQuery, proposalsQuery]);
 
   if (activitiesError) {
     throw new Error(`Failed to load activities: ${activitiesError.message}`);
   }
   if (purchasesError) {
     throw new Error(`Failed to load purchases: ${purchasesError.message}`);
+  }
+  if (proposalsError) {
+    throw new Error(`Failed to load proposals: ${proposalsError.message}`);
   }
 
   const organization = mapOrganizationToCrmRow(
@@ -163,6 +195,14 @@ export default async function OrganizationPage({
   const purchases = Array.from(
     new Map(
       ((purchasesData ?? []) as PurchaseWithRelations[]).map((row) => [
+        row.id,
+        row,
+      ]),
+    ).values(),
+  );
+  const proposals = Array.from(
+    new Map(
+      ((proposalsData ?? []) as ProposalWithItems[]).map((row) => [
         row.id,
         row,
       ]),
@@ -184,6 +224,7 @@ export default async function OrganizationPage({
         leads={leads}
         organization={organization}
         projects={projects}
+        proposals={proposals}
         purchases={purchases}
       />
     </main>

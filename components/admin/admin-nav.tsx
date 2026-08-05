@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 const links = [
   { href: "/admin", label: "CRM", key: "crm" as const },
   { href: "/admin/pipeline", label: "Pipeline", key: "pipeline" as const },
+  { href: "/admin/proposals", label: "Proposals", key: "proposals" as const },
   { href: "/admin/projects", label: "Projects", key: "projects" as const },
   { href: "/admin/calendar", label: "Calendar", key: "calendar" as const },
   { href: "/admin/purchases", label: "Purchases", key: "purchases" as const },
@@ -17,6 +18,7 @@ export function AdminNav({
   current:
     | "crm"
     | "pipeline"
+    | "proposals"
     | "projects"
     | "stack"
     | "calendar"

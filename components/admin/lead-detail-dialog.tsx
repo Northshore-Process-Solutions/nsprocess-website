@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, Pencil, Trash2 } from "lucide-react";
+import { CalendarDays, FileText, Pencil, Trash2 } from "lucide-react";
 
 import { ActivityPanel } from "@/components/admin/activity-panel";
 import { Button } from "@/components/ui/button";
@@ -172,6 +172,12 @@ export function LeadDetailDialog({
               <Link href={`/admin/calendar?leadId=${lead.id}`}>
                 <CalendarDays aria-hidden className="size-4" />
                 Schedule
+              </Link>
+            </Button>
+            <Button asChild type="button" variant="outline">
+              <Link href={`/admin/proposals/new?leadId=${lead.id}`}>
+                <FileText aria-hidden className="size-4" />
+                Proposal
               </Link>
             </Button>
             <Button onClick={onClose} type="button" variant="outline">

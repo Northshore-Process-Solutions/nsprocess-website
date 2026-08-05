@@ -115,3 +115,20 @@ body {
   background: rgb(47 128 237 / 0.18);
   color: var(--foreground);
 }
+
+@media print {
+  body {
+    background: white !important;
+    color: #102033 !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .proposal-pdf {
+    box-shadow: none !important;
+    max-width: none !important;
+    padding: 0 !important;
+  }
+}
