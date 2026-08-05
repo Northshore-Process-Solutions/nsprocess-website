@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 
 import { normalizeUsPhone } from "@/lib/phone";
+import { contact } from "@/lib/site-data";
 import { createPublicSupabaseClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -126,6 +127,42 @@ export async function POST(request: Request) {
         <p>${safe.message}</p>
       `,
     });
+
+    try {
+      await transporter.sendMail({
+        from: `"North Shore Process Solutions" <${SMTP_USER}>`,
+        to: email,
+        replyTo: contact.email,
+        subject: "We received your Free Process Review request",
+        text: [
+          `Hi ${firstName},`,
+          "",
+          "Thanks for reaching out to North Shore Process Solutions.",
+          "",
+          "We received your Free Process Review request and will review it shortly. Someone from our team will contact you soon.",
+          "",
+          "If you need to add anything in the meantime, just reply to this email or call us.",
+          "",
+          `Email: ${contact.email}`,
+          `Phone: ${contact.phone}`,
+          "",
+          "North Shore Process Solutions",
+        ].join("\n"),
+        html: `
+          <p>Hi ${escapeHtml(firstName)},</p>
+          <p>Thanks for reaching out to <strong>North Shore Process Solutions</strong>.</p>
+          <p>We received your Free Process Review request and will review it shortly. Someone from our team will contact you soon.</p>
+          <p>If you need to add anything in the meantime, just reply to this email or call us.</p>
+          <p>
+            Email: <a href="mailto:${escapeHtml(contact.email)}">${escapeHtml(contact.email)}</a><br />
+            Phone: <a href="tel:+1${contact.phone.replace(/\D/g, "")}">${escapeHtml(contact.phone)}</a>
+          </p>
+          <p>North Shore Process Solutions</p>
+        `,
+      });
+    } catch (autoReplyError) {
+      console.error("Failed to send contact form auto-reply", autoReplyError);
+    }
 
     await createWebsiteLead({
       firstName,
