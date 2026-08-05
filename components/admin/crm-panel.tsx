@@ -61,30 +61,31 @@ export function CrmPanel({ rows }: { rows: CrmTableRow[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
-          Search, open, edit, or delete organizations from this directory.
-        </p>
-        <Button onClick={openCreate} type="button" variant="accent">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <label className="relative block min-w-0 flex-1">
+          <span className="sr-only">Search organizations</span>
+          <Search
+            aria-hidden
+            className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+          />
+          <input
+            className="min-h-11 w-full rounded-2xl border border-input bg-background py-3 pl-11 pr-4 text-base outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search by name, contact, email, phone, category…"
+            type="search"
+            value={query}
+          />
+        </label>
+        <Button
+          className="shrink-0"
+          onClick={openCreate}
+          type="button"
+          variant="accent"
+        >
           <Plus aria-hidden className="size-4" />
           Add organization
         </Button>
       </div>
-
-      <label className="relative block">
-        <span className="sr-only">Search organizations</span>
-        <Search
-          aria-hidden
-          className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-        />
-        <input
-          className="min-h-11 w-full rounded-2xl border border-input bg-background py-3 pl-11 pr-4 text-base outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search by name, contact, email, phone, category…"
-          type="search"
-          value={query}
-        />
-      </label>
 
       {error ? (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-900">
