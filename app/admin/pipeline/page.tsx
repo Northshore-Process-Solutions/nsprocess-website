@@ -6,6 +6,7 @@ import { LeadsPanel } from "@/components/admin/leads-panel";
 import { SignOutButton } from "@/components/admin/sign-out-button";
 import { Logo } from "@/components/logo";
 import type { ActivityRow } from "@/lib/activities";
+import type { CalendarEventRow } from "@/lib/calendar";
 import { LEAD_STAGES, type LeadRow, type LeadStage } from "@/lib/leads";
 import { createClient } from "@/lib/supabase/server";
 
@@ -43,19 +44,34 @@ export default async function PipelinePage({ searchParams }: PipelinePageProps) 
 
   const leadIds = leads.map((lead) => lead.id);
   let activities: ActivityRow[] = [];
+  let calendarEvents: CalendarEventRow[] = [];
 
   if (leadIds.length > 0) {
-    const { data: activitiesData, error: activitiesError } = await supabase
-      .from("activities")
-      .select("*")
-      .in("lead_id", leadIds)
-      .order("occurred_at", { ascending: false });
+    const [
+      { data: activitiesData, error: activitiesError },
+      { data: eventsData, error: eventsError },
+    ] = await Promise.all([
+      supabase
+        .from("activities")
+        .select("*")
+        .in("lead_id", leadIds)
+        .order("occurred_at", { ascending: false }),
+      supabase
+        .from("calendar_events")
+        .select("*")
+        .in("lead_id", leadIds)
+        .order("starts_at", { ascending: true }),
+    ]);
 
     if (activitiesError) {
       throw new Error(`Failed to load activities: ${activitiesError.message}`);
     }
+    if (eventsError) {
+      throw new Error(`Failed to load calendar events: ${eventsError.message}`);
+    }
 
     activities = (activitiesData ?? []) as ActivityRow[];
+    calendarEvents = (eventsData ?? []) as CalendarEventRow[];
   }
 
   const activitiesByLeadId = activities.reduce<Record<string, ActivityRow[]>>(
@@ -68,6 +84,16 @@ export default async function PipelinePage({ searchParams }: PipelinePageProps) 
     },
     {},
   );
+
+  const eventsByLeadId = calendarEvents.reduce<
+    Record<string, CalendarEventRow[]>
+  >((acc, event) => {
+    if (!event.lead_id) return acc;
+    const current = acc[event.lead_id] ?? [];
+    current.push(event);
+    acc[event.lead_id] = current;
+    return acc;
+  }, {});
 
   const openCount = leads.filter(
     (lead) => lead.stage !== "won" && lead.stage !== "lost",
@@ -143,7 +169,11 @@ export default async function PipelinePage({ searchParams }: PipelinePageProps) 
         })}
       </nav>
 
-      <LeadsPanel activitiesByLeadId={activitiesByLeadId} rows={rows} />
+      <LeadsPanel
+        activitiesByLeadId={activitiesByLeadId}
+        eventsByLeadId={eventsByLeadId}
+        rows={rows}
+      />
     </main>
   );
 }

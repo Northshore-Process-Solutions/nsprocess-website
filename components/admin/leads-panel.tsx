@@ -11,14 +11,17 @@ import { LeadReplyDialog } from "@/components/admin/lead-reply-dialog";
 import { LeadsTable } from "@/components/admin/leads-table";
 import { Button } from "@/components/ui/button";
 import type { ActivityRow } from "@/lib/activities";
+import type { CalendarEventRow } from "@/lib/calendar";
 import type { LeadRow } from "@/lib/leads";
 
 export function LeadsPanel({
   rows,
   activitiesByLeadId = {},
+  eventsByLeadId = {},
 }: {
   rows: LeadRow[];
   activitiesByLeadId?: Record<string, ActivityRow[]>;
+  eventsByLeadId?: Record<string, CalendarEventRow[]>;
 }) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
@@ -102,6 +105,7 @@ export function LeadsPanel({
       ) : null}
 
       <LeadsTable
+        eventsByLeadId={eventsByLeadId}
         onError={(message) => setError(message)}
         onReply={openReply}
         onStageChanged={() => {
