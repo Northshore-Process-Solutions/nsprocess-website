@@ -62,6 +62,44 @@ export function isCustomerStage(stage: LeadStage) {
   return stage === "deposit_received" || stage === "won";
 }
 
+const FOLLOW_UP_TIMEZONE = "America/New_York";
+const FOLLOW_UP_CUTOFF_HOUR = 14; // 2:00 PM Eastern
+
+/**
+ * Default next-follow-up date for a new lead.
+ * Before 2pm Eastern → same calendar day; at/after 2pm → next calendar day.
+ */
+export function defaultNextFollowUpDate(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: FOLLOW_UP_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(now);
+
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((part) => part.type === type)?.value ?? "0");
+
+  const year = get("year");
+  const month = get("month");
+  const day = get("day");
+  const hour = get("hour");
+
+  const pad = (value: number) => String(value).padStart(2, "0");
+  const today = `${year}-${pad(month)}-${pad(day)}`;
+
+  if (hour < FOLLOW_UP_CUTOFF_HOUR) {
+    return today;
+  }
+
+  // Advance one calendar day without depending on the server's local timezone.
+  const next = new Date(`${today}T12:00:00.000Z`);
+  next.setUTCDate(next.getUTCDate() + 1);
+  return `${next.getUTCFullYear()}-${pad(next.getUTCMonth() + 1)}-${pad(next.getUTCDate())}`;
+}
+
 export function leadStageLabel(stage: LeadStage) {
   return LEAD_STAGES.find((item) => item.value === stage)?.label ?? stage;
 }
@@ -81,7 +119,7 @@ export function emptyLeadFormValues() {
     stage: "new_inquiry" as LeadStage,
     message: "",
     notes: "",
-    nextFollowUpAt: "",
+    nextFollowUpAt: defaultNextFollowUpDate(),
     lostReason: "",
   };
 }

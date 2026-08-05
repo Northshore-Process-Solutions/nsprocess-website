@@ -5,11 +5,14 @@ import { revalidatePath } from "next/cache";
 import {
   LEAD_SOURCES,
   LEAD_STAGES,
+  defaultNextFollowUpDate,
   isCustomerStage,
   type LeadSource,
   type LeadStage,
 } from "@/lib/leads";
+import { sendAppEmail } from "@/lib/mail";
 import { normalizeUsPhone } from "@/lib/phone";
+import { contact } from "@/lib/site-data";
 import { createClient } from "@/lib/supabase/server";
 
 export type LeadInput = {
@@ -501,9 +504,14 @@ export async function createLead(input: LeadInput): Promise<ActionResult> {
   const { supabase, error: authError } = await requireUser();
   if (authError) return { ok: false, error: authError };
 
+  const payload = toDbPayload({
+    ...parsed,
+    nextFollowUpAt: parsed.nextFollowUpAt ?? defaultNextFollowUpDate(),
+  });
+
   const { data, error } = await supabase
     .from("leads")
-    .insert(toDbPayload(parsed))
+    .insert(payload)
     .select("id")
     .single();
 
@@ -590,5 +598,68 @@ export async function deleteLead(leadId: string): Promise<ActionResult> {
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/admin/pipeline");
+  return { ok: true };
+}
+
+export async function replyToLead(
+  leadId: string,
+  input: { subject: string; body: string },
+): Promise<ActionResult> {
+  if (!leadId) return { ok: false, error: "Missing lead id." };
+
+  const subject = clean(input.subject);
+  const body = clean(input.body);
+
+  if (!subject) return { ok: false, error: "Subject is required." };
+  if (!body) return { ok: false, error: "Message body is required." };
+
+  const { supabase, error: authError } = await requireUser();
+  if (authError) return { ok: false, error: authError };
+
+  const { data: lead, error: leadError } = await supabase
+    .from("leads")
+    .select("id, email, contact_name, business_name, organization_id")
+    .eq("id", leadId)
+    .maybeSingle();
+
+  if (leadError || !lead) {
+    return { ok: false, error: leadError?.message ?? "Lead not found." };
+  }
+
+  const to = clean(lead.email);
+  if (!to) return { ok: false, error: "Lead does not have an email address." };
+
+  const mailResult = await sendAppEmail({
+    to,
+    subject,
+    text: body,
+    replyTo: contact.email,
+  });
+
+  if (!mailResult.ok) {
+    return { ok: false, error: mailResult.error };
+  }
+
+  const { error: activityError } = await supabase.from("activities").insert({
+    lead_id: lead.id,
+    organization_id: lead.organization_id,
+    activity_type: "email",
+    subject,
+    body,
+    occurred_at: new Date().toISOString(),
+  });
+
+  if (activityError) {
+    return {
+      ok: false,
+      error: `Email sent, but failed to log activity: ${activityError.message}`,
+    };
+  }
+
+  revalidatePath("/admin/pipeline");
+  if (lead.organization_id) {
+    revalidatePath(`/admin/organizations/${lead.organization_id}`);
+  }
+
   return { ok: true };
 }

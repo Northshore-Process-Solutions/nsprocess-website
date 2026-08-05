@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 
+import { defaultNextFollowUpDate } from "@/lib/leads";
 import { normalizeUsPhone } from "@/lib/phone";
 import { contact } from "@/lib/site-data";
 import { createPublicSupabaseClient } from "@/lib/supabase/admin";
@@ -47,6 +48,7 @@ async function createWebsiteLead(input: {
     source: "website_form",
     stage: "new_inquiry",
     message: input.message,
+    next_follow_up_at: defaultNextFollowUpDate(),
   });
 
   if (error) {

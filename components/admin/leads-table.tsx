@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Building2, Pencil, Trash2, UserPlus } from "lucide-react";
+import { Building2, Mail, Pencil, Trash2, UserPlus } from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -32,6 +32,7 @@ const stageStyles: Record<LeadStage, string> = {
 type LeadsTableProps = {
   rows: LeadRow[];
   onEdit: (row: LeadRow) => void;
+  onReply: (row: LeadRow) => void;
   onDelete: (row: LeadRow) => void;
   deletingId?: string | null;
   onStageChanged: () => void;
@@ -41,6 +42,7 @@ type LeadsTableProps = {
 export function LeadsTable({
   rows,
   onEdit,
+  onReply,
   onDelete,
   deletingId = null,
   onStageChanged,
@@ -195,6 +197,15 @@ export function LeadsTable({
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex gap-2">
+                      <Button
+                        aria-label={`Email ${row.business_name}`}
+                        onClick={() => onReply(row)}
+                        size="icon"
+                        type="button"
+                        variant="outline"
+                      >
+                        <Mail aria-hidden className="size-4" />
+                      </Button>
                       <Button
                         aria-label={`Edit ${row.business_name}`}
                         onClick={() => onEdit(row)}

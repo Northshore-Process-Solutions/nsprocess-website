@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { deleteLead } from "@/app/admin/pipeline/actions";
 import { LeadForm } from "@/components/admin/lead-form";
+import { LeadReplyDialog } from "@/components/admin/lead-reply-dialog";
 import { LeadsTable } from "@/components/admin/leads-table";
 import { Button } from "@/components/ui/button";
 import type { ActivityRow } from "@/lib/activities";
@@ -20,8 +21,10 @@ export function LeadsPanel({
 }) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
+  const [replyOpen, setReplyOpen] = useState(false);
   const [mode, setMode] = useState<"create" | "edit">("create");
   const [selectedRow, setSelectedRow] = useState<LeadRow | null>(null);
+  const [replyLead, setReplyLead] = useState<LeadRow | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,6 +40,12 @@ export function LeadsPanel({
     setSelectedRow(row);
     setError(null);
     setFormOpen(true);
+  }
+
+  function openReply(row: LeadRow) {
+    setReplyLead(row);
+    setError(null);
+    setReplyOpen(true);
   }
 
   async function handleDelete(row: LeadRow) {
@@ -84,6 +93,7 @@ export function LeadsPanel({
         onDelete={handleDelete}
         onEdit={openEdit}
         onError={(message) => setError(message)}
+        onReply={openReply}
         onStageChanged={() => {
           setError(null);
           router.refresh();
@@ -104,6 +114,20 @@ export function LeadsPanel({
           router.refresh();
         }}
         open={formOpen}
+      />
+
+      <LeadReplyDialog
+        lead={replyLead}
+        onClose={() => {
+          setReplyOpen(false);
+          setReplyLead(null);
+        }}
+        onSent={() => {
+          setReplyOpen(false);
+          setReplyLead(null);
+          router.refresh();
+        }}
+        open={replyOpen}
       />
     </div>
   );
