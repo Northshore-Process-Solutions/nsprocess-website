@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 const links = [
   { href: "/admin", label: "CRM", key: "crm" as const },
   { href: "/admin/pipeline", label: "Pipeline", key: "pipeline" as const },
+  { href: "/admin/projects", label: "Projects", key: "projects" as const },
   { href: "/admin/calendar", label: "Calendar", key: "calendar" as const },
   { href: "/admin/tools", label: "Stack", key: "stack" as const },
 ];
@@ -12,7 +13,7 @@ const links = [
 export function AdminNav({
   current,
 }: {
-  current: "crm" | "pipeline" | "stack" | "calendar";
+  current: "crm" | "pipeline" | "projects" | "stack" | "calendar";
 }) {
   return (
     <nav aria-label="Admin sections" className="mt-6 flex flex-wrap gap-2">

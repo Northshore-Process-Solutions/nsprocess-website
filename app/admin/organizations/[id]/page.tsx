@@ -10,6 +10,7 @@ import {
   type OrganizationRow,
 } from "@/lib/crm";
 import type { LeadRow } from "@/lib/leads";
+import type { ProjectRow } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
 
 type OrganizationPageProps = {
@@ -76,17 +77,31 @@ export default async function OrganizationPage({
     notFound();
   }
 
-  const { data: leadsData, error: leadsError } = await supabase
-    .from("leads")
-    .select("*")
-    .eq("organization_id", id)
-    .order("created_at", { ascending: false });
+  const [
+    { data: leadsData, error: leadsError },
+    { data: projectsData, error: projectsError },
+  ] = await Promise.all([
+    supabase
+      .from("leads")
+      .select("*")
+      .eq("organization_id", id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("projects")
+      .select("*")
+      .eq("organization_id", id)
+      .order("created_at", { ascending: false }),
+  ]);
 
   if (leadsError) {
     throw new Error(`Failed to load linked leads: ${leadsError.message}`);
   }
+  if (projectsError) {
+    throw new Error(`Failed to load projects: ${projectsError.message}`);
+  }
 
   const leads = (leadsData ?? []) as LeadRow[];
+  const projects = (projectsData ?? []) as ProjectRow[];
   const leadIds = leads.map((lead) => lead.id);
 
   let activitiesQuery = supabase
@@ -127,6 +142,7 @@ export default async function OrganizationPage({
         activities={activities}
         leads={leads}
         organization={organization}
+        projects={projects}
       />
     </main>
   );

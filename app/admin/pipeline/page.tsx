@@ -6,7 +6,7 @@ import { SignOutButton } from "@/components/admin/sign-out-button";
 import { Logo } from "@/components/logo";
 import type { ActivityRow } from "@/lib/activities";
 import type { CalendarEventRow } from "@/lib/calendar";
-import type { LeadRow } from "@/lib/leads";
+import { isCustomerStage, type LeadRow } from "@/lib/leads";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function PipelinePage() {
@@ -26,38 +26,57 @@ export default async function PipelinePage() {
     throw new Error(`Failed to load leads: ${error.message}`);
   }
 
-  const leads = (data ?? []) as LeadRow[];
+  const allLeads = (data ?? []) as LeadRow[];
+  const leads = allLeads.filter((lead) => !isCustomerStage(lead.stage));
   const leadIds = leads.map((lead) => lead.id);
   let activities: ActivityRow[] = [];
   let calendarEvents: CalendarEventRow[] = [];
+  let activeProjectsCount = 0;
 
-  if (leadIds.length > 0) {
-    const [
-      { data: activitiesData, error: activitiesError },
-      { data: eventsData, error: eventsError },
-    ] = await Promise.all([
-      supabase
-        .from("activities")
-        .select("*")
-        .in("lead_id", leadIds)
-        .order("occurred_at", { ascending: false }),
-      supabase
-        .from("calendar_events")
-        .select("*")
-        .in("lead_id", leadIds)
-        .order("starts_at", { ascending: true }),
-    ]);
+  const [
+    activitiesResult,
+    eventsResult,
+    projectsResult,
+  ] = await Promise.all([
+    leadIds.length > 0
+      ? supabase
+          .from("activities")
+          .select("*")
+          .in("lead_id", leadIds)
+          .order("occurred_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
+    leadIds.length > 0
+      ? supabase
+          .from("calendar_events")
+          .select("*")
+          .in("lead_id", leadIds)
+          .order("starts_at", { ascending: true })
+      : Promise.resolve({ data: [], error: null }),
+    supabase
+      .from("projects")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["planning", "active"]),
+  ]);
 
-    if (activitiesError) {
-      throw new Error(`Failed to load activities: ${activitiesError.message}`);
-    }
-    if (eventsError) {
-      throw new Error(`Failed to load calendar events: ${eventsError.message}`);
-    }
-
-    activities = (activitiesData ?? []) as ActivityRow[];
-    calendarEvents = (eventsData ?? []) as CalendarEventRow[];
+  if (activitiesResult.error) {
+    throw new Error(
+      `Failed to load activities: ${activitiesResult.error.message}`,
+    );
   }
+  if (eventsResult.error) {
+    throw new Error(
+      `Failed to load calendar events: ${eventsResult.error.message}`,
+    );
+  }
+  if (projectsResult.error) {
+    throw new Error(
+      `Failed to load projects: ${projectsResult.error.message}`,
+    );
+  }
+
+  activities = (activitiesResult.data ?? []) as ActivityRow[];
+  calendarEvents = (eventsResult.data ?? []) as CalendarEventRow[];
+  activeProjectsCount = projectsResult.count ?? 0;
 
   const activitiesByLeadId = activities.reduce<Record<string, ActivityRow[]>>(
     (acc, activity) => {
@@ -81,13 +100,13 @@ export default async function PipelinePage() {
   }, {});
 
   const countByStage = (stage: LeadRow["stage"]) =>
-    leads.filter((lead) => lead.stage === stage).length;
+    allLeads.filter((lead) => lead.stage === stage).length;
 
   const kpis = [
     { label: "New Leads", value: countByStage("new_inquiry") },
     { label: "Consults Booked", value: countByStage("review_booked") },
     { label: "Proposals Sent", value: countByStage("proposal_sent") },
-    { label: "Deposits Received", value: countByStage("deposit_received") },
+    { label: "Active Projects", value: activeProjectsCount },
     { label: "Awaiting Follow-Up", value: countByStage("follow_up") },
   ];
 
@@ -101,8 +120,8 @@ export default async function PipelinePage() {
             Pipeline
           </h1>
           <p className="mt-2 text-muted-foreground">
-            From inquiry and scheduling through consult, proposal, deposit, and
-            project kickoff.
+            Open inquiries through consult and proposal. Deposit and kickoff
+            move customers into Projects.
           </p>
         </div>
         <SignOutButton />

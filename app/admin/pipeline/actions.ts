@@ -12,6 +12,7 @@ import {
 } from "@/lib/leads";
 import { sendAppEmail } from "@/lib/mail";
 import { normalizeUsPhone } from "@/lib/phone";
+import { defaultProjectName } from "@/lib/projects";
 import { contact } from "@/lib/site-data";
 import { createClient } from "@/lib/supabase/server";
 
@@ -33,6 +34,7 @@ export type ActionResult = {
   ok: boolean;
   error?: string;
   organizationId?: string;
+  projectId?: string;
   alreadyLinked?: boolean;
 };
 
@@ -340,6 +342,47 @@ async function upsertPrimaryContactForOrg(
   return { error: null, contactId };
 }
 
+async function ensureProjectForCustomer(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  input: {
+    organizationId: string;
+    leadId: string;
+    businessName: string;
+  },
+) {
+  const { data: existing } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("lead_id", input.leadId)
+    .maybeSingle();
+
+  if (existing?.id) {
+    return { error: null as string | null, projectId: existing.id as string };
+  }
+
+  const { data: project, error } = await supabase
+    .from("projects")
+    .insert({
+      organization_id: input.organizationId,
+      lead_id: input.leadId,
+      name: defaultProjectName(input.businessName),
+      status: "active",
+      started_at: new Date().toISOString().slice(0, 10),
+      notes: "Created when deposit was received / project kicked off.",
+    })
+    .select("id")
+    .single();
+
+  if (error || !project) {
+    return {
+      error: error?.message ?? "Failed to create project.",
+      projectId: null as string | null,
+    };
+  }
+
+  return { error: null as string | null, projectId: project.id as string };
+}
+
 export async function convertWonLeadToCrm(
   leadId: string,
   targetStage: LeadStage = "won",
@@ -392,12 +435,27 @@ export async function convertWonLeadToCrm(
       .eq("lead_id", leadId)
       .is("organization_id", null);
 
+    const projectResult = await ensureProjectForCustomer(supabase, {
+      organizationId: lead.organization_id,
+      leadId,
+      businessName: lead.business_name,
+    });
+    if (projectResult.error || !projectResult.projectId) {
+      return {
+        ok: false,
+        error: projectResult.error ?? "Failed to create project.",
+      };
+    }
+
     revalidatePath("/admin/pipeline");
     revalidatePath("/admin");
+    revalidatePath("/admin/projects");
     revalidatePath(`/admin/organizations/${lead.organization_id}`);
+    revalidatePath(`/admin/projects/${projectResult.projectId}`);
     return {
       ok: true,
       organizationId: lead.organization_id,
+      projectId: projectResult.projectId,
       alreadyLinked: true,
     };
   }
@@ -491,10 +549,28 @@ export async function convertWonLeadToCrm(
     .eq("lead_id", leadId)
     .is("organization_id", null);
 
+  const projectResult = await ensureProjectForCustomer(supabase, {
+    organizationId,
+    leadId,
+    businessName: lead.business_name,
+  });
+  if (projectResult.error || !projectResult.projectId) {
+    return {
+      ok: false,
+      error: projectResult.error ?? "Failed to create project.",
+    };
+  }
+
   revalidatePath("/admin/pipeline");
   revalidatePath("/admin");
+  revalidatePath("/admin/projects");
   revalidatePath(`/admin/organizations/${organizationId}`);
-  return { ok: true, organizationId };
+  revalidatePath(`/admin/projects/${projectResult.projectId}`);
+  return {
+    ok: true,
+    organizationId,
+    projectId: projectResult.projectId,
+  };
 }
 
 export async function createLead(input: LeadInput): Promise<ActionResult> {

@@ -27,6 +27,10 @@ import {
   leadStageLabel,
   type LeadRow,
 } from "@/lib/leads";
+import {
+  projectStatusLabel,
+  type ProjectRow,
+} from "@/lib/projects";
 import { cn } from "@/lib/utils";
 
 const statusStyles: Record<string, string> = {
@@ -47,15 +51,25 @@ const stageStyles: Record<string, string> = {
   lost: "bg-red-50 text-red-800 border-red-200",
 };
 
+const projectStatusStyles: Record<string, string> = {
+  planning: "bg-sky-50 text-sky-800 border-sky-200",
+  active: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  on_hold: "bg-amber-50 text-amber-900 border-amber-200",
+  completed: "bg-slate-100 text-slate-700 border-slate-200",
+  cancelled: "bg-red-50 text-red-800 border-red-200",
+};
+
 type OrganizationDetailProps = {
   organization: CrmTableRow;
   leads: LeadRow[];
+  projects: ProjectRow[];
   activities: ActivityRow[];
 };
 
 export function OrganizationDetail({
   organization,
   leads,
+  projects,
   activities,
 }: OrganizationDetailProps) {
   const router = useRouter();
@@ -278,6 +292,77 @@ export function OrganizationDetail({
       <section className="rounded-2xl border border-border bg-card p-6 shadow-soft">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
+            <h2 className="text-lg font-semibold">Projects</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Delivery work for this customer after deposit.
+            </p>
+          </div>
+          <Button asChild variant="outline">
+            <Link href="/admin/projects">Open Projects</Link>
+          </Button>
+        </div>
+
+        {projects.length === 0 ? (
+          <div className="mt-6 rounded-2xl border border-dashed border-border p-8 text-center">
+            <p className="font-semibold">No projects yet</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Moving a Pipeline lead to deposit received creates a project
+              here.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-6 overflow-x-auto">
+            <table className="min-w-full border-collapse text-left text-sm">
+              <thead className="text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                <tr>
+                  <th className="px-2 py-2 font-semibold">Project</th>
+                  <th className="px-2 py-2 font-semibold">Started</th>
+                  <th className="px-2 py-2 font-semibold">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {projects.map((project) => (
+                  <tr
+                    className="border-t border-border align-top"
+                    key={project.id}
+                  >
+                    <td className="px-2 py-3">
+                      <Link
+                        className="font-medium text-accent hover:underline"
+                        href={`/admin/projects/${project.id}`}
+                      >
+                        {project.name}
+                      </Link>
+                    </td>
+                    <td className="px-2 py-3 whitespace-nowrap">
+                      {project.started_at
+                        ? new Date(
+                            `${project.started_at}T12:00:00`,
+                          ).toLocaleDateString()
+                        : "—"}
+                    </td>
+                    <td className="px-2 py-3">
+                      <span
+                        className={cn(
+                          "inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
+                          projectStatusStyles[project.status] ??
+                            projectStatusStyles.active,
+                        )}
+                      >
+                        {projectStatusLabel(project.status)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-border bg-card p-6 shadow-soft">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
             <h2 className="text-lg font-semibold">Process Review history</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Pipeline leads linked to this organization.
@@ -292,8 +377,8 @@ export function OrganizationDetail({
           <div className="mt-6 rounded-2xl border border-dashed border-border p-8 text-center">
             <p className="font-semibold">No linked Process Review leads</p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Marking a Pipeline lead Won will create or link a CRM customer
-              here.
+              Marking a Pipeline lead deposit received creates a CRM customer
+              and project here.
             </p>
           </div>
         ) : (
