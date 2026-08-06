@@ -242,10 +242,26 @@ export function OrganizationDetail({
             {organization.relationshipTypes.map((type) => (
               <StatusPill key={type} label={relationshipTypeLabel(type)} />
             ))}
-            <StatusPill
-              label={organization.status.replaceAll("_", " ")}
-              tone={statusStyles[organization.status] ?? statusStyles.inactive}
-            />
+            {(() => {
+              const statusLabel = organization.status.replaceAll("_", " ");
+              const relationshipLabels = new Set(
+                organization.relationshipTypes.map((type) =>
+                  relationshipTypeLabel(type).toLowerCase(),
+                ),
+              );
+              // Avoid "Prospect" + "prospect" when relationship is lead and status is prospect
+              if (relationshipLabels.has(statusLabel.toLowerCase())) {
+                return null;
+              }
+              return (
+                <StatusPill
+                  label={statusLabel}
+                  tone={
+                    statusStyles[organization.status] ?? statusStyles.inactive
+                  }
+                />
+              );
+            })()}
             {organization.category ? (
               <StatusPill label={organization.category} />
             ) : null}
