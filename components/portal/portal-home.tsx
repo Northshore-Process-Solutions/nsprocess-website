@@ -64,7 +64,7 @@ export function PortalHome({
         />
         <StatCard
           emphasize={acceptedDeals.length > 0}
-          href={href("/pipeline?stage=proposal_accepted")}
+          href={href("/pipeline?phase=accepted")}
           label="Accepted — next step"
           value={String(acceptedDeals.length)}
         />
@@ -98,7 +98,7 @@ export function PortalHome({
 
         <QueueCard
           empty="No accepted proposals waiting on agreement or deposit."
-          href={href("/pipeline?stage=proposal_accepted")}
+          href={href("/pipeline?phase=accepted")}
           items={acceptedDeals.map((proposal) => ({
             key: proposal.id,
             href: href(`/proposals/${proposal.id}`),

@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { LeadsPanel } from "@/components/admin/leads-panel";
+import { PipelinePhaseBar } from "@/components/admin/pipeline-phase-bar";
 import type { ActivityRow } from "@/lib/activities";
 import type { CalendarEventRow } from "@/lib/calendar";
 import {
@@ -10,8 +10,13 @@ import {
   type LeadRow,
   type LeadStage,
 } from "@/lib/leads";
+import {
+  filterLeadsByPipelinePhase,
+  isPipelinePhaseId,
+  openLeadPipelinePhase,
+  type PipelinePhaseId,
+} from "@/lib/pipeline-phases";
 import { createClient } from "@/lib/supabase/server";
-import { cn } from "@/lib/utils";
 
 function isLeadStage(value: string | undefined | null): value is LeadStage {
   return Boolean(value && LEAD_STAGES.some((stage) => stage.value === value));
@@ -23,11 +28,13 @@ export default async function PipelinePage({
   searchParams?: Promise<{
     leadId?: string;
     stage?: string;
+    phase?: string;
   }>;
 }) {
   const params = await searchParams;
   const initialLeadId = params?.leadId ?? null;
   const stageFilter = isLeadStage(params?.stage) ? params.stage : null;
+  const phaseFilter = isPipelinePhaseId(params?.phase) ? params.phase : null;
 
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
@@ -47,49 +54,56 @@ export default async function PipelinePage({
 
   const allLeads = (data ?? []) as LeadRow[];
   const openLeads = allLeads.filter((lead) => !isCustomerStage(lead.stage));
-  const leads = (
-    stageFilter
-      ? openLeads.filter((lead) => lead.stage === stageFilter)
-      : openLeads
-  ).sort((a, b) => {
-    // Keep accepted deals near the top so the close-the-deal queue is obvious.
-    if (a.stage === "proposal_accepted" && b.stage !== "proposal_accepted") {
-      return -1;
-    }
-    if (b.stage === "proposal_accepted" && a.stage !== "proposal_accepted") {
-      return 1;
-    }
-    return 0;
-  });
-  const leadIds = leads.map((lead) => lead.id);
+  const openLeadIds = openLeads.map((lead) => lead.id);
 
-  const [activitiesResult, eventsResult, projectsResult, acceptedResult] =
-    await Promise.all([
-    leadIds.length > 0
+  const [
+    activitiesResult,
+    eventsResult,
+    projectsResult,
+    acceptedResult,
+    agreementsResult,
+    depositsResult,
+  ] = await Promise.all([
+    openLeadIds.length > 0
       ? supabase
           .from("activities")
           .select("*")
-          .in("lead_id", leadIds)
+          .in("lead_id", openLeadIds)
           .order("occurred_at", { ascending: false })
       : Promise.resolve({ data: [], error: null }),
-    leadIds.length > 0
+    openLeadIds.length > 0
       ? supabase
           .from("calendar_events")
           .select("*")
-          .in("lead_id", leadIds)
+          .in("lead_id", openLeadIds)
           .order("starts_at", { ascending: true })
       : Promise.resolve({ data: [], error: null }),
     supabase
       .from("projects")
       .select("id", { count: "exact", head: true })
       .in("status", ["planning", "active"]),
-    leadIds.length > 0
+    openLeadIds.length > 0
       ? supabase
           .from("proposals")
           .select("id, lead_id")
           .eq("status", "accepted")
-          .in("lead_id", leadIds)
+          .in("lead_id", openLeadIds)
           .order("client_responded_at", { ascending: false, nullsFirst: false })
+      : Promise.resolve({ data: [], error: null }),
+    openLeadIds.length > 0
+      ? supabase
+          .from("agreements")
+          .select("lead_id, status")
+          .in("lead_id", openLeadIds)
+          .in("status", ["draft", "sent"])
+      : Promise.resolve({ data: [], error: null }),
+    openLeadIds.length > 0
+      ? supabase
+          .from("invoices")
+          .select("lead_id")
+          .in("lead_id", openLeadIds)
+          .eq("invoice_type", "deposit")
+          .in("status", ["draft", "sent"])
       : Promise.resolve({ data: [], error: null }),
   ]);
 
@@ -113,10 +127,66 @@ export default async function PipelinePage({
       `Failed to load accepted proposals: ${acceptedResult.error.message}`,
     );
   }
+  if (agreementsResult.error) {
+    throw new Error(
+      `Failed to load agreements: ${agreementsResult.error.message}`,
+    );
+  }
+  if (depositsResult.error) {
+    throw new Error(
+      `Failed to load deposit invoices: ${depositsResult.error.message}`,
+    );
+  }
 
+  const contractLeadIds = new Set(
+    (agreementsResult.data ?? [])
+      .map((row) => row.lead_id)
+      .filter((id): id is string => Boolean(id)),
+  );
+  const depositLeadIds = new Set(
+    (depositsResult.data ?? [])
+      .map((row) => row.lead_id)
+      .filter((id): id is string => Boolean(id)),
+  );
+
+  const activeProjectsCount = projectsResult.count ?? 0;
+
+  const phaseCounts: Record<Exclude<PipelinePhaseId, "project">, number> = {
+    prospect: 0,
+    accepted: 0,
+    contract: 0,
+    deposit: 0,
+  };
+  for (const lead of openLeads) {
+    const phase = openLeadPipelinePhase(lead, contractLeadIds, depositLeadIds);
+    if (phase) phaseCounts[phase] += 1;
+  }
+
+  let leads = openLeads;
+  if (phaseFilter && phaseFilter !== "project") {
+    leads = filterLeadsByPipelinePhase(
+      openLeads,
+      phaseFilter,
+      contractLeadIds,
+      depositLeadIds,
+    );
+  } else if (stageFilter) {
+    leads = openLeads.filter((lead) => lead.stage === stageFilter);
+  }
+
+  leads = [...leads].sort((a, b) => {
+    if (a.stage === "proposal_accepted" && b.stage !== "proposal_accepted") {
+      return -1;
+    }
+    if (b.stage === "proposal_accepted" && a.stage !== "proposal_accepted") {
+      return 1;
+    }
+    return 0;
+  });
+
+  const leadIds = leads.map((lead) => lead.id);
   const activities = (activitiesResult.data ?? []) as ActivityRow[];
   const calendarEvents = (eventsResult.data ?? []) as CalendarEventRow[];
-  const activeProjectsCount = projectsResult.count ?? 0;
   const acceptedProposalByLeadId = (
     acceptedResult.data ?? []
   ).reduce<Record<string, string>>((acc, proposal) => {
@@ -146,28 +216,17 @@ export default async function PipelinePage({
     return acc;
   }, {});
 
-  const countByStage = (stage: LeadRow["stage"]) =>
-    allLeads.filter((lead) => lead.stage === stage).length;
+  // Activities/events were loaded for all open leads; trim to visible rows.
+  const visibleActivitiesByLeadId = Object.fromEntries(
+    leadIds.map((id) => [id, activitiesByLeadId[id] ?? []]),
+  );
+  const visibleEventsByLeadId = Object.fromEntries(
+    leadIds.map((id) => [id, eventsByLeadId[id] ?? []]),
+  );
 
-  const acceptedCount = countByStage("proposal_accepted");
-
-  const kpis: Array<{
-    label: string;
-    value: number;
-    href?: string;
-    emphasize?: boolean;
-  }> = [
-    { label: "New Leads", value: countByStage("new_inquiry") },
-    { label: "Consults Booked", value: countByStage("review_booked") },
-    {
-      label: "Accepted — next step",
-      value: acceptedCount,
-      href: "/crm/pipeline?stage=proposal_accepted",
-      emphasize: acceptedCount > 0,
-    },
-    { label: "Active Projects", value: activeProjectsCount },
-    { label: "Awaiting Follow-Up", value: countByStage("follow_up") },
-  ];
+  const activePhase: PipelinePhaseId | null =
+    phaseFilter ??
+    (stageFilter === "proposal_accepted" ? "accepted" : null);
 
   return (
     <main>
@@ -176,60 +235,50 @@ export default async function PipelinePage({
           Pipeline
         </h1>
         <p className="mt-1 text-sm text-slate-600">
-          Sales work through proposal acceptance. After accept: agreement →
-          deposit invoice. Deposit paid moves the customer into Projects.
+          Prospect → accept → contract → deposit. Paid deposits move customers
+          into Projects.
         </p>
       </header>
 
-      <section className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        {kpis.map((kpi) => {
-          const cardClass = cn(
-            "rounded-md border px-3 py-3",
-            kpi.emphasize
-              ? "border-lime-300 bg-lime-50"
-              : "border-slate-200 bg-white",
-          );
-          const body = (
-            <>
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                {kpi.label}
-              </p>
-              <p className="mt-1 text-xl font-semibold text-slate-900">
-                {kpi.value}
-              </p>
-            </>
-          );
-          return kpi.href ? (
-            <Link className={cn(cardClass, "transition hover:border-slate-400")} href={kpi.href} key={kpi.label}>
-              {body}
-            </Link>
-          ) : (
-            <div className={cardClass} key={kpi.label}>
-              {body}
-            </div>
-          );
-        })}
-      </section>
-
-      {stageFilter === "proposal_accepted" ? (
-        <div className="mb-4 flex flex-col gap-2 rounded-md border border-lime-200 bg-lime-50 px-3 py-3 text-sm text-lime-950 sm:flex-row sm:items-center sm:justify-between">
-          <p>
-            Showing accepted proposals waiting on agreement and deposit. They
-            leave Pipeline when deposit is marked paid.
-          </p>
-          <Link
-            className="shrink-0 text-xs font-semibold text-lime-900 underline-offset-2 hover:underline"
-            href="/crm/pipeline"
-          >
-            Clear filter
-          </Link>
-        </div>
-      ) : null}
+      <PipelinePhaseBar
+        activePhase={activePhase}
+        clearHref="/crm/pipeline"
+        items={[
+          {
+            id: "prospect",
+            count: phaseCounts.prospect,
+            href: "/crm/pipeline?phase=prospect",
+          },
+          {
+            id: "accepted",
+            count: phaseCounts.accepted,
+            href: "/crm/pipeline?phase=accepted",
+            emphasize: phaseCounts.accepted > 0,
+          },
+          {
+            id: "contract",
+            count: phaseCounts.contract,
+            href: "/crm/pipeline?phase=contract",
+            emphasize: phaseCounts.contract > 0,
+          },
+          {
+            id: "deposit",
+            count: phaseCounts.deposit,
+            href: "/crm/pipeline?phase=deposit",
+            emphasize: phaseCounts.deposit > 0,
+          },
+          {
+            id: "project",
+            count: activeProjectsCount,
+            href: "/crm/projects",
+          },
+        ]}
+      />
 
       <LeadsPanel
         acceptedProposalByLeadId={acceptedProposalByLeadId}
-        activitiesByLeadId={activitiesByLeadId}
-        eventsByLeadId={eventsByLeadId}
+        activitiesByLeadId={visibleActivitiesByLeadId}
+        eventsByLeadId={visibleEventsByLeadId}
         initialLeadId={initialLeadId}
         rows={leads}
       />
