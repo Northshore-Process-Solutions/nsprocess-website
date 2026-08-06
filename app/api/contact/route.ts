@@ -4,7 +4,10 @@ import { defaultNextFollowUpDate } from "@/lib/leads";
 import { escapeHtml, getSmtpConfig, sendAppEmail } from "@/lib/mail";
 import { normalizeUsPhone } from "@/lib/phone";
 import { contact } from "@/lib/site-data";
-import { createPublicSupabaseClient } from "@/lib/supabase/admin";
+import {
+  createPublicSupabaseClient,
+  createServiceRoleClient,
+} from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
@@ -29,21 +32,56 @@ async function createWebsiteLead(input: {
 }) {
   const supabase = createPublicSupabaseClient();
   const phone = input.phone ? normalizeUsPhone(input.phone) : null;
+  const contactName = `${input.firstName} ${input.lastName}`.trim();
+  const now = new Date().toISOString();
 
-  const { error } = await supabase.from("leads").insert({
-    business_name: input.business,
-    contact_name: `${input.firstName} ${input.lastName}`.trim(),
-    email: input.email.toLowerCase(),
-    phone,
-    title: "Free Process Review",
-    source: "website_form",
-    stage: "new_inquiry",
-    message: input.message,
-    next_follow_up_at: defaultNextFollowUpDate(),
-  });
+  const { data: lead, error } = await supabase
+    .from("leads")
+    .insert({
+      business_name: input.business,
+      contact_name: contactName,
+      email: input.email.toLowerCase(),
+      phone,
+      title: "Free Process Review",
+      source: "website_form",
+      stage: "new_inquiry",
+      message: input.message,
+      next_follow_up_at: defaultNextFollowUpDate(),
+    })
+    .select("id")
+    .single();
 
-  if (error) {
+  if (error || !lead) {
     console.error("Failed to create website lead", error);
+    return;
+  }
+
+  const activityBody = [
+    `Name: ${contactName}`,
+    `Business: ${input.business}`,
+    `Email: ${input.email}`,
+    `Phone: ${input.phone || "Not provided"}`,
+    "",
+    "Message:",
+    input.message,
+  ].join("\n");
+
+  try {
+    const admin = createServiceRoleClient();
+    const { error: activityError } = await admin.from("activities").insert({
+      lead_id: lead.id,
+      activity_type: "email",
+      email_direction: "received",
+      subject: "Free Process Review request (website form)",
+      body: activityBody,
+      occurred_at: now,
+    });
+
+    if (activityError) {
+      console.error("Failed to log website form activity", activityError);
+    }
+  } catch (activitySetupError) {
+    console.error("Failed to log website form activity", activitySetupError);
   }
 }
 

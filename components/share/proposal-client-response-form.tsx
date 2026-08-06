@@ -70,16 +70,15 @@ export function ProposalClientResponseForm({
     <section className="mx-auto mt-8 max-w-[8.5in] rounded-2xl border border-border bg-card p-6 shadow-soft">
       <h2 className="text-lg font-semibold text-slate-900">Your response</h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        Accept or decline this proposal and leave a short comment for us.
+        Accept or decline this proposal. A short comment is optional.
       </p>
 
       <label className="mt-4 block space-y-2 text-sm font-semibold">
-        Comment
+        Comment <span className="font-normal text-muted-foreground">(optional)</span>
         <textarea
           className="min-h-28 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onChange={(event) => setComment(event.target.value)}
           placeholder="Questions, timing notes, or why you're declining…"
-          required
           value={comment}
         />
       </label>

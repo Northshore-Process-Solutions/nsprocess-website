@@ -83,7 +83,7 @@ export default async function PublicProposalPage({
           Proposal {proposal.proposal_number}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Review the details below, then accept or decline with a comment.
+          Review the details below, then accept or decline.
         </p>
       </div>
 

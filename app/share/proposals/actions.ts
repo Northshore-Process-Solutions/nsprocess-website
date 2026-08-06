@@ -113,7 +113,7 @@ Please review the proposal for ${proposal.client_business_name}:
 
 ${link.shareUrl}
 
-You can accept or decline and leave a short comment for us.
+You can accept or decline below. A short comment is optional.
 
 Thank you,
 North Shore Process Solutions`;
@@ -122,7 +122,7 @@ North Shore Process Solutions`;
     <p>${escapeHtml(greeting)}</p>
     <p>Please review the proposal for <strong>${escapeHtml(proposal.client_business_name)}</strong>.</p>
     <p><a href="${escapeHtml(link.shareUrl)}">View proposal and respond</a></p>
-    <p>You can accept or decline and leave a short comment for us.</p>
+    <p>You can accept or decline below. A short comment is optional.</p>
     <p>Thank you,<br />North Shore Process Solutions</p>
   `;
 
@@ -225,9 +225,6 @@ export async function respondToSharedProposal(input: {
   }
 
   const comment = input.comment?.trim() ?? "";
-  if (!comment) {
-    return { ok: false, error: "Please add a short comment." };
-  }
   if (comment.length > 2000) {
     return { ok: false, error: "Comment is too long (max 2000 characters)." };
   }
@@ -285,7 +282,7 @@ export async function respondToSharedProposal(input: {
     .from("proposals")
     .update({
       status: decision,
-      client_response: comment,
+      client_response: comment || null,
       client_responded_at: now,
       accepted_at: decision === "accepted" ? now : null,
       declined_at: decision === "declined" ? now : null,
@@ -304,7 +301,7 @@ export async function respondToSharedProposal(input: {
       activity_type: "note",
       email_direction: null,
       subject: `Proposal ${proposal.proposal_number} ${label}`,
-      body: comment,
+      body: comment || null,
       occurred_at: now,
     });
   }
@@ -321,13 +318,13 @@ export async function respondToSharedProposal(input: {
   if (notifyTo) {
     const label = decision === "accepted" ? "accepted" : "declined";
     const subject = `Proposal ${proposal.proposal_number} ${label}`;
-    const text = `Proposal ${proposal.proposal_number} (${proposal.client_business_name}) was ${label}.
-
-Client comment:
-${comment}
-
-Open in CRM:
-${getCrmProposalUrl(proposal.id)}`;
+    const text = [
+      `Proposal ${proposal.proposal_number} (${proposal.client_business_name}) was ${label}.`,
+      comment ? `\nClient comment:\n${comment}` : "",
+      `\nOpen in CRM:\n${getCrmProposalUrl(proposal.id)}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
 
     await sendAppEmail({
       to: notifyTo,
@@ -338,8 +335,12 @@ ${getCrmProposalUrl(proposal.id)}`;
         <p>Proposal <strong>${escapeHtml(proposal.proposal_number)}</strong>
         (${escapeHtml(proposal.client_business_name)}) was
         <strong>${escapeHtml(label)}</strong>.</p>
-        <p><strong>Client comment:</strong></p>
-        <p>${escapeHtml(comment).replaceAll("\n", "<br />")}</p>
+        ${
+          comment
+            ? `<p><strong>Client comment:</strong></p>
+        <p>${escapeHtml(comment).replaceAll("\n", "<br />")}</p>`
+            : ""
+        }
         <p><a href="${escapeHtml(getCrmProposalUrl(proposal.id))}">Open in CRM</a></p>
       `,
     });

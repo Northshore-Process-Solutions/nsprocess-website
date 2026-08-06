@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ChevronRight,
   Mail,
   NotebookPen,
   Phone,
@@ -20,6 +21,7 @@ import {
   ACTIVITY_TYPES,
   activityTypeLabel,
   emptyActivityFormValues,
+  formatActivityWhen,
   type ActivityRow,
   type ActivityType,
   type EmailDirection,
@@ -33,6 +35,14 @@ const typeIcons: Record<ActivityType, typeof Mail> = {
   note: NotebookPen,
   other: NotebookPen,
 };
+
+function activityKindLabel(activity: ActivityRow) {
+  const type = activityTypeLabel(activity.activity_type);
+  if (activity.activity_type !== "email") return type;
+  const direction =
+    (activity.email_direction ?? "sent") === "received" ? "Received" : "Sent";
+  return `${type} · ${direction}`;
+}
 
 type ActivityPanelProps = {
   activities: ActivityRow[];
@@ -57,6 +67,7 @@ export function ActivityPanel({
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [selected, setSelected] = useState<ActivityRow | null>(null);
 
   function updateField<K extends keyof typeof values>(
     key: K,
@@ -95,7 +106,9 @@ export function ActivityPanel({
   }
 
   async function onDelete(activity: ActivityRow) {
-    const confirmed = window.confirm("Delete this activity? This cannot be undone.");
+    const confirmed = window.confirm(
+      "Delete this activity? This cannot be undone.",
+    );
     if (!confirmed) return;
 
     setDeletingId(activity.id);
@@ -114,6 +127,7 @@ export function ActivityPanel({
       return;
     }
 
+    setSelected(null);
     router.refresh();
   }
 
@@ -156,7 +170,10 @@ export function ActivityPanel({
       ) : null}
 
       {!readOnly && showForm ? (
-        <form className="mt-4 space-y-4 rounded-2xl border border-border bg-background p-4" onSubmit={onSubmit}>
+        <form
+          className="mt-4 space-y-4 rounded-2xl border border-border bg-background p-4"
+          onSubmit={onSubmit}
+        >
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-2 text-sm font-semibold">
               Type
@@ -256,65 +273,95 @@ export function ActivityPanel({
           </p>
         </div>
       ) : (
-        <ul className="mt-4 space-y-3">
+        <ul className="mt-4 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-background">
           {activities.map((activity) => {
             const Icon = typeIcons[activity.activity_type] ?? NotebookPen;
 
             return (
-              <li
-                className="rounded-2xl border border-border bg-background p-4"
-                key={activity.id}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-start gap-3">
-                    <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-secondary text-accent">
-                      <Icon aria-hidden className="size-4" />
+              <li key={activity.id}>
+                <button
+                  className="flex w-full items-center gap-3 px-3 py-3 text-left transition hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                  onClick={() => setSelected(activity)}
+                  type="button"
+                >
+                  <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-secondary text-accent">
+                    <Icon aria-hidden className="size-4" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold text-foreground">
+                      {activityKindLabel(activity)}
                     </span>
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                          {activityTypeLabel(activity.activity_type)}
-                          {activity.activity_type === "email"
-                            ? ` · ${
-                                (activity.email_direction ?? "sent") ===
-                                "received"
-                                  ? "Received"
-                                  : "Sent"
-                              }`
-                            : ""}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(activity.occurred_at).toLocaleString()}
-                        </span>
-                      </div>
-                      <p className="mt-1 font-semibold">
-                        {activity.subject || activityTypeLabel(activity.activity_type)}
-                      </p>
-                      {activity.body ? (
-                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
-                          {activity.body}
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
-                  {!readOnly ? (
-                    <Button
-                      aria-label="Delete activity"
-                      disabled={deletingId === activity.id}
-                      onClick={() => onDelete(activity)}
-                      size="icon"
-                      type="button"
-                      variant="outline"
-                    >
-                      <Trash2 aria-hidden className="size-4" />
-                    </Button>
-                  ) : null}
-                </div>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      {formatActivityWhen(activity.occurred_at)}
+                    </span>
+                  </span>
+                  <ChevronRight
+                    aria-hidden
+                    className="size-4 shrink-0 text-muted-foreground"
+                  />
+                </button>
               </li>
             );
           })}
         </ul>
       )}
+
+      {selected ? (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-primary/40 p-3 sm:items-center sm:p-6">
+          <div
+            aria-modal="true"
+            className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-card"
+            role="dialog"
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  {activityKindLabel(selected)}
+                </p>
+                <h3 className="mt-1 text-lg font-semibold tracking-tight">
+                  {selected.subject || activityKindLabel(selected)}
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {new Date(selected.occurred_at).toLocaleString()}
+                </p>
+              </div>
+              <Button
+                onClick={() => setSelected(null)}
+                type="button"
+                variant="outline"
+              >
+                Close
+              </Button>
+            </div>
+
+            <div className="overflow-y-auto px-5 py-5">
+              {selected.body ? (
+                <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">
+                  {selected.body}
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No details recorded for this activity.
+                </p>
+              )}
+            </div>
+
+            {!readOnly ? (
+              <div className="border-t border-border px-5 py-4">
+                <Button
+                  disabled={deletingId === selected.id}
+                  onClick={() => onDelete(selected)}
+                  type="button"
+                  variant="outline"
+                >
+                  <Trash2 aria-hidden className="size-4" />
+                  {deletingId === selected.id ? "Deleting…" : "Delete"}
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
