@@ -789,6 +789,21 @@ export async function replyToLead(
     };
   }
 
+  const { error: followUpError } = await supabase
+    .from("leads")
+    .update({
+      next_follow_up_at: defaultNextFollowUpDate(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", leadId);
+
+  if (followUpError) {
+    return {
+      ok: false,
+      error: `Email sent and logged, but failed to update follow-up: ${followUpError.message}`,
+    };
+  }
+
   revalidatePath("/crm/pipeline");
   revalidatePath("/crm/projects");
   if (lead.organization_id) {

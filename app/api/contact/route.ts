@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import nodemailer from "nodemailer";
 
 import { defaultNextFollowUpDate } from "@/lib/leads";
+import { escapeHtml, getSmtpConfig, sendAppEmail } from "@/lib/mail";
 import { normalizeUsPhone } from "@/lib/phone";
 import { contact } from "@/lib/site-data";
 import { createPublicSupabaseClient } from "@/lib/supabase/admin";
@@ -11,15 +11,6 @@ export const runtime = "nodejs";
 function getField(formData: FormData, name: string) {
   const value = formData.get(name);
   return typeof value === "string" ? value.trim() : "";
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
 }
 
 function redirectToContact(request: Request, status: "sent" | "error") {
@@ -80,22 +71,12 @@ export async function POST(request: Request) {
 
   const normalizedPhone = phone ? normalizeUsPhone(phone) : null;
 
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, CONTACT_TO } =
-    process.env;
+  const { CONTACT_TO } = process.env;
+  const smtp = getSmtpConfig();
 
-  if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS || !CONTACT_TO) {
+  if (!smtp || !CONTACT_TO) {
     return redirectToContact(request, "error");
   }
-
-  const transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: Number(SMTP_PORT),
-    secure: Number(SMTP_PORT) === 465,
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
-    },
-  });
 
   const fullName = `${firstName} ${lastName}`;
   const safe = {
@@ -106,80 +87,77 @@ export async function POST(request: Request) {
     message: escapeHtml(message).replaceAll("\n", "<br />"),
   };
 
-  try {
-    await transporter.sendMail({
-      from: `"North Shore Process Solutions" <${SMTP_USER}>`,
-      to: CONTACT_TO,
-      replyTo: email,
-      subject: `Free Process Review request from ${business}`,
-      text: [
-        `Name: ${fullName}`,
-        `Business: ${business}`,
-        `Email: ${email}`,
-        `Phone: ${phone || "Not provided"}`,
-        "",
-        "Message:",
-        message,
-      ].join("\n"),
-      html: `
-        <h2>Free Process Review Request</h2>
-        <p><strong>Name:</strong> ${safe.fullName}</p>
-        <p><strong>Business:</strong> ${safe.business}</p>
-        <p><strong>Email:</strong> ${safe.email}</p>
-        <p><strong>Phone:</strong> ${safe.phone}</p>
-        <p><strong>Message:</strong></p>
-        <p>${safe.message}</p>
-      `,
-    });
-
-    try {
-      await transporter.sendMail({
-        from: `"North Shore Process Solutions" <${SMTP_USER}>`,
-        to: email,
-        replyTo: contact.email,
-        subject: "We received your Free Process Review request",
-        text: [
-          `Hi ${firstName},`,
-          "",
-          "Thanks for reaching out to North Shore Process Solutions.",
-          "",
-          "We received your Free Process Review request and will review it shortly. Someone from our team will contact you soon.",
-          "",
-          "If you need to add anything in the meantime, just reply to this email or call us.",
-          "",
-          `Email: ${contact.email}`,
-          `Phone: ${contact.phone}`,
-          "",
-          "North Shore Process Solutions",
-        ].join("\n"),
-        html: `
-          <p>Hi ${escapeHtml(firstName)},</p>
-          <p>Thanks for reaching out to <strong>North Shore Process Solutions</strong>.</p>
-          <p>We received your Free Process Review request and will review it shortly. Someone from our team will contact you soon.</p>
-          <p>If you need to add anything in the meantime, just reply to this email or call us.</p>
-          <p>
-            Email: <a href="mailto:${escapeHtml(contact.email)}">${escapeHtml(contact.email)}</a><br />
-            Phone: <a href="tel:+1${contact.phone.replace(/\D/g, "")}">${escapeHtml(contact.phone)}</a>
-          </p>
-          <p>North Shore Process Solutions</p>
-        `,
-      });
-    } catch (autoReplyError) {
-      console.error("Failed to send contact form auto-reply", autoReplyError);
-    }
-
-    await createWebsiteLead({
-      firstName,
-      lastName,
-      business,
-      email,
-      phone: normalizedPhone ?? "",
+  const notify = await sendAppEmail({
+    to: CONTACT_TO,
+    replyTo: email,
+    subject: `Free Process Review request from ${business}`,
+    text: [
+      `Name: ${fullName}`,
+      `Business: ${business}`,
+      `Email: ${email}`,
+      `Phone: ${phone || "Not provided"}`,
+      "",
+      "Message:",
       message,
-    });
+    ].join("\n"),
+    html: `
+      <h2>Free Process Review Request</h2>
+      <p><strong>Name:</strong> ${safe.fullName}</p>
+      <p><strong>Business:</strong> ${safe.business}</p>
+      <p><strong>Email:</strong> ${safe.email}</p>
+      <p><strong>Phone:</strong> ${safe.phone}</p>
+      <p><strong>Message:</strong></p>
+      <p>${safe.message}</p>
+    `,
+  });
 
-    return redirectToContact(request, "sent");
-  } catch (error) {
-    console.error("Failed to send contact form email", error);
+  if (!notify.ok) {
     return redirectToContact(request, "error");
   }
+
+  const autoReply = await sendAppEmail({
+    to: email,
+    replyTo: contact.email,
+    subject: "We received your Free Process Review request",
+    text: [
+      `Hi ${firstName},`,
+      "",
+      "Thanks for reaching out to North Shore Process Solutions.",
+      "",
+      "We received your Free Process Review request and will review it shortly. Someone from our team will contact you soon.",
+      "",
+      "If you need to add anything in the meantime, just reply to this email or call us.",
+      "",
+      `Email: ${contact.email}`,
+      `Phone: ${contact.phone}`,
+      "",
+      "North Shore Process Solutions",
+    ].join("\n"),
+    html: `
+      <p>Hi ${escapeHtml(firstName)},</p>
+      <p>Thanks for reaching out to <strong>North Shore Process Solutions</strong>.</p>
+      <p>We received your Free Process Review request and will review it shortly. Someone from our team will contact you soon.</p>
+      <p>If you need to add anything in the meantime, just reply to this email or call us.</p>
+      <p>
+        Email: <a href="mailto:${escapeHtml(contact.email)}">${escapeHtml(contact.email)}</a><br />
+        Phone: <a href="tel:+1${contact.phone.replace(/\D/g, "")}">${escapeHtml(contact.phone)}</a>
+      </p>
+      <p>North Shore Process Solutions</p>
+    `,
+  });
+
+  if (!autoReply.ok) {
+    console.error("Failed to send contact form auto-reply", autoReply.error);
+  }
+
+  await createWebsiteLead({
+    firstName,
+    lastName,
+    business,
+    email,
+    phone: normalizedPhone ?? "",
+    message,
+  });
+
+  return redirectToContact(request, "sent");
 }

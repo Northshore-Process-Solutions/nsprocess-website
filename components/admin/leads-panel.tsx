@@ -65,6 +65,8 @@ export function LeadsPanel({
   function openReply(row: LeadRow) {
     setReplyLead(row);
     setError(null);
+    setFormOpen(false);
+    setDetailOpen(false);
     setReplyOpen(true);
   }
 
@@ -134,6 +136,7 @@ export function LeadsPanel({
         }}
         onDelete={readOnly ? undefined : handleDelete}
         onEdit={readOnly ? undefined : openEdit}
+        onReply={readOnly ? undefined : openReply}
         open={detailOpen}
       />
 
@@ -152,6 +155,7 @@ export function LeadsPanel({
                 setDetailOpen(true);
               }
             }}
+            onReply={openReply}
             onSaved={() => {
               setFormOpen(false);
               setDetailOpen(false);

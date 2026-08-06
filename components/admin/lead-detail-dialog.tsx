@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, FileText, Pencil, Trash2 } from "lucide-react";
+import { CalendarDays, FileText, Mail, Pencil, Trash2 } from "lucide-react";
 
 import { ActivityPanel } from "@/components/admin/activity-panel";
 import { usePortal } from "@/components/portal/portal-provider";
@@ -20,6 +20,7 @@ type LeadDetailDialogProps = {
   deleting?: boolean;
   onClose: () => void;
   onEdit?: (lead: LeadRow) => void;
+  onReply?: (lead: LeadRow) => void;
   onDelete?: (lead: LeadRow) => void;
 };
 
@@ -47,6 +48,7 @@ export function LeadDetailDialog({
   deleting = false,
   onClose,
   onEdit,
+  onReply,
   onDelete,
 }: LeadDetailDialogProps) {
   const { href, isDemo } = usePortal();
@@ -127,6 +129,16 @@ export function LeadDetailDialog({
             <span />
           )}
           <div className="flex flex-col-reverse gap-3 sm:flex-row">
+            {onReply ? (
+              <Button
+                onClick={() => onReply(lead)}
+                type="button"
+                variant="outline"
+              >
+                <Mail aria-hidden className="size-4" />
+                Reply
+              </Button>
+            ) : null}
             <Button asChild type="button" variant="outline">
               <Link href={href(`/calendar?leadId=${lead.id}`)}>
                 <CalendarDays aria-hidden className="size-4" />

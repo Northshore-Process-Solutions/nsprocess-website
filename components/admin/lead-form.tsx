@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Mail } from "lucide-react";
 
 import {
   createLead,
@@ -25,6 +26,7 @@ type LeadFormProps = {
   activities?: ActivityRow[];
   onClose: () => void;
   onSaved: () => void;
+  onReply?: (lead: LeadRow) => void;
 };
 
 export function LeadForm({
@@ -34,6 +36,7 @@ export function LeadForm({
   activities = [],
   onClose,
   onSaved,
+  onReply,
 }: LeadFormProps) {
   if (!open) return null;
 
@@ -43,6 +46,7 @@ export function LeadForm({
       initialRow={initialRow}
       mode={mode}
       onClose={onClose}
+      onReply={onReply}
       onSaved={onSaved}
     />
   );
@@ -54,6 +58,7 @@ function LeadFormDialog({
   activities = [],
   onClose,
   onSaved,
+  onReply,
 }: Omit<LeadFormProps, "open">) {
   const [values, setValues] = useState(() =>
     mode === "edit" && initialRow
@@ -252,17 +257,31 @@ function LeadFormDialog({
             </label>
           ) : null}
 
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-            <Button onClick={onClose} type="button" variant="outline">
-              Cancel
-            </Button>
-            <Button disabled={loading} type="submit" variant="accent">
-              {loading
-                ? "Saving..."
-                : mode === "edit"
-                  ? "Save changes"
-                  : "Add lead"}
-            </Button>
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+            {mode === "edit" && initialRow && onReply ? (
+              <Button
+                onClick={() => onReply(initialRow)}
+                type="button"
+                variant="outline"
+              >
+                <Mail aria-hidden className="size-4" />
+                Reply by email
+              </Button>
+            ) : (
+              <span />
+            )}
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <Button onClick={onClose} type="button" variant="outline">
+                Cancel
+              </Button>
+              <Button disabled={loading} type="submit" variant="accent">
+                {loading
+                  ? "Saving..."
+                  : mode === "edit"
+                    ? "Save changes"
+                    : "Add lead"}
+              </Button>
+            </div>
           </div>
         </form>
 
