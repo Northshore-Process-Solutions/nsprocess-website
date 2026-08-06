@@ -31,7 +31,20 @@ export async function loadDemoSeed(): Promise<DemoSeed> {
   if (!session?.seed) {
     demoSessionRedirect(error);
   }
-  return normalizeDemoSeed(session!.seed!);
+  const seed = normalizeDemoSeed(session!.seed!);
+  const intake = session!.intake;
+  if (!intake) return seed;
+
+  return {
+    ...seed,
+    business: {
+      ...seed.business,
+      name: intake.businessName?.trim() || seed.business.name,
+      category: intake.industry?.trim() || seed.business.category,
+      location: intake.location?.trim() || seed.business.location,
+      contactName: intake.contactName?.trim() || seed.business.contactName,
+    },
+  };
 }
 
 export async function loadDemoCrmData(): Promise<DemoCrmData> {

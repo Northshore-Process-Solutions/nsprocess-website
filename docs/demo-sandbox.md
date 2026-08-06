@@ -67,4 +67,5 @@ Demo supports printable views (same print/Save as PDF flow as live CRM):
 
 Editors and tables show **Open PDF**. **Draft with AI** on proposals uses the
 demo session cookie (no CRM login) via `app/demo/ai/actions.ts`. Seeded line
-items, scope, and terms come from `lib/demo/map-to-crm.ts`.
+items, scope, and terms come from `lib/demo/map-to-crm.ts`. Document headers
+use the intake business name (not NSPS) via `documentIssuerFromDemoBusiness`.

@@ -1,11 +1,16 @@
-import Image from "next/image";
-
+import {
+  DocumentPdfBrandFooter,
+  DocumentPdfBrandHeader,
+} from "@/components/admin/document-pdf-brand";
 import {
   type AgreementItemRow,
   type AgreementWithItems,
 } from "@/lib/agreements";
 import { computeTotals, formatMoney } from "@/lib/billing";
-import { contact } from "@/lib/site-data";
+import {
+  nspsDocumentIssuer,
+  type DocumentIssuer,
+} from "@/lib/document-issuer";
 
 const LINE_SLOT_COUNT = 8;
 
@@ -19,8 +24,10 @@ function padLineSlots(items: AgreementItemRow[]) {
 
 export function AgreementPdfDocument({
   agreement,
+  issuer = nspsDocumentIssuer,
 }: {
   agreement: AgreementWithItems;
+  issuer?: DocumentIssuer;
 }) {
   const items = [...(agreement.agreement_items ?? [])].sort(
     (a, b) => a.sort_order - b.sort_order,
@@ -49,28 +56,7 @@ export function AgreementPdfDocument({
 
   return (
     <article className="proposal-pdf mx-auto max-w-[8.5in] bg-white px-8 py-7 text-[11pt] leading-[1.45] text-[#102033]">
-      <header className="flex items-start justify-between gap-6 border-b-2 border-[#0B2545] pb-4">
-        <div className="min-w-0">
-          <p className="text-[15pt] font-bold leading-none tracking-tight text-[#0B2545]">
-            North Shore Process Solutions
-          </p>
-          <p className="mt-1.5 text-[10pt] text-[#5C6B7D]">
-            Helping small businesses get their time back.
-          </p>
-          <p className="mt-2 text-[10pt] leading-relaxed text-[#5C6B7D]">
-            {contact.serviceArea}
-            <br />
-            {contact.phone} · {contact.email}
-          </p>
-        </div>
-        <Image
-          alt="North Shore Process Solutions"
-          className="h-12 w-auto shrink-0"
-          height={48}
-          src="/transparentLogo.png"
-          width={48}
-        />
-      </header>
+      <DocumentPdfBrandHeader issuer={issuer} />
 
       <section className="mt-4 grid gap-4 border-b border-[#DCE7F2] pb-4 sm:grid-cols-[1.4fr_1fr]">
         <div>
@@ -209,9 +195,7 @@ export function AgreementPdfDocument({
         </div>
       </section>
 
-      <footer className="mt-5 border-t border-[#DCE7F2] pt-3 text-[9pt] text-[#5C6B7D]">
-        North Shore Process Solutions · {contact.email} · {contact.phone}
-      </footer>
+      <DocumentPdfBrandFooter issuer={issuer} />
     </article>
   );
 }

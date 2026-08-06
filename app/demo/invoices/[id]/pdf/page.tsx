@@ -7,6 +7,7 @@ import { ProposalPrintButton } from "@/components/admin/proposal-print-button";
 import { Button } from "@/components/ui/button";
 import { loadDemoCrmData } from "@/lib/demo/data";
 import { findDemoInvoice } from "@/lib/demo/map-to-crm";
+import { documentIssuerFromDemoBusiness } from "@/lib/document-issuer";
 
 type DemoInvoicePdfPageProps = {
   params: Promise<{
@@ -42,7 +43,10 @@ export default async function DemoInvoicePdfPage({
         <ProposalPrintButton />
       </div>
 
-      <InvoicePdfDocument invoice={invoice} />
+      <InvoicePdfDocument
+        invoice={invoice}
+        issuer={documentIssuerFromDemoBusiness(data.seed.business)}
+      />
 
       <p className="mx-auto mt-4 max-w-[8.5in] text-center text-sm text-muted-foreground print:hidden">
         Use <strong>Print / Save as PDF</strong>, choose “Save as PDF” as the

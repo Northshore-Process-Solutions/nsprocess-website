@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { isDateOnly } from "@/lib/billing";
 import { loadDemoCrmData } from "@/lib/demo/data";
 import { findDemoOrganization } from "@/lib/demo/map-to-crm";
+import { documentIssuerFromDemoBusiness } from "@/lib/document-issuer";
 import { invoiceBalance } from "@/lib/invoices";
 
 type DemoStatementViewPageProps = {
@@ -84,6 +85,7 @@ export default async function DemoStatementViewPage({
       <StatementPdfDocument
         from={from}
         invoices={periodInvoices}
+        issuer={documentIssuerFromDemoBusiness(data.seed.business)}
         organizationName={organization.name}
         priorOpenBalance={Math.round(priorOpenBalance * 100) / 100}
         to={to}

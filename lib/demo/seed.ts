@@ -221,6 +221,14 @@ leads.message examples of the tone required (adapt to this industry/customer typ
 
     return {
       ...object,
+      business: {
+        ...object.business,
+        name: intake.businessName.trim() || object.business.name,
+        category: intake.industry.trim() || object.business.category,
+        location: intake.location.trim() || object.business.location,
+        contactName:
+          intake.contactName.trim() || object.business.contactName,
+      },
       purchases: object.purchases ?? [],
       tools: object.tools ?? [],
     };
