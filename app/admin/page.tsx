@@ -216,7 +216,7 @@ export default async function AdminTodayPage() {
           <Link href="/admin/billing">Open Billing</Link>
         </Button>
         <Button asChild size="sm" variant="outline">
-          <Link href="/admin/crm">Open CRM</Link>
+          <Link href="/admin/crm">Open Businesses</Link>
         </Button>
         <Button asChild size="sm" variant="outline">
           <Link href="/admin/projects">Open Projects</Link>

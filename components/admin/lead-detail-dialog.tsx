@@ -102,7 +102,7 @@ export function LeadDetailDialog({
               value={new Date(lead.updated_at).toLocaleString()}
             />
             <DetailItem
-              label="CRM"
+              label="Business"
               value={
                 lead.organization_id ? (
                   <Link

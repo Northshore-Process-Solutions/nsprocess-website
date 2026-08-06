@@ -19,9 +19,9 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-4 py-12">
       <div className="mb-8">
         <Logo />
-        <h1 className="mt-8 text-3xl font-bold tracking-tight">Admin CRM</h1>
+        <h1 className="mt-8 text-3xl font-bold tracking-tight">Admin</h1>
         <p className="mt-3 text-muted-foreground">
-          Sign in to manage vendors, customers, and contacts.
+          Sign in to manage pipeline, businesses, billing, and delivery.
         </p>
       </div>
 

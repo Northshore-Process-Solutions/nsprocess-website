@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -23,22 +24,31 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="admin-shell min-h-screen bg-[#f1f3f5] text-foreground">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex h-12 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+        <div className="flex h-12 w-full items-center justify-between gap-4 px-4 sm:px-6">
           <Link
-            className="text-sm font-semibold tracking-tight text-slate-900"
+            aria-label="NSPS Admin home"
+            className="inline-flex items-center gap-2.5 text-slate-900"
             href="/admin"
           >
-            NSPS Admin
+            <Image
+              alt=""
+              className="h-8 w-auto object-contain"
+              height={32}
+              priority
+              src="/transparentLogo.png"
+              width={44}
+            />
+            <span className="hidden text-sm font-semibold tracking-tight sm:inline">
+              NSPS Admin
+            </span>
           </Link>
           <SignOutButton />
         </div>
-        <div className="border-t border-slate-100">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6">
-            <AdminNav />
-          </div>
+        <div className="border-t border-slate-100 px-4 sm:px-6">
+          <AdminNav />
         </div>
       </header>
-      <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+      <div className="w-full px-4 py-5 sm:px-6 lg:px-8">
         {children}
       </div>
     </div>

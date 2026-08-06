@@ -126,7 +126,7 @@ export function OrganizationDetail({
             href="/admin/crm"
           >
             <ArrowLeft aria-hidden className="size-4" />
-            Back to CRM
+            Back to Businesses
           </Link>
           <h1 className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">
             {organization.name}

@@ -63,11 +63,11 @@ export default async function CrmPage() {
     <main>
       <header className="mb-5">
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-          CRM
+          Businesses
         </h1>
         <p className="mt-1 text-sm text-slate-600">
-          Businesses and contacts. Inquiries live in Pipeline; delivery work
-          lives in Projects.
+          Company records and contacts. Inquiries live in Pipeline; delivery
+          work lives in Projects.
         </p>
       </header>
 

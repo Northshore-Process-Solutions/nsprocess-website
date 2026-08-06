@@ -15,7 +15,7 @@ const links = [
   },
   {
     href: "/admin/crm",
-    label: "CRM",
+    label: "Businesses",
     key: "crm" as const,
     match: (p: string) =>
       p.startsWith("/admin/crm") || p.startsWith("/admin/organizations"),
