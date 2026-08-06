@@ -245,30 +245,13 @@ async function loadAgreement(
   return { agreement: data as AgreementWithItems };
 }
 
-async function syncLeadOnDepositPaid(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  leadId: string | null,
-) {
+async function syncLeadOnDepositPaid(leadId: string | null) {
   if (!leadId) return;
 
-  const { data: lead } = await supabase
-    .from("leads")
-    .select("stage")
-    .eq("id", leadId)
-    .maybeSingle();
-
-  if (
-    lead &&
-    !["deposit_received", "won", "lost"].includes(lead.stage)
-  ) {
-    await supabase
-      .from("leads")
-      .update({
-        stage: "deposit_received",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", leadId);
-  }
+  // Deposit paid means the sale closed — create/link Business + Project.
+  // (Updating stage alone hid the lead from Pipeline without a Project.)
+  const { convertWonLeadToCrm } = await import("@/app/crm/pipeline/actions");
+  await convertWonLeadToCrm(leadId, "deposit_received");
 }
 
 export async function createInvoice(
@@ -323,6 +306,10 @@ export async function createInvoice(
 
   const itemsError = await replaceItems(auth.supabase, data.id, value.items);
   if (itemsError) return { ok: false, error: itemsError };
+
+  if (value.invoiceType === "deposit" && value.status === "paid") {
+    await syncLeadOnDepositPaid(value.leadId);
+  }
 
   revalidateInvoiceTargets({
     id: data.id,
@@ -393,10 +380,7 @@ export async function updateInvoice(
   if (itemsError) return { ok: false, error: itemsError };
 
   if (value.invoiceType === "deposit" && value.status === "paid") {
-    await syncLeadOnDepositPaid(
-      auth.supabase,
-      value.leadId ?? existing.lead_id,
-    );
+    await syncLeadOnDepositPaid(value.leadId ?? existing.lead_id);
   }
 
   revalidateInvoiceTargets({
@@ -509,7 +493,7 @@ export async function markInvoicePaid(
   if (error) return { ok: false, error: error.message };
 
   if (existing.invoice_type === "deposit") {
-    await syncLeadOnDepositPaid(auth.supabase, existing.lead_id);
+    await syncLeadOnDepositPaid(existing.lead_id);
   }
 
   revalidateInvoiceTargets({
