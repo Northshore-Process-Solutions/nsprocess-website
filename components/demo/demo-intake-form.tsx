@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { startDemoSession } from "@/app/demo/actions";
+import { markDemoSkipEnd } from "@/components/demo/demo-session-flags";
 import { Button } from "@/components/ui/button";
 
 export function DemoIntakeForm() {
@@ -22,7 +23,14 @@ export function DemoIntakeForm() {
         setError(result.error ?? "Could not build the demo.");
         return;
       }
-      router.replace("/demo");
+
+      // Bust the App Router client cache for /demo (otherwise the previous
+      // session's RSC payload can flash/stick after End demo → rebuild).
+      markDemoSkipEnd();
+      const next = result.sessionId
+        ? `/demo?s=${encodeURIComponent(result.sessionId)}`
+        : "/demo";
+      router.replace(next);
       router.refresh();
     });
   }

@@ -59,7 +59,14 @@ export async function setDemoSessionCookie(sessionId: string) {
 
 export async function clearDemoSessionCookie() {
   const jar = await cookies();
-  jar.delete(DEMO_SESSION_COOKIE);
+  // Explicit expire — jar.delete() alone can leave the cookie in some browsers.
+  jar.set(DEMO_SESSION_COOKIE, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 0,
+  });
 }
 
 export async function getDemoSessionIdFromCookie() {
@@ -158,7 +165,24 @@ export async function requireReadyDemoSession() {
 
 export async function deleteDemoSession(sessionId: string) {
   const client = createDemoAdminClient();
-  await client.from("demo_sessions").delete().eq("id", sessionId);
+  const { error } = await client
+    .from("demo_sessions")
+    .delete()
+    .eq("id", sessionId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+/** Delete the current cookie session row (if any) and clear the cookie. */
+export async function destroyCurrentDemoSession() {
+  const sessionId = await getDemoSessionIdFromCookie();
+  if (sessionId) {
+    await deleteDemoSession(sessionId);
+  }
+  await clearDemoSessionCookie();
+  return sessionId;
 }
 
 export async function purgeExpiredDemoSessions() {

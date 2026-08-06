@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import type React from "react";
 
 import { AdminShell } from "@/components/admin/admin-shell";
+import { DemoSessionCleanup } from "@/components/demo/demo-session-cleanup";
 import { PortalProvider } from "@/components/portal/portal-provider";
 import {
   getDemoSession,
   getDemoSessionIdFromCookie,
 } from "@/lib/demo/session";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "NSPS Portal Demo",
@@ -31,6 +34,7 @@ export default async function DemoLayout({
 
   return (
     <PortalProvider mode="demo">
+      <DemoSessionCleanup />
       <AdminShell subtitle={subtitle}>{children}</AdminShell>
     </PortalProvider>
   );

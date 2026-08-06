@@ -1,13 +1,13 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { generateDemoSeed } from "@/lib/demo/seed";
 import {
   clearDemoSessionCookie,
   createBuildingDemoSession,
-  deleteDemoSession,
-  getDemoSessionIdFromCookie,
+  destroyCurrentDemoSession,
   markDemoSessionError,
   markDemoSessionReady,
   purgeExpiredDemoSessions,
@@ -25,6 +25,10 @@ function clean(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function revalidateDemoPortal() {
+  revalidatePath("/demo", "layout");
+}
+
 export async function startDemoSession(
   formData: FormData,
 ): Promise<DemoActionResult> {
@@ -32,6 +36,17 @@ export async function startDemoSession(
     await purgeExpiredDemoSessions();
   } catch {
     // Non-fatal if purge fails; session create will still surface real errors.
+  }
+
+  // Always drop any prior session so a new intake cannot reuse old seed/cookie.
+  try {
+    await destroyCurrentDemoSession();
+  } catch {
+    try {
+      await clearDemoSessionCookie();
+    } catch {
+      // ignore
+    }
   }
 
   const intake: DemoIntake = {
@@ -54,7 +69,6 @@ export async function startDemoSession(
     const session = await createBuildingDemoSession(intake);
     await setDemoSessionCookie(session.id);
 
-    // Build seed in the same request so the visitor lands on a ready demo.
     try {
       const seed = await generateDemoSeed(intake);
       await markDemoSessionReady(session.id, seed);
@@ -65,6 +79,7 @@ export async function startDemoSession(
       return { ok: false, sessionId: session.id, error: message };
     }
 
+    revalidateDemoPortal();
     return { ok: true, sessionId: session.id };
   } catch (error) {
     const message =
@@ -74,14 +89,22 @@ export async function startDemoSession(
 }
 
 export async function endDemoSession() {
-  const sessionId = await getDemoSessionIdFromCookie();
-  if (sessionId) {
+  try {
+    await destroyCurrentDemoSession();
+  } catch {
     try {
-      await deleteDemoSession(sessionId);
+      await clearDemoSessionCookie();
     } catch {
-      // Cookie clear still happens below.
+      // ignore
     }
   }
-  await clearDemoSessionCookie();
+
+  try {
+    await purgeExpiredDemoSessions();
+  } catch {
+    // Best-effort.
+  }
+
+  revalidateDemoPortal();
   redirect("/demo/start");
 }

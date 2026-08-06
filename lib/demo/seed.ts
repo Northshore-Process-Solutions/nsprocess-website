@@ -172,9 +172,14 @@ function fallbackSeed(intake: DemoIntake): DemoSeed {
   };
 
   // Generic but job-shaped fallback; AI path should be industry-specific.
-  const customerA = "Rivera Residence";
-  const customerB = "Harbor Street Cafe";
-  const customerC = "Oakdale Property Group";
+  // Vary labels by intake so a rebuild after End demo never looks identical.
+  const slug = `${industry}-${companyName}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .slice(0, 24);
+  const customerA = `${industry} inquiry A (${slug})`;
+  const customerB = `${industry} job B (${companyName.split(" ")[0] || "Client"})`;
+  const customerC = `${industry} lead C`;
 
   return {
     business: {

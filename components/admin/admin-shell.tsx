@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useTransition } from "react";
 
+import { endDemoSession } from "@/app/demo/actions";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { SignOutButton } from "@/components/admin/sign-out-button";
-import { endDemoSession } from "@/app/demo/actions";
 import { usePortal } from "@/components/portal/portal-provider";
 import { Button } from "@/components/ui/button";
 import { portalModeFromPathname } from "@/lib/portal/paths";
@@ -18,9 +19,16 @@ function isBarePortalRoute(pathname: string, mode: "live" | "demo") {
     if (pathname.startsWith("/crm/statements/view")) return true;
     return false;
   }
-  // Demo intake lives at /demo/start (and legacy /demo when no session).
   if (pathname === "/demo/start") return true;
   return false;
+}
+
+async function endDemoViaApi() {
+  await fetch("/api/demo/end", {
+    method: "POST",
+    credentials: "same-origin",
+    keepalive: true,
+  });
 }
 
 export function AdminShell({
@@ -33,10 +41,24 @@ export function AdminShell({
   headerActions?: React.ReactNode;
 }) {
   const pathname = usePathname() ?? "/crm";
+  const router = useRouter();
+  const [leaving, startLeave] = useTransition();
   const portal = usePortal();
   const mode = portal.mode || portalModeFromPathname(pathname);
   const homeHref = portal.href();
   const isDemo = mode === "demo";
+
+  function leaveDemo(href: string) {
+    startLeave(async () => {
+      try {
+        await endDemoViaApi();
+      } catch {
+        // Still leave even if cleanup fails.
+      }
+      router.push(href);
+      router.refresh();
+    });
+  }
 
   if (isBarePortalRoute(pathname, mode)) {
     return <>{children}</>;
@@ -74,8 +96,14 @@ export function AdminShell({
             {headerActions}
             {isDemo ? (
               <>
-                <Button asChild size="sm" variant="outline">
-                  <Link href="/contact">Book a real review</Link>
+                <Button
+                  disabled={leaving}
+                  onClick={() => leaveDemo("/contact")}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  Book a real review
                 </Button>
                 <form action={endDemoSession}>
                   <Button size="sm" type="submit" variant="outline">

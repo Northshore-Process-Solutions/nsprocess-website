@@ -20,6 +20,7 @@ Intake lives at `/demo/start`. After a ready session, home is `/demo`.
 1. **Session-scoped** — each visitor gets a signed `nsps_demo_session` cookie and one `demo_sessions` row.
 2. **Concurrent-safe** — every read/write is keyed by that session id; demos never share seed payloads.
 3. **Production-safe** — live CRM tables are never written. Demo data lives only in `public.demo_sessions` and is accessible only with the service role.
+4. **Cleanup** — **End demo**, leaving `/demo` (e.g. Book a review), and closing/refreshing the tab call `POST /api/demo/end` (or the end server action) to delete the row and clear the cookie. Expired rows are also purged on demo start and via `/api/demo/purge`.
 
 ## Required env vars
 
