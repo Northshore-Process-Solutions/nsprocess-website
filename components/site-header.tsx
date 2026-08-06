@@ -38,6 +38,9 @@ export function SiteHeader() {
 
         <div className="hidden items-center gap-3 lg:flex">
           <Button asChild variant="outline">
+            <Link href="/demo">Try demo</Link>
+          </Button>
+          <Button asChild variant="outline">
             <Link href="/contact">Book Free Review</Link>
           </Button>
         </div>

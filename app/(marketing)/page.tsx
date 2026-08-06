@@ -480,12 +480,17 @@ export default function Home() {
                   you find the first useful step.
                 </p>
               </div>
-              <Button asChild size="lg" variant="accent">
-                <Link href="/contact">
-                  Book Your Free Process Review
-                  <ArrowRight aria-hidden className="size-4" />
-                </Link>
-              </Button>
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                <Button asChild size="lg" variant="outline">
+                  <Link href="/demo">Try interactive demo</Link>
+                </Button>
+                <Button asChild size="lg" variant="accent">
+                  <Link href="/contact">
+                    Book Your Free Process Review
+                    <ArrowRight aria-hidden className="size-4" />
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         </Reveal>

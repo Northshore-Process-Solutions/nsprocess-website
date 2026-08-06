@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/crm", "/crm/"],
+      disallow: ["/crm", "/crm/", "/demo", "/demo/"],
     },
     sitemap: "https://nsprocess.com/sitemap.xml",
   };
