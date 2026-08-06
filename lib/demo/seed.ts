@@ -1,7 +1,7 @@
 import { generateObject } from "ai";
 import { z } from "zod";
 
-import { getDraftModel } from "@/lib/ai/openai";
+import { getDemoSeedModel } from "@/lib/ai/openai";
 import type { DemoIntake, DemoSeed } from "@/lib/demo/types";
 
 const seedSchema = z.object({
@@ -173,13 +173,24 @@ function fallbackSeed(intake: DemoIntake): DemoSeed {
 
   // Generic but job-shaped fallback; AI path should be industry-specific.
   // Vary labels by intake so a rebuild after End demo never looks identical.
+  const desc = `${intake.description} ${industry}`.toLowerCase();
+  const isPublicSector =
+    /\b(state|municipal|government|public.?sector|school|town of|city of|dot|dpw|contract)\b/.test(
+      desc,
+    );
   const slug = `${industry}-${companyName}`
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .slice(0, 24);
-  const customerA = `${industry} inquiry A (${slug})`;
-  const customerB = `${industry} job B (${companyName.split(" ")[0] || "Client"})`;
-  const customerC = `${industry} lead C`;
+  const customerA = isPublicSector
+    ? "Town of Amesbury DPW"
+    : `${industry} inquiry A (${slug})`;
+  const customerB = isPublicSector
+    ? "MA DOT District 4"
+    : `${industry} job B (${companyName.split(" ")[0] || "Client"})`;
+  const customerC = isPublicSector
+    ? "Salem Public Schools"
+    : `${industry} lead C`;
 
   return {
     business: {
@@ -399,7 +410,7 @@ function fallbackSeed(intake: DemoIntake): DemoSeed {
 export async function generateDemoSeed(intake: DemoIntake): Promise<DemoSeed> {
   try {
     const { object } = await generateObject({
-      model: getDraftModel(),
+      model: getDemoSeedModel(),
       schema: seedSchema,
       system: `You generate CRM demo seed data from the POINT OF VIEW of the visitor's company.
 
@@ -407,10 +418,10 @@ The visitor IS the business owner/operator. The CRM is THEIR operating system fo
 
 Critical framing:
 - business = the visitor's company (the CRM owner). Example: "North Shore Comfort HVAC".
-- leads = THEIR customers/prospects (homeowners, restaurants, property managers, etc.). Never make the visitor's company a lead.
-- leads.businessName = customer/account label (e.g. "Rivera Residence", "Harbor Street Cafe").
+- leads = THEIR customers/prospects. Never make the visitor's company a lead.
+- leads.businessName = customer/account label that matches the REAL customer type implied by intake.
 - leads.contactName = the customer's contact person.
-- leads.message = what the customer wants (install, repair, quote, service call) in that industry's language.
+- leads.message = what the customer wants, in that industry's language and buying context.
 - proposals / agreements / invoices = paperwork the visitor's company sends TO those customers for jobs.
 - projects = active jobs/work orders for those customers (include scope + optional dates).
 - events = estimates, installs, service calls, follow-ups on the calendar.
@@ -418,25 +429,36 @@ Critical framing:
 - tools = the visitor company's software/stack (scheduling, accounting, email, field apps).
 - activities = internal notes/emails about those customer jobs.
 
-Industry fidelity:
-- If industry is HVAC: heat pumps, furnace swaps, AC installs, maintenance plans, load calculations, etc.
-- If dental: new patient inquiries, chair time, treatment plans — still mapped onto leads/proposals/projects.
-- Always mirror the intake industry and description. Do not invent "process improvement consulting" unless the intake company IS a consultancy.
+Intake fidelity (non-negotiable):
+- Treat intake.description as the source of truth for who they sell to and how work is won.
+- If they mention state contracts, government, municipalities, schools, or public-sector work: MOST leads/customers must be those entities (e.g. "MA DOT District 4", "Town of Amesbury DPW", "Salem Public Schools") — not residential homeowners or random cafes.
+- If they mention residential / homeowners: prefer residences and property managers.
+- If they mention commercial / restaurants / property groups: prefer those account types.
+- Mirror niche details from the description in messages, proposal titles, project scopes, and activities (contract vehicles, bid cycles, compliance, seasonality, etc.).
+- Always mirror the intake industry. Do not invent "process improvement consulting" unless the intake company IS a consultancy.
+
+Industry examples (only when they fit intake):
+- HVAC: heat pumps, furnace swaps, AC installs, maintenance plans, load calculations.
+- Dental: new patient inquiries, chair time, treatment plans — mapped onto leads/proposals/projects.
 
 Rules:
 - Use short ids (lead-1, company-1, prop-1).
 - Dates: YYYY-MM-DD or full ISO timestamps.
-- Dollar amounts realistic for that trade (often $500–$25,000).
+- Dollar amounts realistic for that trade and customer type (public-sector jobs are often larger).
 - At least one lead follow-up due today or earlier.
 - Include a clear path: inquiry → proposal → agreement/deposit invoice → active job/project.
-- Keep all names fictional.`,
+- Keep all names fictional but plausible for the stated customer type.
+- At least 3 of 5 leads (or all leads if fewer) must clearly match the primary customer type from intake.description.`,
       prompt: `Build a company-operator CRM demo seed for this intake:
 ${JSON.stringify(intake, null, 2)}
 
 Today's date: ${new Date().toISOString().slice(0, 10)}
-Default geography: Massachusetts North Shore unless intake says otherwise.
+Default geography: use intake.location when present; otherwise Massachusetts North Shore.
 
-Remember: the visitor runs ${intake.businessName || "this company"}. Populate THEIR pipeline with THEIR customers and jobs.`,
+Primary customer type to invent for (derive from description/industry):
+"${intake.description}"
+
+Remember: the visitor runs ${intake.businessName || "this company"}. Populate THEIR pipeline with customers that match how THEY actually win work — not a generic small-business sample.`,
     });
 
     return {

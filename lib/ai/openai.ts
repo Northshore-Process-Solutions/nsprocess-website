@@ -15,3 +15,9 @@ export function getDraftModel() {
   getOpenAIApiKey();
   return openai("gpt-4.1-mini");
 }
+
+/** Stronger model for demo seed generation (intake fidelity matters). */
+export function getDemoSeedModel() {
+  getOpenAIApiKey();
+  return openai("gpt-4.1");
+}
