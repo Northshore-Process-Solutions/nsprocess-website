@@ -86,7 +86,7 @@ export async function sendProposalShareEmail(
   const { data: proposal, error } = await auth.supabase
     .from("proposals")
     .select(
-      "proposal_number, title, client_business_name, client_contact_name, client_email",
+      "id, status, proposal_number, title, client_business_name, client_contact_name, client_email, lead_id, organization_id",
     )
     .eq("id", id)
     .maybeSingle();
@@ -131,6 +131,83 @@ North Shore Process Solutions`;
     return { ok: false, error: sent.error, shareUrl: link.shareUrl };
   }
 
+  const now = new Date().toISOString();
+
+  // Mark sent so the public link accepts responses.
+  if (proposal.status === "draft" || proposal.status === "expired") {
+    await auth.supabase
+      .from("proposals")
+      .update({
+        status: "sent",
+        sent_at: now,
+        updated_at: now,
+      })
+      .eq("id", id);
+
+    if (proposal.lead_id) {
+      const { data: lead } = await auth.supabase
+        .from("leads")
+        .select("stage")
+        .eq("id", proposal.lead_id)
+        .maybeSingle();
+
+      if (
+        lead &&
+        !["proposal_sent", "deposit_received", "won", "lost"].includes(
+          lead.stage,
+        )
+      ) {
+        await auth.supabase
+          .from("leads")
+          .update({ stage: "proposal_sent", updated_at: now })
+          .eq("id", proposal.lead_id);
+      }
+    }
+  }
+
+  let projectId: string | null = null;
+  if (proposal.lead_id) {
+    const { data: project } = await auth.supabase
+      .from("projects")
+      .select("id")
+      .eq("lead_id", proposal.lead_id)
+      .maybeSingle();
+    projectId = project?.id ?? null;
+  }
+
+  if (proposal.lead_id || proposal.organization_id || projectId) {
+    const { error: activityError } = await auth.supabase
+      .from("activities")
+      .insert({
+        lead_id: proposal.lead_id,
+        organization_id: proposal.organization_id,
+        project_id: projectId,
+        activity_type: "email",
+        email_direction: "sent",
+        subject,
+        body: text,
+        occurred_at: now,
+      });
+
+    if (activityError) {
+      return {
+        ok: false,
+        error: `Email sent, but failed to log activity: ${activityError.message}`,
+        token: link.token,
+        shareUrl: link.shareUrl,
+      };
+    }
+  }
+
+  revalidatePath("/crm/pipeline");
+  revalidatePath(`/crm/proposals/${id}`);
+  if (proposal.organization_id) {
+    revalidatePath(`/crm/organizations/${proposal.organization_id}`);
+  }
+  if (projectId) {
+    revalidatePath(`/crm/projects/${projectId}`);
+  }
+
   return { ok: true, token: link.token, shareUrl: link.shareUrl };
 }
 
@@ -171,7 +248,7 @@ export async function respondToSharedProposal(input: {
   const { data: proposal, error: loadError } = await admin
     .from("proposals")
     .select(
-      "id, status, proposal_number, title, client_business_name, client_email, share_token, client_responded_at, valid_until",
+      "id, status, proposal_number, title, client_business_name, client_email, lead_id, organization_id, share_token, client_responded_at, valid_until",
     )
     .eq("share_token", token)
     .maybeSingle();
@@ -219,10 +296,26 @@ export async function respondToSharedProposal(input: {
 
   if (updateError) return { ok: false, error: updateError.message };
 
+  if (proposal.lead_id || proposal.organization_id) {
+    const label = decision === "accepted" ? "accepted" : "declined";
+    await admin.from("activities").insert({
+      lead_id: proposal.lead_id,
+      organization_id: proposal.organization_id,
+      activity_type: "note",
+      email_direction: null,
+      subject: `Proposal ${proposal.proposal_number} ${label}`,
+      body: comment,
+      occurred_at: now,
+    });
+  }
+
   revalidatePath(`/crm/proposals/${proposal.id}`);
   revalidatePath("/crm/proposals");
   revalidatePath("/crm/pipeline");
   revalidatePath(`/p/${token}`);
+  if (proposal.organization_id) {
+    revalidatePath(`/crm/organizations/${proposal.organization_id}`);
+  }
 
   const notifyTo = process.env.CONTACT_TO?.trim();
   if (notifyTo) {
