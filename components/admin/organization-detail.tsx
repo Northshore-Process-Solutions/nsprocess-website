@@ -17,6 +17,11 @@ import { deleteOrganization } from "@/app/crm/actions";
 import { ActivityPanel } from "@/components/admin/activity-panel";
 import { OrganizationForm } from "@/components/admin/organization-form";
 import { PurchasesPanel } from "@/components/admin/purchases-panel";
+import {
+  MobileDataCard,
+  MobileDataField,
+  ResponsiveDataList,
+} from "@/components/admin/responsive-data-list";
 import { usePortal } from "@/components/portal/portal-provider";
 import { Button } from "@/components/ui/button";
 import type { ActivityRow } from "@/lib/activities";
@@ -659,48 +664,80 @@ export function OrganizationDetail({
           description="Full Process Review / pipeline history"
           title="Lead history"
         >
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse text-left text-sm">
-              <thead className="text-xs uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-2 py-2 font-medium">Lead</th>
-                  <th className="px-2 py-2 font-medium">Contact</th>
-                  <th className="px-2 py-2 font-medium">Source</th>
-                  <th className="px-2 py-2 font-medium">Stage</th>
-                  <th className="px-2 py-2 font-medium">Created</th>
-                </tr>
-              </thead>
-              <tbody>
-                {leads.map((lead) => (
-                  <tr className="border-t border-slate-100 align-top" key={lead.id}>
-                    <td className="px-2 py-2.5">
-                      <div className="font-medium text-slate-900">
-                        {lead.title}
-                      </div>
-                    </td>
-                    <td className="px-2 py-2.5">
-                      <div>{lead.contact_name}</div>
-                      <div className="mt-0.5 text-xs text-slate-500">
-                        {lead.email}
-                      </div>
-                    </td>
-                    <td className="px-2 py-2.5">
-                      {leadSourceLabel(lead.source)}
-                    </td>
-                    <td className="px-2 py-2.5">
-                      <StatusPill
-                        label={leadStageLabel(lead.stage)}
-                        tone={stageStyles[lead.stage] ?? stageStyles.new_inquiry}
-                      />
-                    </td>
-                    <td className="whitespace-nowrap px-2 py-2.5">
+          <ResponsiveDataList
+            cards={leads.map((lead) => (
+              <MobileDataCard
+                badge={
+                  <StatusPill
+                    label={leadStageLabel(lead.stage)}
+                    tone={stageStyles[lead.stage] ?? stageStyles.new_inquiry}
+                  />
+                }
+                key={lead.id}
+                meta={
+                  <>
+                    <span>{leadSourceLabel(lead.source)}</span>
+                    <span>
                       {new Date(lead.created_at).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </span>
+                  </>
+                }
+                subtitle={lead.contact_name}
+                title={lead.title || lead.business_name}
+              >
+                <MobileDataField label="Email">{lead.email}</MobileDataField>
+              </MobileDataCard>
+            ))}
+            table={
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-collapse text-left text-sm">
+                  <thead className="text-xs uppercase tracking-wide text-slate-500">
+                    <tr>
+                      <th className="px-2 py-2 font-medium">Lead</th>
+                      <th className="px-2 py-2 font-medium">Contact</th>
+                      <th className="px-2 py-2 font-medium">Source</th>
+                      <th className="px-2 py-2 font-medium">Stage</th>
+                      <th className="px-2 py-2 font-medium">Created</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leads.map((lead) => (
+                      <tr
+                        className="border-t border-slate-100 align-top"
+                        key={lead.id}
+                      >
+                        <td className="px-2 py-2.5">
+                          <div className="font-medium text-slate-900">
+                            {lead.title}
+                          </div>
+                        </td>
+                        <td className="px-2 py-2.5">
+                          <div>{lead.contact_name}</div>
+                          <div className="mt-0.5 text-xs text-slate-500">
+                            {lead.email}
+                          </div>
+                        </td>
+                        <td className="px-2 py-2.5">
+                          {leadSourceLabel(lead.source)}
+                        </td>
+                        <td className="px-2 py-2.5">
+                          <StatusPill
+                            label={leadStageLabel(lead.stage)}
+                            tone={
+                              stageStyles[lead.stage] ?? stageStyles.new_inquiry
+                            }
+                          />
+                        </td>
+                        <td className="whitespace-nowrap px-2 py-2.5">
+                          {new Date(lead.created_at).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            }
+          />
         </HubCard>
       ) : null}
 

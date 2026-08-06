@@ -5,6 +5,11 @@ import { useMemo, useState } from "react";
 import { CalendarDays, Eye } from "lucide-react";
 
 import { ActionHoverTooltip } from "@/components/admin/action-hover-tooltip";
+import {
+  MobileDataCard,
+  MobileDataField,
+  ResponsiveDataList,
+} from "@/components/admin/responsive-data-list";
 import { usePortal } from "@/components/portal/portal-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -209,108 +214,191 @@ export function ProjectsTable({ rows }: ProjectsTableProps) {
           <p className="font-semibold">No projects in this status</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse text-left text-sm">
-              <thead className="bg-muted/70 text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                <tr>
-                  <th className="px-4 py-3 font-semibold">Project</th>
-                  <th className="px-4 py-3 font-semibold">Priority</th>
-                  <th className="px-4 py-3 font-semibold">Next action</th>
-                  <th className="px-4 py-3 font-semibold">Tasks</th>
-                  <th className="px-4 py-3 font-semibold">Status</th>
-                  <th className="px-4 py-3 font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((row) => {
-                  const overdueAction = isNextActionOverdue(row);
-                  const pastTarget = isProjectPastTarget(row);
-
-                  return (
-                    <tr
-                      className="border-t border-border align-top transition hover:bg-secondary/40"
-                      key={row.id}
+        <ResponsiveDataList
+          cards={filtered.map((row) => {
+            const overdueAction = isNextActionOverdue(row);
+            const pastTarget = isProjectPastTarget(row);
+            return (
+              <MobileDataCard
+                actions={
+                  <>
+                    <ProjectCalendarAction row={row} />
+                    <ProjectViewAction row={row} />
+                  </>
+                }
+                badge={
+                  <span
+                    className={cn(
+                      "inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
+                      statusStyles[row.status] ?? statusStyles.active,
+                    )}
+                  >
+                    {projectStatusLabel(row.status)}
+                  </span>
+                }
+                key={row.id}
+                meta={
+                  <>
+                    <span
+                      className={cn(
+                        "inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
+                        priorityStyles[row.priority] ?? priorityStyles.normal,
+                      )}
                     >
-                      <td className="px-4 py-4">
-                        <div className="font-semibold text-foreground">
-                          {row.name}
-                        </div>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {row.organizations?.name ?? "—"}
-                          {pastTarget ? " · Past target end" : ""}
-                        </p>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span
-                          className={cn(
-                            "inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
-                            priorityStyles[row.priority] ??
-                              priorityStyles.normal,
-                          )}
-                        >
-                          {projectPriorityLabel(row.priority)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div
-                          className={cn(
-                            "font-medium",
-                            overdueAction && "text-red-700",
-                          )}
-                        >
-                          {row.next_action || "—"}
-                        </div>
-                        <p
-                          className={cn(
-                            "mt-1 text-xs text-muted-foreground",
-                            overdueAction && "font-semibold text-red-700",
-                          )}
-                        >
-                          {row.next_action_source === "task"
-                            ? "Task"
-                            : row.next_action_source === "event"
-                              ? "Event"
-                              : null}
-                          {row.next_action_source && row.next_action_at
-                            ? " · "
-                            : null}
-                          {row.next_action_at
-                            ? new Date(
-                                `${row.next_action_at}T12:00:00`,
-                              ).toLocaleDateString()
-                            : row.next_action
-                              ? "No date"
-                              : "Add a task or event"}
-                          {overdueAction ? " · Overdue" : ""}
-                        </p>
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        {row.open_task_count ?? 0} open
-                      </td>
-                      <td className="px-4 py-4">
-                        <span
-                          className={cn(
-                            "inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
-                            statusStyles[row.status] ?? statusStyles.active,
-                          )}
-                        >
-                          {projectStatusLabel(row.status)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex gap-2">
-                          <ProjectCalendarAction row={row} />
-                          <ProjectViewAction row={row} />
-                        </div>
-                      </td>
+                      {projectPriorityLabel(row.priority)}
+                    </span>
+                    <span>{row.open_task_count ?? 0} open tasks</span>
+                  </>
+                }
+                subtitle={
+                  <>
+                    {row.organizations?.name ?? "—"}
+                    {pastTarget ? " · Past target end" : ""}
+                  </>
+                }
+                title={row.name}
+              >
+                <MobileDataField label="Next">
+                  <span
+                    className={cn(
+                      "block",
+                      overdueAction && "text-red-700",
+                    )}
+                  >
+                    {row.next_action || "—"}
+                    <span
+                      className={cn(
+                        "mt-0.5 block text-xs font-normal text-muted-foreground",
+                        overdueAction && "font-semibold text-red-700",
+                      )}
+                    >
+                      {row.next_action_source === "task"
+                        ? "Task"
+                        : row.next_action_source === "event"
+                          ? "Event"
+                          : null}
+                      {row.next_action_source && row.next_action_at
+                        ? " · "
+                        : null}
+                      {row.next_action_at
+                        ? new Date(
+                            `${row.next_action_at}T12:00:00`,
+                          ).toLocaleDateString()
+                        : row.next_action
+                          ? "No date"
+                          : "Add a task or event"}
+                      {overdueAction ? " · Overdue" : ""}
+                    </span>
+                  </span>
+                </MobileDataField>
+              </MobileDataCard>
+            );
+          })}
+          table={
+            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-collapse text-left text-sm">
+                  <thead className="bg-muted/70 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold">Project</th>
+                      <th className="px-4 py-3 font-semibold">Priority</th>
+                      <th className="px-4 py-3 font-semibold">Next action</th>
+                      <th className="px-4 py-3 font-semibold">Tasks</th>
+                      <th className="px-4 py-3 font-semibold">Status</th>
+                      <th className="px-4 py-3 font-semibold">Actions</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                  </thead>
+                  <tbody>
+                    {filtered.map((row) => {
+                      const overdueAction = isNextActionOverdue(row);
+                      const pastTarget = isProjectPastTarget(row);
+
+                      return (
+                        <tr
+                          className="border-t border-border align-top transition hover:bg-secondary/40"
+                          key={row.id}
+                        >
+                          <td className="px-4 py-4">
+                            <div className="font-semibold text-foreground">
+                              {row.name}
+                            </div>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {row.organizations?.name ?? "—"}
+                              {pastTarget ? " · Past target end" : ""}
+                            </p>
+                          </td>
+                          <td className="px-4 py-4">
+                            <span
+                              className={cn(
+                                "inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
+                                priorityStyles[row.priority] ??
+                                  priorityStyles.normal,
+                              )}
+                            >
+                              {projectPriorityLabel(row.priority)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div
+                              className={cn(
+                                "font-medium",
+                                overdueAction && "text-red-700",
+                              )}
+                            >
+                              {row.next_action || "—"}
+                            </div>
+                            <p
+                              className={cn(
+                                "mt-1 text-xs text-muted-foreground",
+                                overdueAction && "font-semibold text-red-700",
+                              )}
+                            >
+                              {row.next_action_source === "task"
+                                ? "Task"
+                                : row.next_action_source === "event"
+                                  ? "Event"
+                                  : null}
+                              {row.next_action_source && row.next_action_at
+                                ? " · "
+                                : null}
+                              {row.next_action_at
+                                ? new Date(
+                                    `${row.next_action_at}T12:00:00`,
+                                  ).toLocaleDateString()
+                                : row.next_action
+                                  ? "No date"
+                                  : "Add a task or event"}
+                              {overdueAction ? " · Overdue" : ""}
+                            </p>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            {row.open_task_count ?? 0} open
+                          </td>
+                          <td className="px-4 py-4">
+                            <span
+                              className={cn(
+                                "inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
+                                statusStyles[row.status] ?? statusStyles.active,
+                              )}
+                            >
+                              {projectStatusLabel(row.status)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="flex gap-2">
+                              <ProjectCalendarAction row={row} />
+                              <ProjectViewAction row={row} />
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+        />
       )}
     </div>
   );

@@ -136,7 +136,9 @@ export function AdminShell({
           <AdminNav />
         </div>
       </header>
-      <div className="w-full px-4 py-5 sm:px-6 lg:px-8">{children}</div>
+      <div className="min-w-0 w-full overflow-x-hidden px-4 py-5 sm:px-6 lg:px-8">
+        {children}
+      </div>
       {isDemo ? (
         <footer className="border-t border-slate-200 px-4 py-3 text-center text-xs text-slate-500">
           Demo sandbox — same portal UI as production; session-private data

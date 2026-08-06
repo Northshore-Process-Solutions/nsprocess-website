@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { FileText, Pencil, Trash2 } from "lucide-react";
 
+import {
+  MobileDataCard,
+  MobileDataField,
+  ResponsiveDataList,
+} from "@/components/admin/responsive-data-list";
 import { Button } from "@/components/ui/button";
 import { usePortal } from "@/components/portal/portal-provider";
 import { formatMoney } from "@/lib/billing";
@@ -27,6 +32,64 @@ type InvoicesTableProps = {
   deletingId?: string | null;
 };
 
+function StatusBadge({ status }: { status: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
+        statusStyles[status] ?? statusStyles.draft,
+      )}
+    >
+      {invoiceStatusLabel(status as InvoiceWithItems["status"])}
+    </span>
+  );
+}
+
+function RowActions({
+  row,
+  onDelete,
+  deletingId,
+}: {
+  row: InvoiceWithItems;
+  onDelete?: (row: InvoiceWithItems) => void;
+  deletingId: string | null;
+}) {
+  const { href } = usePortal();
+  return (
+    <>
+      <Button asChild size="icon" variant="outline">
+        <Link
+          aria-label={`Edit ${row.title}`}
+          href={href(`/invoices/${row.id}`)}
+        >
+          <Pencil aria-hidden className="size-4" />
+        </Link>
+      </Button>
+      <Button asChild size="icon" variant="outline">
+        <Link
+          aria-label={`Open PDF for ${row.title}`}
+          href={href(`/invoices/${row.id}/pdf`)}
+          target="_blank"
+        >
+          <FileText aria-hidden className="size-4" />
+        </Link>
+      </Button>
+      {onDelete ? (
+        <Button
+          aria-label={`Delete ${row.title}`}
+          disabled={deletingId === row.id}
+          onClick={() => onDelete(row)}
+          size="icon"
+          type="button"
+          variant="outline"
+        >
+          <Trash2 aria-hidden className="size-4" />
+        </Button>
+      ) : null}
+    </>
+  );
+}
+
 export function InvoicesTable({
   rows,
   onDelete,
@@ -45,106 +108,128 @@ export function InvoicesTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
-      <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse text-left text-sm">
-          <thead className="bg-muted/70 text-xs uppercase tracking-[0.14em] text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3 font-semibold">Invoice</th>
-              <th className="px-4 py-3 font-semibold">Client</th>
-              <th className="px-4 py-3 font-semibold">Type</th>
-              <th className="px-4 py-3 font-semibold">Status</th>
-              <th className="px-4 py-3 font-semibold">Total</th>
-              <th className="px-4 py-3 font-semibold">Balance</th>
-              <th className="px-4 py-3 font-semibold">Issued</th>
-              <th className="px-4 py-3 font-semibold">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr
-                className="border-t border-border align-top transition hover:bg-secondary/40"
-                key={row.id}
-              >
-                <td className="px-4 py-4">
-                  <Link
-                    className="font-semibold text-accent hover:underline"
-                    href={href(`/invoices/${row.id}`)}
+    <ResponsiveDataList
+      cards={rows.map((row) => (
+        <MobileDataCard
+          actions={
+            <RowActions
+              deletingId={deletingId}
+              onDelete={onDelete}
+              row={row}
+            />
+          }
+          badge={<StatusBadge status={row.status} />}
+          key={row.id}
+          meta={
+            <>
+              <span>{invoiceTypeLabel(row.invoice_type)}</span>
+              <span>{formatMoney(row.total_amount)}</span>
+              <span>
+                Bal {formatMoney(invoiceBalance(row))}
+              </span>
+            </>
+          }
+          subtitle={row.invoice_number}
+          title={
+            <Link
+              className="text-accent hover:underline"
+              href={href(`/invoices/${row.id}`)}
+            >
+              {row.title}
+            </Link>
+          }
+        >
+          <MobileDataField label="Client">
+            <span className="block">
+              {row.client_business_name}
+              {row.client_contact_name ? (
+                <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                  {row.client_contact_name}
+                </span>
+              ) : null}
+            </span>
+          </MobileDataField>
+          <MobileDataField label="Issued">
+            {new Date(`${row.issued_at}T12:00:00`).toLocaleDateString()}
+          </MobileDataField>
+        </MobileDataCard>
+      ))}
+      table={
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse text-left text-sm">
+              <thead className="bg-muted/70 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">Invoice</th>
+                  <th className="px-4 py-3 font-semibold">Client</th>
+                  <th className="px-4 py-3 font-semibold">Type</th>
+                  <th className="px-4 py-3 font-semibold">Status</th>
+                  <th className="px-4 py-3 font-semibold">Total</th>
+                  <th className="px-4 py-3 font-semibold">Balance</th>
+                  <th className="px-4 py-3 font-semibold">Issued</th>
+                  <th className="px-4 py-3 font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr
+                    className="border-t border-border align-top transition hover:bg-secondary/40"
+                    key={row.id}
                   >
-                    {row.title}
-                  </Link>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {row.invoice_number}
-                  </p>
-                </td>
-                <td className="px-4 py-4">
-                  <div className="font-medium">{row.client_business_name}</div>
-                  {row.client_contact_name ? (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {row.client_contact_name}
-                    </p>
-                  ) : null}
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap">
-                  {invoiceTypeLabel(row.invoice_type)}
-                </td>
-                <td className="px-4 py-4">
-                  <span
-                    className={cn(
-                      "inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
-                      statusStyles[row.status] ?? statusStyles.draft,
-                    )}
-                  >
-                    {invoiceStatusLabel(row.status)}
-                  </span>
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap font-medium">
-                  {formatMoney(row.total_amount)}
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap font-medium">
-                  {formatMoney(invoiceBalance(row))}
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap text-muted-foreground">
-                  {new Date(`${row.issued_at}T12:00:00`).toLocaleDateString()}
-                </td>
-                <td className="px-4 py-4">
-                  <div className="flex gap-2">
-                    <Button asChild size="icon" variant="outline">
+                    <td className="px-4 py-4">
                       <Link
-                        aria-label={`Edit ${row.title}`}
+                        className="font-semibold text-accent hover:underline"
                         href={href(`/invoices/${row.id}`)}
                       >
-                        <Pencil aria-hidden className="size-4" />
+                        {row.title}
                       </Link>
-                    </Button>
-                    <Button asChild size="icon" variant="outline">
-                      <Link
-                        aria-label={`Open PDF for ${row.title}`}
-                        href={href(`/invoices/${row.id}/pdf`)}
-                        target="_blank"
-                      >
-                        <FileText aria-hidden className="size-4" />
-                      </Link>
-                    </Button>
-                    {onDelete ? (
-                      <Button
-                        aria-label={`Delete ${row.title}`}
-                        disabled={deletingId === row.id}
-                        onClick={() => onDelete(row)}
-                        size="icon"
-                        type="button"
-                        variant="outline"
-                      >
-                        <Trash2 aria-hidden className="size-4" />
-                      </Button>
-                    ) : null}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {row.invoice_number}
+                      </p>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="font-medium">
+                        {row.client_business_name}
+                      </div>
+                      {row.client_contact_name ? (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {row.client_contact_name}
+                        </p>
+                      ) : null}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      {invoiceTypeLabel(row.invoice_type)}
+                    </td>
+                    <td className="px-4 py-4">
+                      <StatusBadge status={row.status} />
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap font-medium">
+                      {formatMoney(row.total_amount)}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap font-medium">
+                      {formatMoney(invoiceBalance(row))}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-muted-foreground">
+                      {new Date(
+                        `${row.issued_at}T12:00:00`,
+                      ).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex gap-2">
+                        <RowActions
+                          deletingId={deletingId}
+                          onDelete={onDelete}
+                          row={row}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    />
   );
 }

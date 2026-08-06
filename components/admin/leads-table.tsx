@@ -4,6 +4,11 @@ import Link from "next/link";
 import { CalendarDays, Eye, Mail } from "lucide-react";
 
 import { ActionHoverTooltip } from "@/components/admin/action-hover-tooltip";
+import {
+  MobileDataCard,
+  MobileDataField,
+  ResponsiveDataList,
+} from "@/components/admin/responsive-data-list";
 import { usePortal } from "@/components/portal/portal-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -296,73 +301,132 @@ export function LeadsTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-soft">
-      <table className="min-w-full border-collapse text-left text-sm">
-        <thead className="bg-muted/70 text-xs uppercase tracking-[0.14em] text-muted-foreground">
-          <tr>
-            <th className="px-4 py-3 font-semibold">Business</th>
-            <th className="px-4 py-3 font-semibold">Contact</th>
-            <th className="px-4 py-3 font-semibold">Created</th>
-            <th className="px-4 py-3 font-semibold">Source</th>
-            <th className="px-4 py-3 font-semibold">Stage</th>
-            <th className="px-4 py-3 font-semibold">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr
-              className="border-t border-border align-top transition hover:bg-secondary/40"
-              key={row.id}
+    <ResponsiveDataList
+      cards={rows.map((row) => (
+        <MobileDataCard
+          actions={
+            <>
+              <LeadEmailAction
+                activities={activitiesByLeadId[row.id] ?? []}
+                lead={row}
+                onReply={onReply}
+              />
+              <LeadCalendarAction
+                events={eventsByLeadId[row.id] ?? []}
+                lead={row}
+              />
+              <LeadViewAction lead={row} onView={onView} />
+            </>
+          }
+          badge={
+            <span
+              className={cn(
+                "inline-flex rounded-full border px-3 py-1 text-xs font-semibold",
+                stageStyles[row.stage],
+              )}
             >
-              <td className="px-4 py-4">
-                <div className="font-semibold">{row.business_name}</div>
-              </td>
-              <td className="px-4 py-4">
-                <div className="font-medium">{row.contact_name}</div>
-                <a
-                  className="mt-1 block text-xs text-accent hover:underline"
-                  href={`mailto:${row.email}`}
-                >
-                  {row.email}
-                </a>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  {row.phone || "—"}
-                </div>
-              </td>
-              <td className="px-4 py-4 whitespace-nowrap">
-                {new Date(row.created_at).toLocaleDateString()}
-              </td>
-              <td className="px-4 py-4">
-                {leadSourceLabel(row.source)}
-              </td>
-              <td className="px-4 py-4">
-                <span
-                  className={cn(
-                    "inline-flex rounded-full border px-3 py-1 text-xs font-semibold",
-                    stageStyles[row.stage],
-                  )}
-                >
-                  {leadStageLabel(row.stage)}
+              {leadStageLabel(row.stage)}
+            </span>
+          }
+          key={row.id}
+          meta={
+            <>
+              <span>{leadSourceLabel(row.source)}</span>
+              <span>{new Date(row.created_at).toLocaleDateString()}</span>
+            </>
+          }
+          title={row.business_name}
+        >
+          <MobileDataField label="Contact">
+            <span className="block">
+              {row.contact_name}
+              <a
+                className="mt-0.5 block text-xs font-normal text-accent hover:underline"
+                href={`mailto:${row.email}`}
+              >
+                {row.email}
+              </a>
+              {row.phone ? (
+                <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                  {row.phone}
                 </span>
-              </td>
-              <td className="px-4 py-4">
-                <div className="flex gap-2">
-                  <LeadEmailAction
-                    activities={activitiesByLeadId[row.id] ?? []}
-                    lead={row}
-                    onReply={onReply}
-                  />
-                  <LeadCalendarAction
-                    events={eventsByLeadId[row.id] ?? []}
-                    lead={row}
-                  />
-                  <LeadViewAction lead={row} onView={onView} />
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+              ) : null}
+            </span>
+          </MobileDataField>
+        </MobileDataCard>
+      ))}
+      table={
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse text-left text-sm">
+              <thead className="bg-muted/70 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">Business</th>
+                  <th className="px-4 py-3 font-semibold">Contact</th>
+                  <th className="px-4 py-3 font-semibold">Created</th>
+                  <th className="px-4 py-3 font-semibold">Source</th>
+                  <th className="px-4 py-3 font-semibold">Stage</th>
+                  <th className="px-4 py-3 font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr
+                    className="border-t border-border align-top transition hover:bg-secondary/40"
+                    key={row.id}
+                  >
+                    <td className="px-4 py-4">
+                      <div className="font-semibold">{row.business_name}</div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="font-medium">{row.contact_name}</div>
+                      <a
+                        className="mt-1 block text-xs text-accent hover:underline"
+                        href={`mailto:${row.email}`}
+                      >
+                        {row.email}
+                      </a>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {row.phone || "—"}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      {new Date(row.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-4">
+                      {leadSourceLabel(row.source)}
+                    </td>
+                    <td className="px-4 py-4">
+                      <span
+                        className={cn(
+                          "inline-flex rounded-full border px-3 py-1 text-xs font-semibold",
+                          stageStyles[row.stage],
+                        )}
+                      >
+                        {leadStageLabel(row.stage)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex gap-2">
+                        <LeadEmailAction
+                          activities={activitiesByLeadId[row.id] ?? []}
+                          lead={row}
+                          onReply={onReply}
+                        />
+                        <LeadCalendarAction
+                          events={eventsByLeadId[row.id] ?? []}
+                          lead={row}
+                        />
+                        <LeadViewAction lead={row} onView={onView} />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    />
   );
 }

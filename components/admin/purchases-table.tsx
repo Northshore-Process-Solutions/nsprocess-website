@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { Pencil, Trash2 } from "lucide-react";
 
+import {
+  MobileDataCard,
+  MobileDataField,
+  ResponsiveDataList,
+} from "@/components/admin/responsive-data-list";
 import { Button } from "@/components/ui/button";
 import { usePortal } from "@/components/portal/portal-provider";
 import {
@@ -27,6 +32,59 @@ type PurchasesTableProps = {
   showLinks?: boolean;
 };
 
+function TypeBadge({ type }: { type: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
+        typeStyles[type] ?? typeStyles.other,
+      )}
+    >
+      {purchaseTypeLabel(type as PurchaseWithRelations["purchase_type"])}
+    </span>
+  );
+}
+
+function RowActions({
+  row,
+  onEdit,
+  onDelete,
+  deletingId,
+}: {
+  row: PurchaseWithRelations;
+  onEdit?: (row: PurchaseWithRelations) => void;
+  onDelete?: (row: PurchaseWithRelations) => void;
+  deletingId: string | null;
+}) {
+  return (
+    <>
+      {onEdit ? (
+        <Button
+          aria-label={`Edit ${row.name}`}
+          onClick={() => onEdit(row)}
+          size="icon"
+          type="button"
+          variant="outline"
+        >
+          <Pencil aria-hidden className="size-4" />
+        </Button>
+      ) : null}
+      {onDelete ? (
+        <Button
+          aria-label={`Delete ${row.name}`}
+          disabled={deletingId === row.id}
+          onClick={() => onDelete(row)}
+          size="icon"
+          type="button"
+          variant="outline"
+        >
+          <Trash2 aria-hidden className="size-4" />
+        </Button>
+      ) : null}
+    </>
+  );
+}
+
 export function PurchasesTable({
   rows,
   onEdit,
@@ -35,6 +93,7 @@ export function PurchasesTable({
   showLinks = true,
 }: PurchasesTableProps) {
   const { href } = usePortal();
+  const showActions = Boolean(onEdit || onDelete);
 
   if (rows.length === 0) {
     return (
@@ -48,118 +107,161 @@ export function PurchasesTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
-      <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse text-left text-sm">
-          <thead className="bg-muted/70 text-xs uppercase tracking-[0.14em] text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3 font-semibold">Purchase</th>
-              <th className="px-4 py-3 font-semibold">Type</th>
-              <th className="px-4 py-3 font-semibold">Amount</th>
-              <th className="px-4 py-3 font-semibold">Date</th>
-              {showLinks ? (
-                <>
-                  <th className="px-4 py-3 font-semibold">Business</th>
-                  <th className="px-4 py-3 font-semibold">Project</th>
-                </>
-              ) : null}
-              {onEdit || onDelete ? (
-                <th className="px-4 py-3 font-semibold">Actions</th>
-              ) : null}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr
-                className="border-t border-border align-top transition hover:bg-secondary/40"
-                key={row.id}
-              >
-                <td className="px-4 py-4">
-                  <div className="font-semibold">{row.name}</div>
-                  {row.notes ? (
-                    <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
-                      {row.notes}
-                    </p>
-                  ) : null}
-                </td>
-                <td className="px-4 py-4">
-                  <span
-                    className={cn(
-                      "inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
-                      typeStyles[row.purchase_type] ?? typeStyles.other,
-                    )}
+    <ResponsiveDataList
+      cards={rows.map((row) => (
+        <MobileDataCard
+          actions={
+            showActions ? (
+              <RowActions
+                deletingId={deletingId}
+                onDelete={onDelete}
+                onEdit={onEdit}
+                row={row}
+              />
+            ) : undefined
+          }
+          badge={<TypeBadge type={row.purchase_type} />}
+          key={row.id}
+          meta={
+            <>
+              <span className="font-medium text-foreground">
+                {formatPurchaseAmount(row.amount)}
+              </span>
+              <span>
+                {new Date(`${row.purchased_at}T12:00:00`).toLocaleDateString()}
+              </span>
+            </>
+          }
+          subtitle={row.notes || undefined}
+          title={row.name}
+        >
+          {showLinks ? (
+            <>
+              <MobileDataField label="Business">
+                {row.organizations ? (
+                  <Link
+                    className="text-accent hover:underline"
+                    href={href(`/organizations/${row.organizations.id}`)}
                   >
-                    {purchaseTypeLabel(row.purchase_type)}
-                  </span>
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap font-medium">
-                  {formatPurchaseAmount(row.amount)}
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap text-muted-foreground">
-                  {new Date(`${row.purchased_at}T12:00:00`).toLocaleDateString()}
-                </td>
-                {showLinks ? (
-                  <>
+                    {row.organizations.name}
+                  </Link>
+                ) : (
+                  "General"
+                )}
+              </MobileDataField>
+              <MobileDataField label="Project">
+                {row.projects ? (
+                  <Link
+                    className="text-accent hover:underline"
+                    href={href(`/projects/${row.projects.id}`)}
+                  >
+                    {row.projects.name}
+                  </Link>
+                ) : (
+                  "—"
+                )}
+              </MobileDataField>
+            </>
+          ) : null}
+        </MobileDataCard>
+      ))}
+      table={
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse text-left text-sm">
+              <thead className="bg-muted/70 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">Purchase</th>
+                  <th className="px-4 py-3 font-semibold">Type</th>
+                  <th className="px-4 py-3 font-semibold">Amount</th>
+                  <th className="px-4 py-3 font-semibold">Date</th>
+                  {showLinks ? (
+                    <>
+                      <th className="px-4 py-3 font-semibold">Business</th>
+                      <th className="px-4 py-3 font-semibold">Project</th>
+                    </>
+                  ) : null}
+                  {showActions ? (
+                    <th className="px-4 py-3 font-semibold">Actions</th>
+                  ) : null}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr
+                    className="border-t border-border align-top transition hover:bg-secondary/40"
+                    key={row.id}
+                  >
                     <td className="px-4 py-4">
-                      {row.organizations ? (
-                        <Link
-                          className="font-medium text-accent hover:underline"
-                          href={href(`/organizations/${row.organizations.id}`)}
-                        >
-                          {row.organizations.name}
-                        </Link>
-                      ) : (
-                        <span className="text-muted-foreground">General</span>
-                      )}
+                      <div className="font-semibold">{row.name}</div>
+                      {row.notes ? (
+                        <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
+                          {row.notes}
+                        </p>
+                      ) : null}
                     </td>
                     <td className="px-4 py-4">
-                      {row.projects ? (
-                        <Link
-                          className="font-medium text-accent hover:underline"
-                          href={href(`/projects/${row.projects.id}`)}
-                        >
-                          {row.projects.name}
-                        </Link>
-                      ) : (
-                        "—"
-                      )}
+                      <TypeBadge type={row.purchase_type} />
                     </td>
-                  </>
-                ) : null}
-                {onEdit || onDelete ? (
-                  <td className="px-4 py-4">
-                    <div className="flex gap-2">
-                      {onEdit ? (
-                        <Button
-                          aria-label={`Edit ${row.name}`}
-                          onClick={() => onEdit(row)}
-                          size="icon"
-                          type="button"
-                          variant="outline"
-                        >
-                          <Pencil aria-hidden className="size-4" />
-                        </Button>
-                      ) : null}
-                      {onDelete ? (
-                        <Button
-                          aria-label={`Delete ${row.name}`}
-                          disabled={deletingId === row.id}
-                          onClick={() => onDelete(row)}
-                          size="icon"
-                          type="button"
-                          variant="outline"
-                        >
-                          <Trash2 aria-hidden className="size-4" />
-                        </Button>
-                      ) : null}
-                    </div>
-                  </td>
-                ) : null}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+                    <td className="px-4 py-4 whitespace-nowrap font-medium">
+                      {formatPurchaseAmount(row.amount)}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-muted-foreground">
+                      {new Date(
+                        `${row.purchased_at}T12:00:00`,
+                      ).toLocaleDateString()}
+                    </td>
+                    {showLinks ? (
+                      <>
+                        <td className="px-4 py-4">
+                          {row.organizations ? (
+                            <Link
+                              className="font-medium text-accent hover:underline"
+                              href={href(
+                                `/organizations/${row.organizations.id}`,
+                              )}
+                            >
+                              {row.organizations.name}
+                            </Link>
+                          ) : (
+                            <span className="text-muted-foreground">
+                              General
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
+                          {row.projects ? (
+                            <Link
+                              className="font-medium text-accent hover:underline"
+                              href={href(`/projects/${row.projects.id}`)}
+                            >
+                              {row.projects.name}
+                            </Link>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                      </>
+                    ) : null}
+                    {showActions ? (
+                      <td className="px-4 py-4">
+                        <div className="flex gap-2">
+                          <RowActions
+                            deletingId={deletingId}
+                            onDelete={onDelete}
+                            onEdit={onEdit}
+                            row={row}
+                          />
+                        </div>
+                      </td>
+                    ) : null}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    />
   );
 }
