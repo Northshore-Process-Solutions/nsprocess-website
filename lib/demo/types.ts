@@ -22,6 +22,7 @@ export type DemoLead = {
     | "review_booked"
     | "review_completed"
     | "proposal_sent"
+    | "proposal_accepted"
     | "deposit_received"
     | "won"
     | "lost";

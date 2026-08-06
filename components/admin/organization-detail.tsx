@@ -71,6 +71,7 @@ const stageStyles: Record<string, string> = {
   review_booked: "bg-indigo-50 text-indigo-800 border-indigo-200",
   review_completed: "bg-violet-50 text-violet-800 border-violet-200",
   proposal_sent: "bg-amber-50 text-amber-900 border-amber-200",
+  proposal_accepted: "bg-lime-50 text-lime-900 border-lime-200",
   deposit_received: "bg-teal-50 text-teal-800 border-teal-200",
   won: "bg-emerald-50 text-emerald-800 border-emerald-200",
   lost: "bg-red-50 text-red-800 border-red-200",

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { escapeHtml, sendAppEmail } from "@/lib/mail";
+import { nextLeadStageForProposalStatus, type LeadStage } from "@/lib/leads";
 import {
   createProposalShareToken,
   getAppOrigin,
@@ -151,15 +152,14 @@ North Shore Process Solutions`;
         .eq("id", proposal.lead_id)
         .maybeSingle();
 
-      if (
-        lead &&
-        !["proposal_sent", "deposit_received", "won", "lost"].includes(
-          lead.stage,
-        )
-      ) {
+      const nextStage = lead
+        ? nextLeadStageForProposalStatus(lead.stage as LeadStage, "sent")
+        : null;
+
+      if (nextStage) {
         await auth.supabase
           .from("leads")
-          .update({ stage: "proposal_sent", updated_at: now })
+          .update({ stage: nextStage, updated_at: now })
           .eq("id", proposal.lead_id);
       }
     }
@@ -292,6 +292,25 @@ export async function respondToSharedProposal(input: {
     .is("client_responded_at", null);
 
   if (updateError) return { ok: false, error: updateError.message };
+
+  if (proposal.lead_id) {
+    const { data: lead } = await admin
+      .from("leads")
+      .select("stage")
+      .eq("id", proposal.lead_id)
+      .maybeSingle();
+
+    const nextStage = lead
+      ? nextLeadStageForProposalStatus(lead.stage as LeadStage, decision)
+      : null;
+
+    if (nextStage) {
+      await admin
+        .from("leads")
+        .update({ stage: nextStage, updated_at: now })
+        .eq("id", proposal.lead_id);
+    }
+  }
 
   if (proposal.lead_id || proposal.organization_id) {
     const label = decision === "accepted" ? "accepted" : "declined";

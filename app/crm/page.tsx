@@ -47,7 +47,7 @@ export default async function AdminTodayPage() {
     supabase
       .from("leads")
       .select("*")
-      .in("stage", ["review_completed", "proposal_sent"])
+      .in("stage", ["review_completed", "proposal_sent", "proposal_accepted"])
       .order("updated_at", { ascending: false })
       .limit(6),
     supabase

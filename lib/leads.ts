@@ -4,6 +4,7 @@ export type LeadStage =
   | "review_booked"
   | "review_completed"
   | "proposal_sent"
+  | "proposal_accepted"
   | "deposit_received"
   | "won"
   | "lost";
@@ -42,6 +43,7 @@ export const LEAD_STAGES: Array<{
   { value: "review_booked", label: "Consult booked" },
   { value: "review_completed", label: "Consult completed" },
   { value: "proposal_sent", label: "Proposal sent" },
+  { value: "proposal_accepted", label: "Proposal accepted" },
   { value: "deposit_received", label: "Deposit received" },
   { value: "won", label: "Project kicked off" },
   { value: "lost", label: "Lost" },
@@ -60,6 +62,40 @@ export const LEAD_SOURCES: Array<{
 /** Stages that mean the lead became a paying customer. */
 export function isCustomerStage(stage: LeadStage) {
   return stage === "deposit_received" || stage === "won";
+}
+
+/**
+ * Next pipeline stage when a linked proposal changes status.
+ * Returns null when the lead stage should not change.
+ */
+export function nextLeadStageForProposalStatus(
+  currentStage: LeadStage,
+  proposalStatus: "draft" | "sent" | "accepted" | "declined" | "expired",
+): LeadStage | null {
+  if (
+    currentStage === "deposit_received" ||
+    currentStage === "won" ||
+    currentStage === "lost"
+  ) {
+    return null;
+  }
+
+  if (proposalStatus === "sent") {
+    if (
+      currentStage === "proposal_sent" ||
+      currentStage === "proposal_accepted"
+    ) {
+      return null;
+    }
+    return "proposal_sent";
+  }
+
+  if (proposalStatus === "accepted") {
+    if (currentStage === "proposal_accepted") return null;
+    return "proposal_accepted";
+  }
+
+  return null;
 }
 
 const FOLLOW_UP_TIMEZONE = "America/New_York";

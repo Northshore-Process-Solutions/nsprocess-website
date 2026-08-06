@@ -48,7 +48,9 @@ export default async function DemoHomePage({ searchParams }: DemoHomePageProps) 
   );
 
   const readyForBilling = data.leads.filter((lead) =>
-    ["review_completed", "proposal_sent"].includes(lead.stage),
+    ["review_completed", "proposal_sent", "proposal_accepted"].includes(
+      lead.stage,
+    ),
   );
 
   const drafts = data.proposals.filter((row) => row.status === "draft");

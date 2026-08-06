@@ -13,6 +13,7 @@ import {
   createProposalShareToken,
   proposalShareUrl,
 } from "@/lib/proposal-share";
+import { nextLeadStageForProposalStatus } from "@/lib/leads";
 import { createClient } from "@/lib/supabase/server";
 
 export type ProposalInput = {
@@ -239,26 +240,27 @@ async function syncLeadOnStatus(
 ) {
   if (!leadId) return;
 
-  if (status === "sent") {
-    const { data: lead } = await supabase
-      .from("leads")
-      .select("stage")
-      .eq("id", leadId)
-      .maybeSingle();
+  const { data: lead } = await supabase
+    .from("leads")
+    .select("stage")
+    .eq("id", leadId)
+    .maybeSingle();
 
-    if (
-      lead &&
-      !["proposal_sent", "deposit_received", "won", "lost"].includes(lead.stage)
-    ) {
-      await supabase
-        .from("leads")
-        .update({
-          stage: "proposal_sent",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", leadId);
-    }
-  }
+  if (!lead) return;
+
+  const nextStage = nextLeadStageForProposalStatus(
+    lead.stage as Parameters<typeof nextLeadStageForProposalStatus>[0],
+    status,
+  );
+  if (!nextStage) return;
+
+  await supabase
+    .from("leads")
+    .update({
+      stage: nextStage,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", leadId);
 }
 
 async function replaceItems(
