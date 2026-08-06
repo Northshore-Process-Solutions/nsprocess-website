@@ -2,7 +2,16 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, FileDown, Plus, Receipt, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  Copy,
+  FileDown,
+  Mail,
+  Plus,
+  Receipt,
+  Trash2,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -11,10 +20,16 @@ import {
   updateAgreement,
   type AgreementInput,
 } from "@/app/crm/agreements/actions";
+import {
+  ensureAgreementShareLink,
+  sendAgreementShareEmail,
+} from "@/app/share/agreements/actions";
 import { Button } from "@/components/ui/button";
 import { usePortal } from "@/components/portal/portal-provider";
+import { agreementSharePath } from "@/lib/agreement-share";
 import {
   AGREEMENT_STATUSES,
+  agreementStatusLabel,
   agreementToFormValues,
   emptyAgreementFormValues,
   type AgreementStatus,
@@ -47,8 +62,13 @@ export function AgreementEditor({
   );
   const [loading, setLoading] = useState(false);
   const [signing, setSigning] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [emailing, setEmailing] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [shareNotice, setShareNotice] = useState<string | null>(null);
+  const [shareUrlPreview, setShareUrlPreview] = useState<string | null>(null);
 
   const totals = useMemo(() => {
     const parsedItems = values.items.map((item) => ({
@@ -194,6 +214,64 @@ export function AgreementEditor({
     router.refresh();
   }
 
+  async function onCopyShareLink() {
+    if (!initialAgreement || isDemo) return;
+    setSharing(true);
+    setError(null);
+    setShareNotice(null);
+
+    const result = await ensureAgreementShareLink(initialAgreement.id);
+    setSharing(false);
+
+    if (!result.ok || !result.token) {
+      setError(result.error ?? "Could not create share link.");
+      return;
+    }
+
+    const url = `${window.location.origin}${agreementSharePath(result.token)}`;
+    setShareUrlPreview(url);
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setShareNotice("Client signing link copied to clipboard.");
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setShareNotice("Copy this link and send it to the client:");
+    }
+  }
+
+  async function onEmailShareLink() {
+    if (!initialAgreement || isDemo) return;
+    setEmailing(true);
+    setError(null);
+    setShareNotice(null);
+
+    const result = await sendAgreementShareEmail(initialAgreement.id);
+    setEmailing(false);
+
+    if (!result.ok) {
+      setError(result.error ?? "Could not email the link.");
+      if (result.token) {
+        setShareUrlPreview(
+          `${window.location.origin}${agreementSharePath(result.token)}`,
+        );
+      }
+      return;
+    }
+
+    if (result.token) {
+      setShareUrlPreview(
+        `${window.location.origin}${agreementSharePath(result.token)}`,
+      );
+    }
+    updateField("status", "sent");
+    setShareNotice(
+      "Email sent to the client with a link to review and sign.",
+    );
+    router.refresh();
+  }
+
   return (
     <form className="space-y-5" onSubmit={onSave}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -214,7 +292,8 @@ export function AgreementEditor({
             </p>
           ) : (
             <p className="mt-2 text-muted-foreground">
-              Draft scope, pricing, and a printable agreement for the client.
+              Binding contract after the proposal is accepted — client signs,
+              then you invoice the deposit.
             </p>
           )}
         </div>
@@ -232,6 +311,41 @@ export function AgreementEditor({
               </Button>
               {!isDemo ? (
                 <>
+                  <Button
+                    disabled={sharing || values.status === "signed"}
+                    onClick={onCopyShareLink}
+                    type="button"
+                    variant="outline"
+                  >
+                    {copied ? (
+                      <Check aria-hidden className="size-4" />
+                    ) : (
+                      <Copy aria-hidden className="size-4" />
+                    )}
+                    {sharing
+                      ? "Preparing…"
+                      : copied
+                        ? "Copied"
+                        : "Copy link"}
+                  </Button>
+                  <Button
+                    disabled={
+                      emailing ||
+                      !values.clientEmail.trim() ||
+                      values.status === "signed"
+                    }
+                    onClick={onEmailShareLink}
+                    title={
+                      values.clientEmail.trim()
+                        ? "Email the client a link to sign"
+                        : "Add a client email first"
+                    }
+                    type="button"
+                    variant="outline"
+                  >
+                    <Mail aria-hidden className="size-4" />
+                    {emailing ? "Sending…" : "Email link"}
+                  </Button>
                   <Button asChild type="button" variant="outline">
                     <Link
                       href={href(
@@ -283,6 +397,31 @@ export function AgreementEditor({
       {saved ? (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-900">
           Saved.
+        </div>
+      ) : null}
+      {shareNotice ? (
+        <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm font-medium text-sky-950">
+          {shareNotice}
+          {shareUrlPreview ? (
+            <p className="mt-2 break-all font-normal text-sky-900/80">
+              {shareUrlPreview}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+      {initialAgreement?.signed_at ? (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
+          <p className="font-semibold">
+            Signed
+            {initialAgreement.signer_name
+              ? ` by ${initialAgreement.signer_name}`
+              : ""}
+            {` · ${new Date(initialAgreement.signed_at).toLocaleString()}`}
+          </p>
+          <p className="mt-1 font-normal text-emerald-900/80">
+            Status: {agreementStatusLabel(initialAgreement.status)}. Next step:
+            issue the deposit invoice if you haven&apos;t already.
+          </p>
         </div>
       ) : null}
 

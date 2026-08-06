@@ -69,14 +69,14 @@ export default async function BillingPage() {
     {
       href: "/crm/proposals",
       title: "Proposals",
-      description: "Draft and send engagement offers after consults.",
+      description: "Draft quotes after consults — client can accept or decline.",
       icon: FileText,
       meta: `${proposalDrafts ?? 0} drafts · ${proposalSent ?? 0} sent`,
     },
     {
       href: "/crm/agreements",
       title: "Agreements",
-      description: "Lock scope and terms once a proposal is ready.",
+      description: "Binding contract to sign after the quote is accepted.",
       icon: FileSignature,
       meta: `${agreementDrafts ?? 0} drafts · ${agreementSigned ?? 0} signed`,
     },
@@ -139,8 +139,8 @@ export default async function BillingPage() {
       <section className="mt-5 rounded-md border border-slate-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-slate-900">Suggested flow</h2>
         <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm text-slate-600">
-          <li>Send a Proposal after the consult.</li>
-          <li>Create an Agreement from the proposal and get it signed.</li>
+          <li>Send a Proposal (quote) after the consult — client accepts or declines.</li>
+          <li>Create an Agreement from the accepted proposal and email the signing link.</li>
           <li>Issue a deposit Invoice; mark paid when funds clear.</li>
           <li>Generate a Statement anytime a client asks for a balance view.</li>
         </ol>

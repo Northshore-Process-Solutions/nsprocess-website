@@ -47,14 +47,14 @@ export default async function DemoBillingPage() {
     {
       href: `${base}/proposals`,
       title: "Proposals",
-      description: "Draft and send engagement offers after consults.",
+      description: "Draft quotes after consults — client can accept or decline.",
       icon: FileText,
       meta: `${proposalDrafts} drafts · ${proposalSent} sent`,
     },
     {
       href: `${base}/agreements`,
       title: "Agreements",
-      description: "Lock scope and terms once a proposal is ready.",
+      description: "Binding contract to sign after the quote is accepted.",
       icon: FileSignature,
       meta: `${agreementDrafts} drafts · ${agreementSigned} signed`,
     },

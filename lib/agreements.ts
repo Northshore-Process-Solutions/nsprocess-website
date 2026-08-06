@@ -27,6 +27,7 @@ export type AgreementRow = {
   signer_name: string | null;
   signed_at: string | null;
   sent_at: string | null;
+  share_token: string | null;
   created_at: string;
   updated_at: string;
 };

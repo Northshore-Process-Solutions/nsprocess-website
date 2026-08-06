@@ -337,6 +337,7 @@ export function mapDemoSeedToCrm(raw: DemoSeed) {
     signed_at:
       doc.status.toLowerCase() === "signed" ? stamp(doc.issuedAt) : null,
     sent_at: stamp(doc.issuedAt),
+    share_token: null,
     created_at: stamp(doc.issuedAt),
     updated_at: stamp(doc.issuedAt),
     agreement_items: agreementItemsForDoc(doc),

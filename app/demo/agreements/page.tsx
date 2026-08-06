@@ -47,8 +47,8 @@ export default async function DemoAgreementsPage({
           Agreements
         </h1>
         <p className="mt-1 text-sm text-slate-600">
-          Turn accepted proposals into signed agreements and print PDFs for
-          clients.
+          Turn an accepted proposal into the binding contract clients sign — then
+          issue the deposit invoice.
         </p>
         <BillingSubnav current="agreements" />
       </header>
