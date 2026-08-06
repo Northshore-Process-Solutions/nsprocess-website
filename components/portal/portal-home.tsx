@@ -18,6 +18,7 @@ export function PortalHome({
   mode,
   leadsDue,
   readyForBilling,
+  acceptedDeals,
   drafts,
   invoices,
   events,
@@ -26,6 +27,7 @@ export function PortalHome({
   mode: PortalMode;
   leadsDue: LeadRow[];
   readyForBilling: LeadRow[];
+  acceptedDeals: ProposalRow[];
   drafts: ProposalRow[];
   invoices: InvoiceRow[];
   events: EventLite[];
@@ -49,7 +51,7 @@ export function PortalHome({
         </p>
       </header>
 
-      <section className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard
           href={href("/pipeline")}
           label="Follow-ups due"
@@ -59,6 +61,12 @@ export function PortalHome({
           href={href("/pipeline")}
           label="Ready to propose"
           value={String(readyForBilling.length)}
+        />
+        <StatCard
+          emphasize={acceptedDeals.length > 0}
+          href={href("/pipeline?stage=proposal_accepted")}
+          label="Accepted — next step"
+          value={String(acceptedDeals.length)}
         />
         <StatCard
           href={href("/invoices")}
@@ -86,6 +94,19 @@ export function PortalHome({
               : "No follow-up date",
           }))}
           title="Pipeline"
+        />
+
+        <QueueCard
+          empty="No accepted proposals waiting on agreement or deposit."
+          href={href("/pipeline?stage=proposal_accepted")}
+          items={acceptedDeals.map((proposal) => ({
+            key: proposal.id,
+            href: href(`/proposals/${proposal.id}`),
+            meta: "Accepted",
+            title: proposal.client_business_name,
+            detail: `${proposal.proposal_number} · Agreement → deposit invoice`,
+          }))}
+          title="Close the deal"
         />
 
         <QueueCard
@@ -153,14 +174,20 @@ function StatCard({
   label,
   value,
   href,
+  emphasize = false,
 }: {
   label: string;
   value: string;
   href: string;
+  emphasize?: boolean;
 }) {
   return (
     <Link
-      className="rounded-md border border-slate-200 bg-white px-3 py-3 transition hover:border-slate-400"
+      className={
+        emphasize
+          ? "rounded-md border border-lime-300 bg-lime-50 px-3 py-3 transition hover:border-lime-500"
+          : "rounded-md border border-slate-200 bg-white px-3 py-3 transition hover:border-slate-400"
+      }
       href={href}
     >
       <p className="text-xs font-medium uppercase tracking-wide text-slate-500">

@@ -18,6 +18,7 @@ type LeadDetailDialogProps = {
   lead: LeadRow | null;
   activities?: ActivityRow[];
   deleting?: boolean;
+  acceptedProposalId?: string | null;
   onClose: () => void;
   onEdit?: (lead: LeadRow) => void;
   onReply?: (lead: LeadRow) => void;
@@ -46,6 +47,7 @@ export function LeadDetailDialog({
   lead,
   activities = [],
   deleting = false,
+  acceptedProposalId = null,
   onClose,
   onEdit,
   onReply,
@@ -102,6 +104,31 @@ export function LeadDetailDialog({
               />
             ) : null}
           </dl>
+
+          {lead.stage === "proposal_accepted" ? (
+            <div className="mt-6 rounded-2xl border border-lime-200 bg-lime-50 p-4 text-sm text-lime-950">
+              <p className="font-semibold">Next: close the deal</p>
+              <p className="mt-1 text-lime-900/80">
+                Create the agreement and deposit invoice from the accepted
+                proposal. This lead leaves Pipeline when deposit is marked paid.
+              </p>
+              {!isDemo ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {acceptedProposalId ? (
+                    <Button asChild type="button" variant="accent">
+                      <Link href={href(`/proposals/${acceptedProposalId}`)}>
+                        Open accepted proposal
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button asChild type="button" variant="accent">
+                      <Link href={href("/billing")}>Go to Billing</Link>
+                    </Button>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
 
           <div className="mt-8">
             <ActivityPanel

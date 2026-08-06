@@ -18,12 +18,14 @@ export function LeadsPanel({
   rows,
   activitiesByLeadId = {},
   eventsByLeadId = {},
+  acceptedProposalByLeadId = {},
   readOnly = false,
   initialLeadId = null,
 }: {
   rows: LeadRow[];
   activitiesByLeadId?: Record<string, ActivityRow[]>;
   eventsByLeadId?: Record<string, CalendarEventRow[]>;
+  acceptedProposalByLeadId?: Record<string, string>;
   readOnly?: boolean;
   /** Open this lead’s detail sheet on load (e.g. home deep link). */
   initialLeadId?: string | null;
@@ -126,6 +128,11 @@ export function LeadsPanel({
       />
 
       <LeadDetailDialog
+        acceptedProposalId={
+          selectedRow
+            ? (acceptedProposalByLeadId[selectedRow.id] ?? null)
+            : null
+        }
         activities={
           selectedRow ? (activitiesByLeadId[selectedRow.id] ?? []) : []
         }

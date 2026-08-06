@@ -48,9 +48,11 @@ export default async function DemoHomePage({ searchParams }: DemoHomePageProps) 
   );
 
   const readyForBilling = data.leads.filter((lead) =>
-    ["review_completed", "proposal_sent", "proposal_accepted"].includes(
-      lead.stage,
-    ),
+    ["review_completed", "proposal_sent"].includes(lead.stage),
+  );
+
+  const acceptedDeals = data.proposals.filter(
+    (row) => row.status === "accepted",
   );
 
   const drafts = data.proposals.filter((row) => row.status === "draft");
@@ -71,6 +73,7 @@ export default async function DemoHomePage({ searchParams }: DemoHomePageProps) 
 
   return (
     <PortalHome
+      acceptedDeals={acceptedDeals}
       drafts={drafts}
       events={events}
       invoices={openInvoices}

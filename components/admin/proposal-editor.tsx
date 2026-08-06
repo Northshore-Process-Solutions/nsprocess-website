@@ -10,6 +10,7 @@ import {
   FileSignature,
   Mail,
   Plus,
+  Receipt,
   Sparkles,
   Trash2,
 } from "lucide-react";
@@ -42,9 +43,19 @@ import {
   type ProposalWithItems,
 } from "@/lib/proposals";
 
+type ProposalHandoff = {
+  agreementId?: string | null;
+  agreementNumber?: string | null;
+  agreementStatus?: string | null;
+  depositInvoiceId?: string | null;
+  depositInvoiceNumber?: string | null;
+  depositInvoiceStatus?: string | null;
+};
+
 type ProposalEditorProps = {
   mode: "create" | "edit";
   initialProposal?: ProposalWithItems | null;
+  handoff?: ProposalHandoff | null;
   defaults?: {
     clientBusinessName?: string;
     clientContactName?: string | null;
@@ -59,6 +70,7 @@ type ProposalEditorProps = {
 export function ProposalEditor({
   mode,
   initialProposal = null,
+  handoff = null,
   defaults,
 }: ProposalEditorProps) {
   const router = useRouter();
@@ -458,6 +470,62 @@ export function ProposalEditor({
               No comment left.
             </p>
           )}
+        </div>
+      ) : null}
+      {!isDemo &&
+      initialProposal &&
+      (initialProposal.status === "accepted" ||
+        initialProposal.leads?.stage === "proposal_accepted") ? (
+        <div className="rounded-2xl border border-lime-200 bg-lime-50 p-4 text-sm text-lime-950">
+          <p className="font-semibold">Next: close the deal</p>
+          <p className="mt-1 font-normal text-lime-900/80">
+            This lead stays in Pipeline until the deposit is marked paid — then
+            a Project is created automatically.
+          </p>
+          <ol className="mt-3 list-decimal space-y-2 pl-5 font-normal">
+            <li>
+              {handoff?.agreementId
+                ? `Agreement ${handoff.agreementNumber ?? ""} (${handoff.agreementStatus ?? "draft"}).`
+                : "Create the agreement from this proposal."}
+            </li>
+            <li>
+              {handoff?.depositInvoiceId
+                ? `Deposit invoice ${handoff.depositInvoiceNumber ?? ""} (${handoff.depositInvoiceStatus ?? "draft"}).`
+                : "Issue the deposit invoice once the agreement is ready."}
+            </li>
+          </ol>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button asChild type="button" variant="accent">
+              <Link
+                href={
+                  handoff?.agreementId
+                    ? href(`/agreements/${handoff.agreementId}`)
+                    : href(`/agreements/new?proposalId=${initialProposal.id}`)
+                }
+              >
+                <FileSignature aria-hidden className="size-4" />
+                {handoff?.agreementId ? "Open agreement" : "Create agreement"}
+              </Link>
+            </Button>
+            {handoff?.agreementId ? (
+              <Button asChild type="button" variant="outline">
+                <Link
+                  href={
+                    handoff.depositInvoiceId
+                      ? href(`/invoices/${handoff.depositInvoiceId}`)
+                      : href(
+                          `/invoices/new?agreementId=${handoff.agreementId}&mode=deposit`,
+                        )
+                  }
+                >
+                  <Receipt aria-hidden className="size-4" />
+                  {handoff.depositInvoiceId
+                    ? "Open deposit invoice"
+                    : "Create deposit invoice"}
+                </Link>
+              </Button>
+            ) : null}
+          </div>
         </div>
       ) : null}
 

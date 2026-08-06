@@ -2,12 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 
+import { syncNextActionForEventTargets } from "@/app/crm/projects/actions";
 import {
   CALENDAR_EVENT_TYPES,
+  calendarEventTypeLabel,
   type CalendarEventType,
 } from "@/lib/calendar";
+import { buildCalendarInviteIcs, formatMeetingWhen } from "@/lib/ics";
+import { escapeHtml, sendAppEmail } from "@/lib/mail";
+import { contact } from "@/lib/site-data";
 import { createClient } from "@/lib/supabase/server";
-import { syncNextActionForEventTargets } from "@/app/crm/projects/actions";
 
 export type CalendarEventInput = {
   title: string;
@@ -19,12 +23,16 @@ export type CalendarEventInput = {
   leadId?: string | null;
   organizationId?: string | null;
   projectId?: string | null;
+  /** Email the linked contact an Outlook-compatible calendar invite. */
+  notifyContact?: boolean;
 };
 
 export type ActionResult = {
   ok: boolean;
   error?: string;
   id?: string;
+  inviteSent?: boolean;
+  inviteError?: string;
 };
 
 function clean(value?: string | null) {
@@ -86,6 +94,7 @@ function parseInput(input: CalendarEventInput): CalendarEventInput | ActionResul
     leadId,
     organizationId,
     projectId,
+    notifyContact: Boolean(input.notifyContact),
   };
 }
 
@@ -134,6 +143,222 @@ async function maybeMarkConsultBooked(
     .eq("id", lead.id);
 }
 
+async function resolveInviteRecipient(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  input: {
+    leadId?: string | null;
+    organizationId?: string | null;
+    projectId?: string | null;
+  },
+): Promise<{ email: string; name: string | null } | null> {
+  if (input.leadId) {
+    const { data: lead } = await supabase
+      .from("leads")
+      .select("email, contact_name")
+      .eq("id", input.leadId)
+      .maybeSingle();
+
+    const email = clean(lead?.email);
+    if (email) {
+      return { email, name: clean(lead?.contact_name) };
+    }
+  }
+
+  let organizationId = input.organizationId ?? null;
+  if (!organizationId && input.projectId) {
+    const { data: project } = await supabase
+      .from("projects")
+      .select("organization_id, lead_id")
+      .eq("id", input.projectId)
+      .maybeSingle();
+
+    organizationId = project?.organization_id ?? null;
+    if (!organizationId && project?.lead_id) {
+      const { data: lead } = await supabase
+        .from("leads")
+        .select("email, contact_name, organization_id")
+        .eq("id", project.lead_id)
+        .maybeSingle();
+      const email = clean(lead?.email);
+      if (email) {
+        return { email, name: clean(lead?.contact_name) };
+      }
+      organizationId = lead?.organization_id ?? null;
+    }
+  }
+
+  if (!organizationId) return null;
+
+  const { data: organization } = await supabase
+    .from("organizations")
+    .select("email, name")
+    .eq("id", organizationId)
+    .maybeSingle();
+
+  const { data: links } = await supabase
+    .from("organization_contacts")
+    .select(
+      `
+      is_primary,
+      contacts (
+        email,
+        first_name,
+        last_name
+      )
+    `,
+    )
+    .eq("organization_id", organizationId)
+    .order("is_primary", { ascending: false })
+    .limit(5);
+
+  for (const row of links ?? []) {
+    const person = Array.isArray(row.contacts) ? row.contacts[0] : row.contacts;
+    const email = clean(person?.email);
+    if (!email) continue;
+    const name = [person?.first_name, person?.last_name]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+    return { email, name: name || null };
+  }
+
+  const orgEmail = clean(organization?.email);
+  if (orgEmail) {
+    return { email: orgEmail, name: clean(organization?.name) };
+  }
+
+  return null;
+}
+
+async function sendCalendarInviteEmail(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  input: {
+    eventId: string;
+    title: string;
+    eventType: CalendarEventType;
+    startsAt: string;
+    endsAt?: string | null;
+    location?: string | null;
+    notes?: string | null;
+    leadId?: string | null;
+    organizationId?: string | null;
+    projectId?: string | null;
+    sequence?: number;
+  },
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const recipient = await resolveInviteRecipient(supabase, input);
+  if (!recipient) {
+    return {
+      ok: false,
+      error: "No contact email found for this lead or business.",
+    };
+  }
+
+  const startsAt = new Date(input.startsAt);
+  const endsAt = input.endsAt
+    ? new Date(input.endsAt)
+    : new Date(startsAt.getTime() + 60 * 60 * 1000);
+
+  const whenLabel = formatMeetingWhen(startsAt, endsAt);
+  const typeLabel = calendarEventTypeLabel(input.eventType);
+  const greeting = recipient.name ? `Hi ${recipient.name},` : "Hello,";
+  const subject = `${typeLabel} scheduled: ${input.title}`;
+
+  const text = [
+    greeting,
+    "",
+    `You're invited to a ${typeLabel.toLowerCase()} with North Shore Process Solutions.`,
+    "",
+    `What: ${input.title}`,
+    `When: ${whenLabel.replaceAll("\n", " · ")}`,
+    input.location ? `Where: ${input.location}` : null,
+    input.notes ? `Notes: ${input.notes}` : null,
+    "",
+    "A calendar invite (.ics) is attached — open it to add this to Outlook or another calendar.",
+    "",
+    "If you need to reschedule, just reply to this email.",
+    "",
+    "North Shore Process Solutions",
+    contact.phone,
+    contact.email,
+  ]
+    .filter((line): line is string => line !== null)
+    .join("\n");
+
+  const html = `
+    <p>${escapeHtml(greeting)}</p>
+    <p>You're invited to a <strong>${escapeHtml(typeLabel.toLowerCase())}</strong> with North Shore Process Solutions.</p>
+    <p>
+      <strong>What:</strong> ${escapeHtml(input.title)}<br />
+      <strong>When:</strong> ${escapeHtml(whenLabel).replaceAll("\n", "<br />")}
+      ${input.location ? `<br /><strong>Where:</strong> ${escapeHtml(input.location)}` : ""}
+    </p>
+    ${
+      input.notes
+        ? `<p><strong>Notes:</strong><br />${escapeHtml(input.notes).replaceAll("\n", "<br />")}</p>`
+        : ""
+    }
+    <p>A calendar invite (<code>.ics</code>) is attached — open it to add this to Outlook or another calendar.</p>
+    <p>If you need to reschedule, just reply to this email.</p>
+    <p>North Shore Process Solutions<br />${escapeHtml(contact.phone)}<br />${escapeHtml(contact.email)}</p>
+  `;
+
+  const ics = buildCalendarInviteIcs({
+    uid: `${input.eventId}@nsprocess.com`,
+    title: input.title,
+    eventType: input.eventType,
+    startsAt,
+    endsAt,
+    location: input.location,
+    notes: input.notes,
+    organizerEmail: contact.email,
+    attendeeEmail: recipient.email,
+    attendeeName: recipient.name,
+    sequence: input.sequence ?? 0,
+  });
+
+  const mailResult = await sendAppEmail({
+    to: recipient.email,
+    subject,
+    text,
+    html,
+    replyTo: contact.email,
+    attachments: [
+      {
+        filename: "invite.ics",
+        content: ics,
+        contentType: "text/calendar; charset=utf-8; method=REQUEST",
+      },
+    ],
+    icalEvent: {
+      method: "REQUEST",
+      content: ics,
+      filename: "invite.ics",
+    },
+  });
+
+  if (!mailResult.ok) {
+    return { ok: false, error: mailResult.error };
+  }
+
+  const hasActivityTarget =
+    input.leadId || input.organizationId || input.projectId;
+  if (hasActivityTarget) {
+    await supabase.from("activities").insert({
+      lead_id: input.leadId ?? null,
+      organization_id: input.organizationId ?? null,
+      project_id: input.projectId ?? null,
+      activity_type: "email",
+      email_direction: "sent",
+      subject,
+      body: text,
+      occurred_at: new Date().toISOString(),
+    });
+  }
+
+  return { ok: true };
+}
+
 export async function createCalendarEvent(
   input: CalendarEventInput,
 ): Promise<ActionResult> {
@@ -171,7 +396,36 @@ export async function createCalendarEvent(
     leadId: parsed.leadId,
   });
   revalidateCalendar(parsed);
-  return { ok: true, id: data.id };
+
+  if (!parsed.notifyContact) {
+    return { ok: true, id: data.id };
+  }
+
+  const invite = await sendCalendarInviteEmail(supabase, {
+    eventId: data.id,
+    title: parsed.title,
+    eventType: parsed.eventType,
+    startsAt: new Date(parsed.startsAt).toISOString(),
+    endsAt: parsed.endsAt ? new Date(parsed.endsAt).toISOString() : null,
+    location: parsed.location,
+    notes: parsed.notes,
+    leadId: parsed.leadId,
+    organizationId: parsed.organizationId,
+    projectId: parsed.projectId,
+    sequence: 0,
+  });
+
+  if (!invite.ok) {
+    return {
+      ok: true,
+      id: data.id,
+      inviteSent: false,
+      inviteError: invite.error,
+    };
+  }
+
+  revalidateCalendar(parsed);
+  return { ok: true, id: data.id, inviteSent: true };
 }
 
 export async function updateCalendarEvent(
@@ -224,7 +478,36 @@ export async function updateCalendarEvent(
     });
   }
   revalidateCalendar(parsed);
-  return { ok: true, id: eventId };
+
+  if (!parsed.notifyContact) {
+    return { ok: true, id: eventId };
+  }
+
+  const invite = await sendCalendarInviteEmail(supabase, {
+    eventId,
+    title: parsed.title,
+    eventType: parsed.eventType,
+    startsAt: new Date(parsed.startsAt).toISOString(),
+    endsAt: parsed.endsAt ? new Date(parsed.endsAt).toISOString() : null,
+    location: parsed.location,
+    notes: parsed.notes,
+    leadId: parsed.leadId,
+    organizationId: parsed.organizationId,
+    projectId: parsed.projectId,
+    sequence: 1,
+  });
+
+  if (!invite.ok) {
+    return {
+      ok: true,
+      id: eventId,
+      inviteSent: false,
+      inviteError: invite.error,
+    };
+  }
+
+  revalidateCalendar(parsed);
+  return { ok: true, id: eventId, inviteSent: true };
 }
 
 export async function deleteCalendarEvent(

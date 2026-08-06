@@ -93,12 +93,21 @@ function CalendarEventDialogInner({
         leadId: event.lead_id ?? "",
         organizationId: event.organization_id ?? "",
         projectId: event.project_id ?? "",
+        notifyContact:
+          event.event_type === "consult" || event.event_type === "onsite",
       };
     }
 
-    return emptyCalendarEventFormValues(defaults);
+    const defaultsForm = emptyCalendarEventFormValues(defaults);
+    return {
+      ...defaultsForm,
+      notifyContact:
+        defaultsForm.eventType === "consult" ||
+        defaultsForm.eventType === "onsite",
+    };
   });
   const [error, setError] = useState<string | null>(null);
+  const [inviteWarning, setInviteWarning] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -113,6 +122,7 @@ function CalendarEventDialogInner({
     formEvent.preventDefault();
     setLoading(true);
     setError(null);
+    setInviteWarning(null);
 
     const payload = {
       title: values.title,
@@ -124,6 +134,7 @@ function CalendarEventDialogInner({
       leadId: values.leadId || null,
       organizationId: values.organizationId || null,
       projectId: values.projectId || null,
+      notifyContact: values.notifyContact,
     };
 
     const result =
@@ -135,6 +146,13 @@ function CalendarEventDialogInner({
 
     if (!result.ok) {
       setError(result.error ?? "Failed to save event.");
+      return;
+    }
+
+    if (result.inviteError) {
+      setInviteWarning(
+        `Event saved, but the invite email was not sent: ${result.inviteError}`,
+      );
       return;
     }
 
@@ -210,9 +228,13 @@ function CalendarEventDialogInner({
               Type
               <select
                 className="min-h-11 w-full rounded-2xl border border-input bg-background px-4 py-3 text-base font-normal outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
-                onChange={(e) =>
-                  updateField("eventType", e.target.value as CalendarEventType)
-                }
+                onChange={(e) => {
+                  const nextType = e.target.value as CalendarEventType;
+                  updateField("eventType", nextType);
+                  if (nextType === "consult" || nextType === "onsite") {
+                    updateField("notifyContact", true);
+                  }
+                }}
                 value={values.eventType}
               >
                 {CALENDAR_EVENT_TYPES.map((type) => (
@@ -303,6 +325,35 @@ function CalendarEventDialogInner({
               value={values.notes}
             />
           </label>
+
+          <label className="flex items-start gap-3 rounded-2xl border border-border bg-background px-4 py-3 text-sm">
+            <input
+              checked={values.notifyContact}
+              className="mt-1 size-4 accent-slate-900"
+              onChange={(e) => updateField("notifyContact", e.target.checked)}
+              type="checkbox"
+            />
+            <span>
+              <span className="font-semibold text-foreground">
+                Email invite to contact
+              </span>
+              <span className="mt-1 block font-normal text-muted-foreground">
+                Sends meeting details plus an Outlook-compatible calendar card
+                (.ics). Uses the lead email, or the business primary contact.
+              </span>
+            </span>
+          </label>
+
+          {inviteWarning ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-950">
+              {inviteWarning}
+              <div className="mt-3">
+                <Button onClick={onSaved} type="button" variant="outline">
+                  Done
+                </Button>
+              </div>
+            </div>
+          ) : null}
 
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             {mode === "edit" ? (

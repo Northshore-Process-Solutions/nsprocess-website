@@ -45,6 +45,17 @@ export async function sendAppEmail(input: {
   text: string;
   html?: string;
   replyTo?: string;
+  attachments?: Array<{
+    filename: string;
+    content: string | Buffer;
+    contentType?: string;
+  }>;
+  /** Outlook-friendly calendar invite part (METHOD:REQUEST). */
+  icalEvent?: {
+    method?: string;
+    content: string;
+    filename?: string;
+  };
 }) {
   const config = getSmtpConfig();
   const transporter = createMailTransporter();
@@ -63,6 +74,14 @@ export async function sendAppEmail(input: {
       html:
         input.html ??
         `<p>${escapeHtml(input.text).replaceAll("\n", "<br />")}</p>`,
+      attachments: input.attachments,
+      icalEvent: input.icalEvent
+        ? {
+            method: input.icalEvent.method ?? "REQUEST",
+            content: input.icalEvent.content,
+            filename: input.icalEvent.filename ?? "invite.ics",
+          }
+        : undefined,
     });
     return { ok: true as const };
   } catch (error) {

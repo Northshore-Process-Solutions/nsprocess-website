@@ -464,6 +464,18 @@ export async function createAgreementFromProposal(
   }
   if (!proposal) return { ok: false, error: "Proposal not found." };
 
+  const { data: existingAgreement } = await auth.supabase
+    .from("agreements")
+    .select("id")
+    .eq("proposal_id", proposalId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingAgreement) {
+    return { ok: true, id: existingAgreement.id };
+  }
+
   const items = [...(proposal.proposal_items ?? [])].sort(
     (a, b) => a.sort_order - b.sort_order,
   );

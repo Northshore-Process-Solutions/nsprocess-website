@@ -534,6 +534,20 @@ export async function createDepositInvoiceFromAgreement(
   if (!("agreement" in loaded)) return loaded;
 
   const agreement = loaded.agreement;
+
+  const { data: existingDeposit } = await auth.supabase
+    .from("invoices")
+    .select("id")
+    .eq("agreement_id", agreementId)
+    .eq("invoice_type", "deposit")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingDeposit) {
+    return { ok: true, id: existingDeposit.id };
+  }
+
   const total = Number(agreement.total_amount ?? 0);
   const depositPercent =
     agreement.deposit_percent === null ||

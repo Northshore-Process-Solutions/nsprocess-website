@@ -32,6 +32,7 @@ export default async function AdminTodayPage() {
   const [
     { data: followUpLeads },
     { data: consultLeads },
+    { data: acceptedProposals },
     { data: proposalDrafts },
     { data: openInvoices },
     { data: upcomingEvents },
@@ -47,8 +48,14 @@ export default async function AdminTodayPage() {
     supabase
       .from("leads")
       .select("*")
-      .in("stage", ["review_completed", "proposal_sent", "proposal_accepted"])
+      .in("stage", ["review_completed", "proposal_sent"])
       .order("updated_at", { ascending: false })
+      .limit(6),
+    supabase
+      .from("proposals")
+      .select("*")
+      .eq("status", "accepted")
+      .order("client_responded_at", { ascending: false, nullsFirst: false })
       .limit(6),
     supabase
       .from("proposals")
@@ -87,6 +94,7 @@ export default async function AdminTodayPage() {
 
   return (
     <PortalHome
+      acceptedDeals={(acceptedProposals ?? []) as ProposalRow[]}
       drafts={(proposalDrafts ?? []) as ProposalRow[]}
       events={upcomingEvents ?? []}
       invoices={(openInvoices ?? []) as InvoiceRow[]}
