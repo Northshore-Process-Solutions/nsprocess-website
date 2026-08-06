@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type React from "react";
+import { connection } from "next/server";
 
 import { AdminShell } from "@/components/admin/admin-shell";
 import { DemoSessionCleanup } from "@/components/demo/demo-session-cleanup";
@@ -10,6 +11,8 @@ import {
 } from "@/lib/demo/session";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: "NSPS Portal Demo",
@@ -24,6 +27,9 @@ export default async function DemoLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Opt out of any static/CDN reuse for personalized demo pages.
+  await connection();
+
   const sessionId = await getDemoSessionIdFromCookie();
   const session = sessionId ? await getDemoSession(sessionId) : null;
   const businessName =

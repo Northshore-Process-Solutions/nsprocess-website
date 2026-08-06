@@ -2,12 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 
-import { endDemoSession } from "@/app/demo/actions";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { SignOutButton } from "@/components/admin/sign-out-button";
+import { markDemoSkipEnd } from "@/components/demo/demo-session-flags";
 import { usePortal } from "@/components/portal/portal-provider";
 import { Button } from "@/components/ui/button";
 import { portalModeFromPathname } from "@/lib/portal/paths";
@@ -28,6 +28,7 @@ async function endDemoViaApi() {
     method: "POST",
     credentials: "same-origin",
     keepalive: true,
+    cache: "no-store",
   });
 }
 
@@ -41,23 +42,32 @@ export function AdminShell({
   headerActions?: React.ReactNode;
 }) {
   const pathname = usePathname() ?? "/crm";
-  const router = useRouter();
-  const [leaving, startLeave] = useTransition();
+  const [leaving, setLeaving] = useState(false);
   const portal = usePortal();
   const mode = portal.mode || portalModeFromPathname(pathname);
   const homeHref = portal.href();
   const isDemo = mode === "demo";
 
-  function leaveDemo(href: string) {
-    startLeave(async () => {
-      try {
-        await endDemoViaApi();
-      } catch {
-        // Still leave even if cleanup fails.
-      }
-      router.push(href);
-      router.refresh();
-    });
+  async function leaveDemo(href: string) {
+    setLeaving(true);
+    try {
+      await endDemoViaApi();
+    } catch {
+      // Still leave even if cleanup fails.
+    }
+    // Hard navigation avoids App Router / CDN serving a cached demo page.
+    window.location.assign(href);
+  }
+
+  async function handleEndDemo() {
+    setLeaving(true);
+    try {
+      await endDemoViaApi();
+    } catch {
+      // Still leave.
+    }
+    markDemoSkipEnd();
+    window.location.assign("/demo/start");
   }
 
   if (isBarePortalRoute(pathname, mode)) {
@@ -98,18 +108,22 @@ export function AdminShell({
               <>
                 <Button
                   disabled={leaving}
-                  onClick={() => leaveDemo("/contact")}
+                  onClick={() => void leaveDemo("/contact")}
                   size="sm"
                   type="button"
                   variant="outline"
                 >
                   Book a real review
                 </Button>
-                <form action={endDemoSession}>
-                  <Button size="sm" type="submit" variant="outline">
-                    End demo
-                  </Button>
-                </form>
+                <Button
+                  disabled={leaving}
+                  onClick={() => void handleEndDemo()}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  {leaving ? "Ending…" : "End demo"}
+                </Button>
               </>
             ) : (
               <SignOutButton />

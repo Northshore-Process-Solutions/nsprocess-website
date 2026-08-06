@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { startDemoSession } from "@/app/demo/actions";
@@ -8,7 +7,6 @@ import { markDemoSkipEnd } from "@/components/demo/demo-session-flags";
 import { Button } from "@/components/ui/button";
 
 export function DemoIntakeForm() {
-  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -24,14 +22,12 @@ export function DemoIntakeForm() {
         return;
       }
 
-      // Bust the App Router client cache for /demo (otherwise the previous
-      // session's RSC payload can flash/stick after End demo → rebuild).
+      // Hard navigation + session query busts client/CDN caches from prior demos.
       markDemoSkipEnd();
       const next = result.sessionId
         ? `/demo?s=${encodeURIComponent(result.sessionId)}`
-        : "/demo";
-      router.replace(next);
-      router.refresh();
+        : `/demo?t=${Date.now()}`;
+      window.location.assign(next);
     });
   }
 

@@ -44,6 +44,10 @@ Intake lives at `/demo/start`. After a ready session, home is `/demo`.
 6. Session expires after 3 hours, or visitor clicks **End demo**
 7. Optional cron hits `POST /api/demo/purge` to delete expired rows
 
+Demo pages send `Cache-Control: private, no-store` (and Vercel CDN no-store)
+so personalized portal HTML is never shared across visitors or incognito
+sessions. Start/End demo use hard navigations to avoid App Router client cache.
+
 ## What this is not
 
 - Not wired to live Supabase CRM tables for reads or writes

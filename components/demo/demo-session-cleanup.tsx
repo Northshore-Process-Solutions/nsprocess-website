@@ -15,7 +15,11 @@ function endDemoBeacon() {
 
   try {
     if (typeof navigator !== "undefined" && navigator.sendBeacon) {
-      navigator.sendBeacon(END_URL);
+      // Blob forces a CORS-mode request that includes cookies on same-origin.
+      const body = new Blob([JSON.stringify({ reason: "unload" })], {
+        type: "application/json",
+      });
+      navigator.sendBeacon(END_URL, body);
       return;
     }
   } catch {
@@ -26,6 +30,9 @@ function endDemoBeacon() {
     method: "POST",
     keepalive: true,
     credentials: "same-origin",
+    cache: "no-store",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reason: "unload" }),
   });
 }
 
