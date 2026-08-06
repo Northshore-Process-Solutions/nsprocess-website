@@ -78,7 +78,7 @@ export function PortalHome({
           href={href("/pipeline")}
           items={leadsDue.map((lead) => ({
             key: lead.id,
-            href: href("/pipeline"),
+            href: href(`/pipeline?leadId=${lead.id}`),
             meta: leadStageLabel(lead.stage),
             title: lead.business_name,
             detail: lead.next_follow_up_at

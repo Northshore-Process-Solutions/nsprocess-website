@@ -5,6 +5,21 @@ import { createPortal } from "react-dom";
 
 import { cn } from "@/lib/utils";
 
+/** True only on devices that actually hover (not phones/tablets). */
+function useFineHover() {
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const sync = () => setEnabled(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
+
+  return enabled;
+}
+
 export function ActionHoverTooltip({
   children,
   content,
@@ -16,6 +31,7 @@ export function ActionHoverTooltip({
   width?: number;
   className?: string;
 }) {
+  const fineHover = useFineHover();
   const triggerRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<{
@@ -42,7 +58,7 @@ export function ActionHoverTooltip({
   }
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !fineHover) return;
 
     updatePosition();
     function handleReposition() {
@@ -55,7 +71,15 @@ export function ActionHoverTooltip({
       window.removeEventListener("scroll", handleReposition, true);
       window.removeEventListener("resize", handleReposition);
     };
-  }, [open, width]);
+  }, [open, width, fineHover]);
+
+  useEffect(() => {
+    if (!fineHover) setOpen(false);
+  }, [fineHover]);
+
+  if (!fineHover) {
+    return <>{children}</>;
+  }
 
   const tooltip =
     open && coords && typeof document !== "undefined"

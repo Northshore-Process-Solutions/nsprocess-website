@@ -2,7 +2,7 @@
 
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { deleteLead } from "@/app/crm/pipeline/actions";
 import { LeadDetailDialog } from "@/components/admin/lead-detail-dialog";
@@ -19,11 +19,14 @@ export function LeadsPanel({
   activitiesByLeadId = {},
   eventsByLeadId = {},
   readOnly = false,
+  initialLeadId = null,
 }: {
   rows: LeadRow[];
   activitiesByLeadId?: Record<string, ActivityRow[]>;
   eventsByLeadId?: Record<string, CalendarEventRow[]>;
   readOnly?: boolean;
+  /** Open this lead’s detail sheet on load (e.g. home deep link). */
+  initialLeadId?: string | null;
 }) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
@@ -34,6 +37,7 @@ export function LeadsPanel({
   const [replyLead, setReplyLead] = useState<LeadRow | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [openedInitialId, setOpenedInitialId] = useState<string | null>(null);
 
   function openCreate() {
     setMode("create");
@@ -63,6 +67,14 @@ export function LeadsPanel({
     setError(null);
     setReplyOpen(true);
   }
+
+  useEffect(() => {
+    if (!initialLeadId || openedInitialId === initialLeadId) return;
+    const lead = rows.find((row) => row.id === initialLeadId);
+    if (!lead) return;
+    setOpenedInitialId(initialLeadId);
+    openView(lead);
+  }, [initialLeadId, openedInitialId, rows]);
 
   async function handleDelete(row: LeadRow) {
     const confirmed = window.confirm(

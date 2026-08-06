@@ -7,7 +7,15 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function DemoPipelinePage() {
+export default async function DemoPipelinePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{
+    leadId?: string;
+  }>;
+}) {
+  const params = await searchParams;
+  const initialLeadId = params?.leadId ?? null;
   const data = await loadDemoCrmData();
   const allLeads = data.leads;
   const leads = allLeads.filter((lead) => !isCustomerStage(lead.stage));
@@ -57,6 +65,7 @@ export default async function DemoPipelinePage() {
       <LeadsPanel
         activitiesByLeadId={data.activitiesByLeadId}
         eventsByLeadId={data.eventsByLeadId}
+        initialLeadId={initialLeadId}
         readOnly
         rows={leads}
       />

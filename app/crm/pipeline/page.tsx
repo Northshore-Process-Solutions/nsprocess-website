@@ -6,7 +6,16 @@ import type { CalendarEventRow } from "@/lib/calendar";
 import { isCustomerStage, type LeadRow } from "@/lib/leads";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function PipelinePage() {
+export default async function PipelinePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{
+    leadId?: string;
+  }>;
+}) {
+  const params = await searchParams;
+  const initialLeadId = params?.leadId ?? null;
+
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
 
@@ -137,6 +146,7 @@ export default async function PipelinePage() {
       <LeadsPanel
         activitiesByLeadId={activitiesByLeadId}
         eventsByLeadId={eventsByLeadId}
+        initialLeadId={initialLeadId}
         rows={leads}
       />
     </main>

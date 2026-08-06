@@ -335,7 +335,15 @@ export function LeadsTable({
               <span>{new Date(row.created_at).toLocaleDateString()}</span>
             </>
           }
-          title={row.business_name}
+          title={
+            <button
+              className="text-left font-semibold text-foreground"
+              onClick={() => onView(row)}
+              type="button"
+            >
+              {row.business_name}
+            </button>
+          }
         >
           <MobileDataField label="Contact">
             <span className="block">
