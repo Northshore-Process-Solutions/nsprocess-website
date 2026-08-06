@@ -296,6 +296,7 @@ export async function createOrganization(
   }
 
   revalidatePath("/admin");
+  revalidatePath("/admin/crm");
   revalidatePath(`/admin/organizations/${organization.id}`);
   return { ok: true };
 }
@@ -353,6 +354,7 @@ export async function updateOrganization(
   }
 
   revalidatePath("/admin");
+  revalidatePath("/admin/crm");
   revalidatePath(`/admin/organizations/${organizationId}`);
   return { ok: true };
 }
@@ -392,6 +394,7 @@ export async function deleteOrganization(
   }
 
   revalidatePath("/admin");
+  revalidatePath("/admin/crm");
   revalidatePath(`/admin/organizations/${organizationId}`);
   return { ok: true };
 }

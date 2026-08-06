@@ -1,9 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 
-import { AdminNav } from "@/components/admin/admin-nav";
 import { AgreementEditor } from "@/components/admin/agreement-editor";
-import { SignOutButton } from "@/components/admin/sign-out-button";
-import { Logo } from "@/components/logo";
 import type { AgreementWithItems } from "@/lib/agreements";
 import { createClient } from "@/lib/supabase/server";
 
@@ -61,14 +58,7 @@ export default async function AgreementPage({ params }: AgreementPageProps) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <Logo />
-          <AdminNav current="billing" />
-        </div>
-        <SignOutButton />
-      </header>
+    <main className="max-w-5xl">
 
       <AgreementEditor
         initialAgreement={data as AgreementWithItems}

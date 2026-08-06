@@ -7,10 +7,7 @@ import {
   ScrollText,
 } from "lucide-react";
 
-import { AdminNav } from "@/components/admin/admin-nav";
 import { BillingSubnav } from "@/components/admin/billing-subnav";
-import { SignOutButton } from "@/components/admin/sign-out-button";
-import { Logo } from "@/components/logo";
 import { formatMoney } from "@/lib/billing";
 import { createClient } from "@/lib/supabase/server";
 
@@ -100,40 +97,38 @@ export default async function BillingPage() {
   ];
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <Logo />
-          <AdminNav current="billing" />
-          <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">
-            Billing
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Proposals, agreements, invoices, and statements — one place for
-            client paperwork and collections.
-          </p>
-          <BillingSubnav current="overview" />
-        </div>
-        <SignOutButton />
+    <main>
+      <header className="mb-5">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          Billing
+        </h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Proposals, agreements, invoices, and statements — one place for client paperwork and collections.
+        </p>
+        <BillingSubnav current="overview" />
       </header>
 
-      <section className="grid gap-4 sm:grid-cols-2">
+      <section className="grid gap-3 sm:grid-cols-2">
         {cards.map((card) => {
           const Icon = card.icon;
           return (
             <Link
-              className="rounded-2xl border border-border bg-card p-6 shadow-soft transition hover:border-accent/40 hover:bg-secondary/30"
+              className="rounded-md border border-slate-200 bg-white p-4 transition hover:border-slate-400"
               href={card.href}
               key={card.href}
             >
               <div className="flex items-start gap-3">
-                <Icon aria-hidden className="mt-0.5 size-5 text-accent" />
+                <Icon aria-hidden className="mt-0.5 size-4 text-slate-500" />
                 <div>
-                  <h2 className="text-lg font-semibold">{card.title}</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
+                  <h2 className="text-sm font-semibold text-slate-900">
+                    {card.title}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-600">
                     {card.description}
                   </p>
-                  <p className="mt-3 text-sm font-semibold">{card.meta}</p>
+                  <p className="mt-2 text-xs font-medium text-slate-500">
+                    {card.meta}
+                  </p>
                 </div>
               </div>
             </Link>
@@ -141,9 +136,9 @@ export default async function BillingPage() {
         })}
       </section>
 
-      <section className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-soft">
-        <h2 className="text-lg font-semibold">Suggested flow</h2>
-        <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
+      <section className="mt-5 rounded-md border border-slate-200 bg-white p-4">
+        <h2 className="text-sm font-semibold text-slate-900">Suggested flow</h2>
+        <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm text-slate-600">
           <li>Send a Proposal after the consult.</li>
           <li>Create an Agreement from the proposal and get it signed.</li>
           <li>Issue a deposit Invoice; mark paid when funds clear.</li>

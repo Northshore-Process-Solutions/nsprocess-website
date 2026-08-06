@@ -1,9 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 
-import { AdminNav } from "@/components/admin/admin-nav";
 import { ProjectDetail } from "@/components/admin/project-detail";
-import { SignOutButton } from "@/components/admin/sign-out-button";
-import { Logo } from "@/components/logo";
 import type { ActivityRow } from "@/lib/activities";
 import type { CalendarEventWithRelations } from "@/lib/calendar";
 import type { LeadRow } from "@/lib/leads";
@@ -154,14 +151,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   const purchases = (purchasesData ?? []) as PurchaseWithRelations[];
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <Logo />
-          <AdminNav current="projects" />
-        </div>
-        <SignOutButton />
-      </header>
+    <main>
 
       <ProjectDetail
         activities={activities}

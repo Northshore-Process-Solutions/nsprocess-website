@@ -1,9 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { AdminNav } from "@/components/admin/admin-nav";
 import { LeadsPanel } from "@/components/admin/leads-panel";
-import { SignOutButton } from "@/components/admin/sign-out-button";
-import { Logo } from "@/components/logo";
 import type { ActivityRow } from "@/lib/activities";
 import type { CalendarEventRow } from "@/lib/calendar";
 import { isCustomerStage, type LeadRow } from "@/lib/leads";
@@ -111,30 +108,28 @@ export default async function PipelinePage() {
   ];
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <Logo />
-          <AdminNav current="pipeline" />
-          <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">
-            Pipeline
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Open inquiries through consult and proposal. Deposit and kickoff
-            move customers into Projects.
-          </p>
-        </div>
-        <SignOutButton />
+    <main>
+      <header className="mb-5">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          Pipeline
+        </h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Open inquiries through consult and proposal. Deposit and kickoff move customers into Projects.
+        </p>
       </header>
 
-      <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <section className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {kpis.map((kpi) => (
           <div
-            className="rounded-2xl border border-border bg-card px-4 py-4 shadow-soft"
+            className="rounded-md border border-slate-200 bg-white px-3 py-3"
             key={kpi.label}
           >
-            <p className="text-sm text-muted-foreground">{kpi.label}</p>
-            <p className="mt-2 text-3xl font-bold tracking-tight">{kpi.value}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {kpi.label}
+            </p>
+            <p className="mt-1 text-xl font-semibold text-slate-900">
+              {kpi.value}
+            </p>
           </div>
         ))}
       </section>

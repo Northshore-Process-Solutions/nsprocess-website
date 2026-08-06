@@ -1,9 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { AdminNav } from "@/components/admin/admin-nav";
 import { ProjectsTable } from "@/components/admin/projects-table";
-import { SignOutButton } from "@/components/admin/sign-out-button";
-import { Logo } from "@/components/logo";
 import {
   isNextActionOverdue,
   isProjectPastTarget,
@@ -120,20 +117,14 @@ export default async function ProjectsPage() {
   ).length;
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <Logo />
-          <AdminNav current="projects" />
-          <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">
-            Projects
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Lightweight delivery workspace after deposit — tasks, schedule, and
-            next actions in one place.
-          </p>
-        </div>
-        <SignOutButton />
+    <main>
+      <header className="mb-5">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          Projects
+        </h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Lightweight delivery workspace after deposit — tasks, schedule, and next actions in one place.
+        </p>
       </header>
 
       <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

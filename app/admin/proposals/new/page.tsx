@@ -1,10 +1,7 @@
 import { redirect } from "next/navigation";
 
-import { AdminNav } from "@/components/admin/admin-nav";
 import { BillingSubnav } from "@/components/admin/billing-subnav";
 import { ProposalEditor } from "@/components/admin/proposal-editor";
-import { SignOutButton } from "@/components/admin/sign-out-button";
-import { Logo } from "@/components/logo";
 import type { LeadRow } from "@/lib/leads";
 import { createClient } from "@/lib/supabase/server";
 
@@ -42,14 +39,9 @@ export default async function NewProposalPage({
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <Logo />
-          <AdminNav current="billing" />
-          <BillingSubnav current="proposals" />
-        </div>
-        <SignOutButton />
+    <main className="max-w-5xl">
+      <header className="mb-5">
+        <BillingSubnav current="proposals" />
       </header>
 
       <ProposalEditor

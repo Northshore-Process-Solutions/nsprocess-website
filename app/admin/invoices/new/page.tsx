@@ -4,10 +4,7 @@ import {
   createDepositInvoiceFromAgreement,
   createInvoiceFromAgreement,
 } from "@/app/admin/invoices/actions";
-import { AdminNav } from "@/components/admin/admin-nav";
 import { InvoiceEditor } from "@/components/admin/invoice-editor";
-import { SignOutButton } from "@/components/admin/sign-out-button";
-import { Logo } from "@/components/logo";
 import { createClient } from "@/lib/supabase/server";
 
 type NewInvoicePageProps = {
@@ -45,14 +42,7 @@ export default async function NewInvoicePage({
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <Logo />
-          <AdminNav current="billing" />
-        </div>
-        <SignOutButton />
-      </header>
+    <main className="max-w-5xl">
 
       <InvoiceEditor mode="create" />
     </main>

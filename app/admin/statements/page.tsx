@@ -1,10 +1,7 @@
 import { redirect } from "next/navigation";
 
-import { AdminNav } from "@/components/admin/admin-nav";
 import { BillingSubnav } from "@/components/admin/billing-subnav";
 import { StatementForm } from "@/components/admin/statement-form";
-import { SignOutButton } from "@/components/admin/sign-out-button";
-import { Logo } from "@/components/logo";
 import { createClient } from "@/lib/supabase/server";
 
 type StatementsPageProps = {
@@ -34,21 +31,15 @@ export default async function StatementsPage({
   }
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <Logo />
-          <AdminNav current="billing" />
-          <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">
-            Statements
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Generate a printable account statement for a business over a date
-            range.
-          </p>
-          <BillingSubnav current="statements" />
-        </div>
-        <SignOutButton />
+    <main>
+      <header className="mb-5">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          Statements
+        </h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Generate a printable account statement for a business over a date range.
+        </p>
+        <BillingSubnav current="statements" />
       </header>
 
       <div className="max-w-2xl">

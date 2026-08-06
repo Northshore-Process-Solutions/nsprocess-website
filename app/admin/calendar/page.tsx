@@ -1,9 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { AdminNav } from "@/components/admin/admin-nav";
 import { CalendarPanel } from "@/components/admin/calendar-panel";
-import { SignOutButton } from "@/components/admin/sign-out-button";
-import { Logo } from "@/components/logo";
 import {
   getMonthQueryRange,
   monthKey,
@@ -80,19 +77,14 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
   const events = (eventsData ?? []) as CalendarEventWithRelations[];
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <Logo />
-          <AdminNav current="calendar" />
-          <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">
-            Calendar
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Booked consults, onsites, calls, and follow-ups in one place.
-          </p>
-        </div>
-        <SignOutButton />
+    <main>
+      <header className="mb-5">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          Calendar
+        </h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Booked consults, onsites, calls, and follow-ups in one place.
+        </p>
       </header>
 
       <CalendarPanel

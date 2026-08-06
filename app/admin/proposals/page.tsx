@@ -1,11 +1,8 @@
 import { redirect } from "next/navigation";
 import { FileText, Send } from "lucide-react";
 
-import { AdminNav } from "@/components/admin/admin-nav";
 import { BillingSubnav } from "@/components/admin/billing-subnav";
 import { ProposalsPanel } from "@/components/admin/proposals-panel";
-import { SignOutButton } from "@/components/admin/sign-out-button";
-import { Logo } from "@/components/logo";
 import {
   formatProposalMoney,
   PROPOSAL_STATUSES,
@@ -78,21 +75,15 @@ export default async function ProposalsPage({
     .reduce((sum, row) => sum + Number(row.total_amount ?? 0), 0);
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <Logo />
-          <AdminNav current="billing" />
-          <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">
-            Proposals
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Draft scope and investment after a consult, then print a PDF for the
-            client.
-          </p>
-          <BillingSubnav current="proposals" />
-        </div>
-        <SignOutButton />
+    <main>
+      <header className="mb-5">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          Proposals
+        </h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Draft scope and investment after a consult, then print a PDF for the client.
+        </p>
+        <BillingSubnav current="proposals" />
       </header>
 
       <section className="mb-6 grid gap-4 sm:grid-cols-3">

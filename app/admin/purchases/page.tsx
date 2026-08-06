@@ -1,10 +1,7 @@
 import { redirect } from "next/navigation";
 import { Receipt, WalletCards } from "lucide-react";
 
-import { AdminNav } from "@/components/admin/admin-nav";
 import { PurchasesPanel } from "@/components/admin/purchases-panel";
-import { SignOutButton } from "@/components/admin/sign-out-button";
-import { Logo } from "@/components/logo";
 import {
   formatPurchaseAmount,
   PURCHASE_TYPES,
@@ -85,20 +82,14 @@ export default async function PurchasesPage({
     .reduce((sum, row) => sum + Number(row.amount ?? 0), 0);
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <Logo />
-          <AdminNav current="purchases" />
-          <h1 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">
-            Purchases
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Promo materials, equipment, and project-specific spend — not full
-            inventory.
-          </p>
-        </div>
-        <SignOutButton />
+    <main>
+      <header className="mb-5">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          Purchases
+        </h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Promo materials, equipment, and project-specific spend — not full inventory.
+        </p>
       </header>
 
       <section className="mb-6 grid gap-4 sm:grid-cols-2">

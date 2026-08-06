@@ -113,7 +113,7 @@ export function OrganizationDetail({
       return;
     }
 
-    router.push("/admin");
+    router.push("/admin/crm");
     router.refresh();
   }
 
@@ -122,13 +122,13 @@ export function OrganizationDetail({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <Link
-            className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground transition hover:text-foreground"
-            href="/admin"
+            className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900"
+            href="/admin/crm"
           >
             <ArrowLeft aria-hidden className="size-4" />
             Back to CRM
           </Link>
-          <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
+          <h1 className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">
             {organization.name}
           </h1>
           <div className="mt-3 flex flex-wrap items-center gap-2">

@@ -116,6 +116,53 @@ body {
   color: var(--foreground);
 }
 
+/* Admin line-of-business surface: flatter, denser, less marketing chrome */
+.admin-shell {
+  --radius: 0.375rem;
+  --shadow-soft: none;
+  --shadow-card: none;
+  background: #f1f3f5;
+}
+
+.admin-shell button,
+.admin-shell [role="button"],
+.admin-shell a.inline-flex {
+  border-radius: 0.375rem !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.admin-shell .rounded-full {
+  border-radius: 0.375rem !important;
+}
+
+.admin-shell .rounded-2xl,
+.admin-shell .rounded-3xl {
+  border-radius: 0.5rem !important;
+}
+
+.admin-shell .shadow-soft,
+.admin-shell .shadow-card {
+  box-shadow: none !important;
+}
+
+.admin-shell .min-h-11 {
+  min-height: 2.25rem;
+}
+
+.admin-shell input,
+.admin-shell select,
+.admin-shell textarea {
+  border-radius: 0.375rem !important;
+  box-shadow: none !important;
+}
+
+.admin-shell input:focus,
+.admin-shell select:focus,
+.admin-shell textarea:focus {
+  --tw-ring-shadow: 0 0 0 1px var(--ring) !important;
+}
+
 @media print {
   @page {
     size: letter;

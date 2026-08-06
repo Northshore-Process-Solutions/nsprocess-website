@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import type React from "react";
 
+import { AdminShell } from "@/components/admin/admin-shell";
+
 export const metadata: Metadata = {
-  title: "Admin CRM",
+  title: "Admin",
   robots: {
     index: false,
     follow: false,
@@ -14,9 +16,5 @@ export default function AdminLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f7fafc_0%,#eef4f9_100%)] text-foreground">
-      {children}
-    </div>
-  );
+  return <AdminShell>{children}</AdminShell>;
 }
