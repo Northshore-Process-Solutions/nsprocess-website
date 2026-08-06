@@ -2,10 +2,12 @@ import { notFound, redirect } from "next/navigation";
 
 import { OrganizationDetail } from "@/components/admin/organization-detail";
 import type { ActivityRow } from "@/lib/activities";
+import type { AgreementRow } from "@/lib/agreements";
 import {
   mapOrganizationToCrmRow,
   type OrganizationRow,
 } from "@/lib/crm";
+import type { InvoiceRow } from "@/lib/invoices";
 import type { LeadRow } from "@/lib/leads";
 import type { ProjectRow } from "@/lib/projects";
 import type { PurchaseWithRelations } from "@/lib/purchases";
@@ -17,6 +19,10 @@ type OrganizationPageProps = {
     id: string;
   }>;
 };
+
+function dedupeById<T extends { id: string }>(rows: T[]) {
+  return Array.from(new Map(rows.map((row) => [row.id, row])).values());
+}
 
 export default async function OrganizationPage({
   params,
@@ -169,11 +175,45 @@ export default async function OrganizationPage({
     proposalsQuery = proposalsQuery.eq("organization_id", id);
   }
 
+  let agreementsQuery = supabase
+    .from("agreements")
+    .select("*")
+    .order("issued_at", { ascending: false });
+
+  if (leadIds.length > 0) {
+    agreementsQuery = agreementsQuery.or(
+      `organization_id.eq.${id},lead_id.in.(${leadIds.join(",")})`,
+    );
+  } else {
+    agreementsQuery = agreementsQuery.eq("organization_id", id);
+  }
+
+  let invoicesQuery = supabase
+    .from("invoices")
+    .select("*")
+    .order("issued_at", { ascending: false });
+
+  if (leadIds.length > 0) {
+    invoicesQuery = invoicesQuery.or(
+      `organization_id.eq.${id},lead_id.in.(${leadIds.join(",")})`,
+    );
+  } else {
+    invoicesQuery = invoicesQuery.eq("organization_id", id);
+  }
+
   const [
     { data: activitiesData, error: activitiesError },
     { data: purchasesData, error: purchasesError },
     { data: proposalsData, error: proposalsError },
-  ] = await Promise.all([activitiesQuery, purchasesQuery, proposalsQuery]);
+    { data: agreementsData, error: agreementsError },
+    { data: invoicesData, error: invoicesError },
+  ] = await Promise.all([
+    activitiesQuery,
+    purchasesQuery,
+    proposalsQuery,
+    agreementsQuery,
+    invoicesQuery,
+  ]);
 
   if (activitiesError) {
     throw new Error(`Failed to load activities: ${activitiesError.message}`);
@@ -184,37 +224,30 @@ export default async function OrganizationPage({
   if (proposalsError) {
     throw new Error(`Failed to load proposals: ${proposalsError.message}`);
   }
+  if (agreementsError) {
+    throw new Error(`Failed to load agreements: ${agreementsError.message}`);
+  }
+  if (invoicesError) {
+    throw new Error(`Failed to load invoices: ${invoicesError.message}`);
+  }
 
   const organization = mapOrganizationToCrmRow(
     data as unknown as OrganizationRow,
-  );
-  const activities = (activitiesData ?? []) as ActivityRow[];
-  const purchases = Array.from(
-    new Map(
-      ((purchasesData ?? []) as PurchaseWithRelations[]).map((row) => [
-        row.id,
-        row,
-      ]),
-    ).values(),
-  );
-  const proposals = Array.from(
-    new Map(
-      ((proposalsData ?? []) as ProposalWithItems[]).map((row) => [
-        row.id,
-        row,
-      ]),
-    ).values(),
   );
 
   return (
     <main>
       <OrganizationDetail
-        activities={activities}
+        activities={(activitiesData ?? []) as ActivityRow[]}
+        agreements={dedupeById((agreementsData ?? []) as AgreementRow[])}
+        invoices={dedupeById((invoicesData ?? []) as InvoiceRow[])}
         leads={leads}
         organization={organization}
         projects={projects}
-        proposals={proposals}
-        purchases={purchases}
+        proposals={dedupeById((proposalsData ?? []) as ProposalWithItems[])}
+        purchases={dedupeById(
+          (purchasesData ?? []) as PurchaseWithRelations[],
+        )}
       />
     </main>
   );

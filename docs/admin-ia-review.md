@@ -42,7 +42,7 @@ CRM + Pipeline   →    Projects + Calendar → Billing hub   →   Purchases  �
 ## Follow-ups (not blocking)
 
 1. **Shared admin chrome** — Logo/nav/sign-out repeated on every page; extract layout shell.  
-2. **CRM business page** — add compact Billing strip (latest proposal/agreement/invoice + statement link).  
+2. **CRM business page** — add compact Billing strip (latest proposal/agreement/invoice + statement link). ✅ Account hub live under `/crm/organizations/[id]`.  
 3. **Pipeline lead detail** — “Create proposal” already exists; add “Open billing” when proposal exists.  
 4. **Purchases** — optional rename to “Spend” later if Billing confusion appears.  
 5. **KPI cards → filters** — make drafts/sent counts clickable (same pattern as Purchases type filters).  
