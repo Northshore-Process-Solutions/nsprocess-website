@@ -64,7 +64,7 @@ export function ProposalsTable({
                 <td className="px-4 py-4">
                   <Link
                     className="font-semibold text-accent hover:underline"
-                    href={`/admin/proposals/${row.id}`}
+                    href={`/crm/proposals/${row.id}`}
                   >
                     {row.title}
                   </Link>
@@ -101,7 +101,7 @@ export function ProposalsTable({
                     <Button asChild size="icon" variant="outline">
                       <Link
                         aria-label={`Edit ${row.title}`}
-                        href={`/admin/proposals/${row.id}`}
+                        href={`/crm/proposals/${row.id}`}
                       >
                         <Pencil aria-hidden className="size-4" />
                       </Link>
@@ -109,7 +109,7 @@ export function ProposalsTable({
                     <Button asChild size="icon" variant="outline">
                       <Link
                         aria-label={`Open PDF for ${row.title}`}
-                        href={`/admin/proposals/${row.id}/pdf`}
+                        href={`/crm/proposals/${row.id}/pdf`}
                         target="_blank"
                       >
                         <FileText aria-hidden className="size-4" />

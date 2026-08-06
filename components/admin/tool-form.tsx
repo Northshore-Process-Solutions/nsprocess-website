@@ -6,7 +6,7 @@ import {
   createTool,
   updateTool,
   type ToolInput,
-} from "@/app/admin/tools/actions";
+} from "@/app/crm/tools/actions";
 import { Button } from "@/components/ui/button";
 import {
   BILLING_CADENCES,

@@ -4,7 +4,7 @@ import { Plus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
-import { deleteOrganization } from "@/app/admin/actions";
+import { deleteOrganization } from "@/app/crm/actions";
 import { CrmTable } from "@/components/admin/crm-table";
 import { OrganizationForm } from "@/components/admin/organization-form";
 import { Button } from "@/components/ui/button";

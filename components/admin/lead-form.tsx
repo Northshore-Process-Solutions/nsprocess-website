@@ -6,7 +6,7 @@ import {
   createLead,
   updateLead,
   type LeadInput,
-} from "@/app/admin/pipeline/actions";
+} from "@/app/crm/pipeline/actions";
 import { ActivityPanel } from "@/components/admin/activity-panel";
 import { Button } from "@/components/ui/button";
 import type { ActivityRow } from "@/lib/activities";

@@ -182,7 +182,7 @@ export function CalendarPanel({
 
   function goToMonth(target: { year: number; month: number }) {
     setDialogOpen(false);
-    router.push(`/admin/calendar?month=${monthKey(target)}`);
+    router.push(`/crm/calendar?month=${monthKey(target)}`);
   }
 
   function openCreate(day?: Date) {

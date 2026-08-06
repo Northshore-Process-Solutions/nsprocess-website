@@ -6,54 +6,54 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "/admin", label: "Today", key: "today" as const, match: (p: string) => p === "/admin" },
+  { href: "/crm", label: "Today", key: "today" as const, match: (p: string) => p === "/crm" },
   {
-    href: "/admin/pipeline",
+    href: "/crm/pipeline",
     label: "Pipeline",
     key: "pipeline" as const,
-    match: (p: string) => p.startsWith("/admin/pipeline"),
+    match: (p: string) => p.startsWith("/crm/pipeline"),
   },
   {
-    href: "/admin/crm",
+    href: "/crm/businesses",
     label: "Businesses",
     key: "crm" as const,
     match: (p: string) =>
-      p.startsWith("/admin/crm") || p.startsWith("/admin/organizations"),
+      p.startsWith("/crm/businesses") || p.startsWith("/crm/organizations"),
   },
   {
-    href: "/admin/billing",
+    href: "/crm/billing",
     label: "Billing",
     key: "billing" as const,
     match: (p: string) =>
-      p.startsWith("/admin/billing") ||
-      p.startsWith("/admin/proposals") ||
-      p.startsWith("/admin/agreements") ||
-      p.startsWith("/admin/invoices") ||
-      p.startsWith("/admin/statements"),
+      p.startsWith("/crm/billing") ||
+      p.startsWith("/crm/proposals") ||
+      p.startsWith("/crm/agreements") ||
+      p.startsWith("/crm/invoices") ||
+      p.startsWith("/crm/statements"),
   },
   {
-    href: "/admin/projects",
+    href: "/crm/projects",
     label: "Projects",
     key: "projects" as const,
-    match: (p: string) => p.startsWith("/admin/projects"),
+    match: (p: string) => p.startsWith("/crm/projects"),
   },
   {
-    href: "/admin/calendar",
+    href: "/crm/calendar",
     label: "Calendar",
     key: "calendar" as const,
-    match: (p: string) => p.startsWith("/admin/calendar"),
+    match: (p: string) => p.startsWith("/crm/calendar"),
   },
   {
-    href: "/admin/purchases",
+    href: "/crm/purchases",
     label: "Purchases",
     key: "purchases" as const,
-    match: (p: string) => p.startsWith("/admin/purchases"),
+    match: (p: string) => p.startsWith("/crm/purchases"),
   },
   {
-    href: "/admin/tools",
+    href: "/crm/tools",
     label: "Stack",
     key: "stack" as const,
-    match: (p: string) => p.startsWith("/admin/tools"),
+    match: (p: string) => p.startsWith("/crm/tools"),
   },
 ];
 
@@ -69,7 +69,7 @@ export type AdminNavKey =
   | "purchases";
 
 export function AdminNav({ current }: { current?: AdminNavKey } = {}) {
-  const pathname = usePathname() ?? "/admin";
+  const pathname = usePathname() ?? "/crm";
 
   return (
     <nav aria-label="Admin sections" className="flex gap-0 overflow-x-auto">

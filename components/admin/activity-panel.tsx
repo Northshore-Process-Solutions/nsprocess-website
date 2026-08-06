@@ -14,7 +14,7 @@ import { useState } from "react";
 import {
   createActivity,
   deleteActivity,
-} from "@/app/admin/activities/actions";
+} from "@/app/crm/activities/actions";
 import { Button } from "@/components/ui/button";
 import {
   ACTIVITY_TYPES,

@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 
-import { deleteAgreement } from "@/app/admin/agreements/actions";
+import { deleteAgreement } from "@/app/crm/agreements/actions";
 import { AgreementsTable } from "@/components/admin/agreements-table";
 import { Button } from "@/components/ui/button";
 import type { AgreementWithItems } from "@/lib/agreements";
 
 export function AgreementsPanel({
   rows,
-  newHref = "/admin/agreements/new",
+  newHref = "/crm/agreements/new",
 }: {
   rows: AgreementWithItems[];
   newHref?: string;

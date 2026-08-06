@@ -3,16 +3,16 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "/admin/billing", label: "Overview", key: "overview" as const },
-  { href: "/admin/proposals", label: "Proposals", key: "proposals" as const },
+  { href: "/crm/billing", label: "Overview", key: "overview" as const },
+  { href: "/crm/proposals", label: "Proposals", key: "proposals" as const },
   {
-    href: "/admin/agreements",
+    href: "/crm/agreements",
     label: "Agreements",
     key: "agreements" as const,
   },
-  { href: "/admin/invoices", label: "Invoices", key: "invoices" as const },
+  { href: "/crm/invoices", label: "Invoices", key: "invoices" as const },
   {
-    href: "/admin/statements",
+    href: "/crm/statements",
     label: "Statements",
     key: "statements" as const,
   },

@@ -6,7 +6,7 @@ import {
   createOrganization,
   updateOrganization,
   type OrganizationInput,
-} from "@/app/admin/actions";
+} from "@/app/crm/actions";
 import { Button } from "@/components/ui/button";
 import {
   ORGANIZATION_STATUSES,

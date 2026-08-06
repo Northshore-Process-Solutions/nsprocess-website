@@ -26,7 +26,7 @@ npm run build
 
 ## Admin CRM
 
-Internal CRM lives at `/admin` and reads from the Supabase project **NSPS - Admin Portal**.
+Internal CRM lives at `/crm` and reads from the Supabase project **NSPS - Admin Portal**.
 
 Required environment variables:
 
@@ -36,13 +36,13 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
-Create an admin user in the Supabase dashboard under **Authentication → Users → Add user**, then sign in at `/admin/login`.
+Create an admin user in the Supabase dashboard under **Authentication → Users → Add user**, then sign in at `/crm/login`.
 
 Admin sections:
 
-- `/admin` — CRM for customers, vendors, and partners
-- `/admin/pipeline` — Free Process Review lead pipeline
-- `/admin/tools` — internal stack/tools your business depends on (Supabase, GitHub, Vercel, etc.)
+- `/crm` — CRM for customers, vendors, and partners
+- `/crm/pipeline` — Free Process Review lead pipeline
+- `/crm/tools` — internal stack/tools your business depends on (Supabase, GitHub, Vercel, etc.)
 
 Website contact form submissions create a lead in `new_inquiry` and still send the email notification.
 

@@ -64,7 +64,7 @@ export function CrmTable({
                   <div className="flex flex-col items-start gap-1">
                     <Link
                       className="font-semibold text-foreground transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      href={`/admin/organizations/${row.id}`}
+                      href={`/crm/organizations/${row.id}`}
                     >
                       {row.name}
                     </Link>

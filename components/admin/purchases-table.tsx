@@ -102,7 +102,7 @@ export function PurchasesTable({
                       {row.organizations ? (
                         <Link
                           className="font-medium text-accent hover:underline"
-                          href={`/admin/organizations/${row.organizations.id}`}
+                          href={`/crm/organizations/${row.organizations.id}`}
                         >
                           {row.organizations.name}
                         </Link>
@@ -114,7 +114,7 @@ export function PurchasesTable({
                       {row.projects ? (
                         <Link
                           className="font-medium text-accent hover:underline"
-                          href={`/admin/projects/${row.projects.id}`}
+                          href={`/crm/projects/${row.projects.id}`}
                         >
                           {row.projects.name}
                         </Link>

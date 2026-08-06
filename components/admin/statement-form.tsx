@@ -43,7 +43,7 @@ export function StatementForm({
       from,
       to,
     });
-    router.push(`/admin/statements/view?${params.toString()}`);
+    router.push(`/crm/statements/view?${params.toString()}`);
   }
 
   return (

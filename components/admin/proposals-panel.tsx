@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 
-import { deleteProposal } from "@/app/admin/proposals/actions";
+import { deleteProposal } from "@/app/crm/proposals/actions";
 import { ProposalsTable } from "@/components/admin/proposals-table";
 import { Button } from "@/components/ui/button";
 import type { ProposalWithItems } from "@/lib/proposals";
 
 export function ProposalsPanel({
   rows,
-  newHref = "/admin/proposals/new",
+  newHref = "/crm/proposals/new",
 }: {
   rows: ProposalWithItems[];
   newHref?: string;

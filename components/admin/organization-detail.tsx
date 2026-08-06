@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-import { deleteOrganization } from "@/app/admin/actions";
+import { deleteOrganization } from "@/app/crm/actions";
 import { ActivityPanel } from "@/components/admin/activity-panel";
 import { OrganizationForm } from "@/components/admin/organization-form";
 import { PurchasesPanel } from "@/components/admin/purchases-panel";
@@ -113,7 +113,7 @@ export function OrganizationDetail({
       return;
     }
 
-    router.push("/admin/crm");
+    router.push("/crm/businesses");
     router.refresh();
   }
 
@@ -123,7 +123,7 @@ export function OrganizationDetail({
         <div>
           <Link
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900"
-            href="/admin/crm"
+            href="/crm/businesses"
           >
             <ArrowLeft aria-hidden className="size-4" />
             Back to Businesses
@@ -320,13 +320,13 @@ export function OrganizationDetail({
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="outline">
               <Link
-                href={`/admin/statements?organizationId=${organization.id}`}
+                href={`/crm/statements?organizationId=${organization.id}`}
               >
                 Statement
               </Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/admin/billing">Open Billing</Link>
+              <Link href="/crm/billing">Open Billing</Link>
             </Button>
           </div>
         </div>
@@ -358,7 +358,7 @@ export function OrganizationDetail({
                     <td className="px-2 py-3">
                       <Link
                         className="font-medium text-accent hover:underline"
-                        href={`/admin/proposals/${proposal.id}`}
+                        href={`/crm/proposals/${proposal.id}`}
                       >
                         {proposal.title}
                       </Link>
@@ -402,7 +402,7 @@ export function OrganizationDetail({
             </p>
           </div>
           <Button asChild variant="outline">
-            <Link href="/admin/purchases">Open Purchases</Link>
+            <Link href="/crm/purchases">Open Purchases</Link>
           </Button>
         </div>
         <PurchasesPanel
@@ -427,7 +427,7 @@ export function OrganizationDetail({
             </p>
           </div>
           <Button asChild variant="outline">
-            <Link href="/admin/projects">Open Projects</Link>
+            <Link href="/crm/projects">Open Projects</Link>
           </Button>
         </div>
 
@@ -458,7 +458,7 @@ export function OrganizationDetail({
                     <td className="px-2 py-3">
                       <Link
                         className="font-medium text-accent hover:underline"
-                        href={`/admin/projects/${project.id}`}
+                        href={`/crm/projects/${project.id}`}
                       >
                         {project.name}
                       </Link>
@@ -498,7 +498,7 @@ export function OrganizationDetail({
             </p>
           </div>
           <Button asChild variant="outline">
-            <Link href="/admin/pipeline">Open Pipeline</Link>
+            <Link href="/crm/pipeline">Open Pipeline</Link>
           </Button>
         </div>
 

@@ -6,7 +6,7 @@ import {
   createCalendarEvent,
   updateCalendarEvent,
   deleteCalendarEvent,
-} from "@/app/admin/calendar/actions";
+} from "@/app/crm/calendar/actions";
 import { Button } from "@/components/ui/button";
 import {
   CALENDAR_EVENT_TYPES,

@@ -10,7 +10,7 @@ import {
   markAgreementSigned,
   updateAgreement,
   type AgreementInput,
-} from "@/app/admin/agreements/actions";
+} from "@/app/crm/agreements/actions";
 import { Button } from "@/components/ui/button";
 import {
   AGREEMENT_STATUSES,
@@ -151,7 +151,7 @@ export function AgreementEditor({
 
     setSaved(true);
     if (mode === "create" && result.id) {
-      router.push(`/admin/agreements/${result.id}`);
+      router.push(`/crm/agreements/${result.id}`);
       router.refresh();
       return;
     }
@@ -197,7 +197,7 @@ export function AgreementEditor({
         <div>
           <Link
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900"
-            href="/admin/agreements"
+            href="/crm/agreements"
           >
             <ArrowLeft aria-hidden className="size-4" />
             Back to Agreements
@@ -220,7 +220,7 @@ export function AgreementEditor({
             <>
               <Button asChild type="button" variant="outline">
                 <Link
-                  href={`/admin/agreements/${initialAgreement.id}/pdf`}
+                  href={`/crm/agreements/${initialAgreement.id}/pdf`}
                   target="_blank"
                 >
                   <FileDown aria-hidden className="size-4" />
@@ -229,7 +229,7 @@ export function AgreementEditor({
               </Button>
               <Button asChild type="button" variant="outline">
                 <Link
-                  href={`/admin/invoices/new?agreementId=${initialAgreement.id}&mode=deposit`}
+                  href={`/crm/invoices/new?agreementId=${initialAgreement.id}&mode=deposit`}
                 >
                   <Receipt aria-hidden className="size-4" />
                   Deposit invoice
@@ -237,7 +237,7 @@ export function AgreementEditor({
               </Button>
               <Button asChild type="button" variant="outline">
                 <Link
-                  href={`/admin/invoices/new?agreementId=${initialAgreement.id}&mode=full`}
+                  href={`/crm/invoices/new?agreementId=${initialAgreement.id}&mode=full`}
                 >
                   Full invoice
                 </Link>

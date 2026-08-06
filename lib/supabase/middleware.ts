@@ -39,19 +39,31 @@ export async function updateSession(request: NextRequest) {
   const user = data?.claims;
 
   const pathname = request.nextUrl.pathname;
-  const isAdminRoute = pathname.startsWith("/admin");
-  const isLoginRoute = pathname === "/admin/login";
 
-  if (isAdminRoute && !isLoginRoute && !user) {
+  // Keep old /admin bookmarks working
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/admin/login";
+    if (pathname === "/admin/crm" || pathname.startsWith("/admin/crm/")) {
+      redirectUrl.pathname = pathname.replace(/^\/admin\/crm/, "/crm/businesses");
+    } else {
+      redirectUrl.pathname = pathname.replace(/^\/admin/, "/crm");
+    }
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  const isPortalRoute = pathname.startsWith("/crm");
+  const isLoginRoute = pathname === "/crm/login";
+
+  if (isPortalRoute && !isLoginRoute && !user) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/crm/login";
     redirectUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
   if (isLoginRoute && user) {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/admin";
+    redirectUrl.pathname = "/crm";
     redirectUrl.search = "";
     return NextResponse.redirect(redirectUrl);
   }

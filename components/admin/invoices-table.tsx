@@ -67,7 +67,7 @@ export function InvoicesTable({
                 <td className="px-4 py-4">
                   <Link
                     className="font-semibold text-accent hover:underline"
-                    href={`/admin/invoices/${row.id}`}
+                    href={`/crm/invoices/${row.id}`}
                   >
                     {row.title}
                   </Link>
@@ -110,7 +110,7 @@ export function InvoicesTable({
                     <Button asChild size="icon" variant="outline">
                       <Link
                         aria-label={`Edit ${row.title}`}
-                        href={`/admin/invoices/${row.id}`}
+                        href={`/crm/invoices/${row.id}`}
                       >
                         <Pencil aria-hidden className="size-4" />
                       </Link>
@@ -118,7 +118,7 @@ export function InvoicesTable({
                     <Button asChild size="icon" variant="outline">
                       <Link
                         aria-label={`Open PDF for ${row.title}`}
-                        href={`/admin/invoices/${row.id}/pdf`}
+                        href={`/crm/invoices/${row.id}/pdf`}
                         target="_blank"
                       >
                         <FileText aria-hidden className="size-4" />

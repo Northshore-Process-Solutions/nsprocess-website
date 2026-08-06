@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
-export function LoginForm({ nextPath = "/admin" }: { nextPath?: string }) {
+export function LoginForm({ nextPath = "/crm" }: { nextPath?: string }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -75,7 +75,7 @@ export function LoginForm({ nextPath = "/admin" }: { nextPath?: string }) {
         type="submit"
         variant="accent"
       >
-        {loading ? "Signing in..." : "Sign in to Admin"}
+        {loading ? "Signing in..." : "Sign in"}
       </Button>
     </form>
   );

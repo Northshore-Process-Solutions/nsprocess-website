@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { replyToLead } from "@/app/admin/pipeline/actions";
+import { replyToLead } from "@/app/crm/pipeline/actions";
 import { Button } from "@/components/ui/button";
 import {
   leadSourceLabel,

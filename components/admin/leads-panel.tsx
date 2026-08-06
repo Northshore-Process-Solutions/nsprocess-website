@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { deleteLead } from "@/app/admin/pipeline/actions";
+import { deleteLead } from "@/app/crm/pipeline/actions";
 import { LeadDetailDialog } from "@/components/admin/lead-detail-dialog";
 import { LeadForm } from "@/components/admin/lead-form";
 import { LeadReplyDialog } from "@/components/admin/lead-reply-dialog";

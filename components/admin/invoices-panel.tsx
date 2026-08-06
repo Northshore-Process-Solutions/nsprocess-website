@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 
-import { deleteInvoice } from "@/app/admin/invoices/actions";
+import { deleteInvoice } from "@/app/crm/invoices/actions";
 import { InvoicesTable } from "@/components/admin/invoices-table";
 import { Button } from "@/components/ui/button";
 import type { InvoiceWithItems } from "@/lib/invoices";
 
 export function InvoicesPanel({
   rows,
-  newHref = "/admin/invoices/new",
+  newHref = "/crm/invoices/new",
 }: {
   rows: InvoiceWithItems[];
   newHref?: string;

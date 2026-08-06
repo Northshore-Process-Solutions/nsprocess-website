@@ -107,7 +107,7 @@ function ProjectViewAction({ row }: { row: ProjectWithOrganization }) {
         type="button"
         variant="outline"
       >
-        <Link href={`/admin/projects/${row.id}`}>
+        <Link href={`/crm/projects/${row.id}`}>
           <Eye aria-hidden className="size-4" />
         </Link>
       </Button>
@@ -117,8 +117,8 @@ function ProjectViewAction({ row }: { row: ProjectWithOrganization }) {
 
 function ProjectCalendarAction({ row }: { row: ProjectWithOrganization }) {
   const href = row.lead_id
-    ? `/admin/calendar?leadId=${row.lead_id}`
-    : "/admin/calendar";
+    ? `/crm/calendar?leadId=${row.lead_id}`
+    : "/crm/calendar";
 
   return (
     <ActionHoverTooltip

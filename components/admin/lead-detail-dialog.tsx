@@ -107,7 +107,7 @@ export function LeadDetailDialog({
                 lead.organization_id ? (
                   <Link
                     className="text-accent hover:underline"
-                    href={`/admin/organizations/${lead.organization_id}`}
+                    href={`/crm/organizations/${lead.organization_id}`}
                   >
                     View business
                   </Link>
@@ -169,13 +169,13 @@ export function LeadDetailDialog({
           </Button>
           <div className="flex flex-col-reverse gap-3 sm:flex-row">
             <Button asChild type="button" variant="outline">
-              <Link href={`/admin/calendar?leadId=${lead.id}`}>
+              <Link href={`/crm/calendar?leadId=${lead.id}`}>
                 <CalendarDays aria-hidden className="size-4" />
                 Schedule
               </Link>
             </Button>
             <Button asChild type="button" variant="outline">
-              <Link href={`/admin/proposals/new?leadId=${lead.id}`}>
+              <Link href={`/crm/proposals/new?leadId=${lead.id}`}>
                 <FileText aria-hidden className="size-4" />
                 Proposal
               </Link>

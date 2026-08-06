@@ -11,7 +11,7 @@ import {
   markInvoiceSent,
   updateInvoice,
   type InvoiceInput,
-} from "@/app/admin/invoices/actions";
+} from "@/app/crm/invoices/actions";
 import { Button } from "@/components/ui/button";
 import { computeTotals, formatMoney, type LineItemInput } from "@/lib/billing";
 import {
@@ -160,7 +160,7 @@ export function InvoiceEditor({
 
     setSaved(true);
     if (mode === "create" && result.id) {
-      router.push(`/admin/invoices/${result.id}`);
+      router.push(`/crm/invoices/${result.id}`);
       router.refresh();
       return;
     }
@@ -229,7 +229,7 @@ export function InvoiceEditor({
         <div>
           <Link
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900"
-            href="/admin/invoices"
+            href="/crm/invoices"
           >
             <ArrowLeft aria-hidden className="size-4" />
             Back to Invoices
@@ -252,7 +252,7 @@ export function InvoiceEditor({
             <>
               <Button asChild type="button" variant="outline">
                 <Link
-                  href={`/admin/invoices/${initialInvoice.id}/pdf`}
+                  href={`/crm/invoices/${initialInvoice.id}/pdf`}
                   target="_blank"
                 >
                   <FileDown aria-hidden className="size-4" />

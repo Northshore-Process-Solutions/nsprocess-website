@@ -8,7 +8,7 @@ import {
   createProjectTask,
   deleteProjectTask,
   toggleProjectTask,
-} from "@/app/admin/projects/actions";
+} from "@/app/crm/projects/actions";
 import { Button } from "@/components/ui/button";
 import type { ProjectTaskRow } from "@/lib/projects";
 import { cn } from "@/lib/utils";

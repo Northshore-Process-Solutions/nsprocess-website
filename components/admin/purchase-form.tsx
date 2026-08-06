@@ -6,7 +6,7 @@ import {
   createPurchase,
   updatePurchase,
   type PurchaseInput,
-} from "@/app/admin/purchases/actions";
+} from "@/app/crm/purchases/actions";
 import { Button } from "@/components/ui/button";
 import {
   emptyPurchaseFormValues,

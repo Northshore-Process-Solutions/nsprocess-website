@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { deleteTool } from "@/app/admin/tools/actions";
+import { deleteTool } from "@/app/crm/tools/actions";
 import { ToolForm } from "@/components/admin/tool-form";
 import { ToolsTable } from "@/components/admin/tools-table";
 import { Button } from "@/components/ui/button";

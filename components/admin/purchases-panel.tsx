@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { deletePurchase } from "@/app/admin/purchases/actions";
+import { deletePurchase } from "@/app/crm/purchases/actions";
 import {
   PurchaseForm,
   type PurchaseBusinessOption,

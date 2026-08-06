@@ -265,7 +265,7 @@ function LeadCalendarAction({
         type="button"
         variant="outline"
       >
-        <Link href={`/admin/calendar?leadId=${lead.id}`}>
+        <Link href={`/crm/calendar?leadId=${lead.id}`}>
           <CalendarDays aria-hidden className="size-4" />
         </Link>
       </Button>

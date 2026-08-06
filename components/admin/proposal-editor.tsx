@@ -12,13 +12,13 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { draftProposalScope } from "@/app/admin/ai/actions";
+import { draftProposalScope } from "@/app/crm/ai/actions";
 import {
   createProposal,
   markProposalSent,
   updateProposal,
   type ProposalInput,
-} from "@/app/admin/proposals/actions";
+} from "@/app/crm/proposals/actions";
 import { Button } from "@/components/ui/button";
 import {
   computeProposalTotals,
@@ -162,7 +162,7 @@ export function ProposalEditor({
 
     setSaved(true);
     if (mode === "create" && result.id) {
-      router.push(`/admin/proposals/${result.id}`);
+      router.push(`/crm/proposals/${result.id}`);
       router.refresh();
       return;
     }
@@ -228,7 +228,7 @@ export function ProposalEditor({
         <div>
           <Link
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900"
-            href="/admin/proposals"
+            href="/crm/proposals"
           >
             <ArrowLeft aria-hidden className="size-4" />
             Back to Proposals
@@ -251,7 +251,7 @@ export function ProposalEditor({
             <>
               <Button asChild type="button" variant="outline">
                 <Link
-                  href={`/admin/proposals/${initialProposal.id}/pdf`}
+                  href={`/crm/proposals/${initialProposal.id}/pdf`}
                   target="_blank"
                 >
                   <FileDown aria-hidden className="size-4" />
@@ -260,7 +260,7 @@ export function ProposalEditor({
               </Button>
               <Button asChild type="button" variant="outline">
                 <Link
-                  href={`/admin/agreements/new?proposalId=${initialProposal.id}`}
+                  href={`/crm/agreements/new?proposalId=${initialProposal.id}`}
                 >
                   <FileSignature aria-hidden className="size-4" />
                   Create agreement

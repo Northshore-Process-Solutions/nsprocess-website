@@ -8,14 +8,14 @@ import { AdminNav } from "@/components/admin/admin-nav";
 import { SignOutButton } from "@/components/admin/sign-out-button";
 
 function isBareAdminRoute(pathname: string) {
-  if (pathname === "/admin/login") return true;
+  if (pathname === "/crm/login") return true;
   if (pathname.includes("/pdf")) return true;
-  if (pathname.startsWith("/admin/statements/view")) return true;
+  if (pathname.startsWith("/crm/statements/view")) return true;
   return false;
 }
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname() ?? "/admin";
+  const pathname = usePathname() ?? "/crm";
 
   if (isBareAdminRoute(pathname)) {
     return <>{children}</>;
@@ -26,9 +26,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <header className="border-b border-slate-200 bg-white">
         <div className="flex h-12 w-full items-center justify-between gap-4 px-4 sm:px-6">
           <Link
-            aria-label="NSPS Admin home"
+            aria-label="NSPS Portal home"
             className="inline-flex items-center gap-2.5 text-slate-900"
-            href="/admin"
+            href="/crm"
           >
             <Image
               alt=""
@@ -39,7 +39,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               width={44}
             />
             <span className="hidden text-sm font-semibold tracking-tight sm:inline">
-              NSPS Admin
+              NSPS Portal
             </span>
           </Link>
           <SignOutButton />
