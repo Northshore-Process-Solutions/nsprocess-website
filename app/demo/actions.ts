@@ -83,5 +83,5 @@ export async function endDemoSession() {
     }
   }
   await clearDemoSessionCookie();
-  redirect("/demo");
+  redirect("/demo/start");
 }

@@ -1,9 +1,6 @@
-import Link from "next/link";
-
-import { DemoShell } from "@/components/demo/demo-shell";
-import { DemoPageHeader } from "@/components/demo/demo-ui";
-import { loadDemoSeed } from "@/lib/demo/data";
-import { leadStageLabel } from "@/lib/leads";
+import { LeadsPanel } from "@/components/admin/leads-panel";
+import { loadDemoCrmData } from "@/lib/demo/data";
+import { isCustomerStage } from "@/lib/leads";
 
 export const metadata = {
   title: "Demo Pipeline",
@@ -11,53 +8,58 @@ export const metadata = {
 };
 
 export default async function DemoPipelinePage() {
-  const seed = await loadDemoSeed();
+  const data = await loadDemoCrmData();
+  const allLeads = data.leads;
+  const leads = allLeads.filter((lead) => !isCustomerStage(lead.stage));
+  const activeProjectsCount = data.projects.filter((project) =>
+    ["planning", "active"].includes(project.status),
+  ).length;
+
+  const countByStage = (stage: (typeof allLeads)[number]["stage"]) =>
+    allLeads.filter((lead) => lead.stage === stage).length;
+
+  const kpis = [
+    { label: "New Leads", value: countByStage("new_inquiry") },
+    { label: "Consults Booked", value: countByStage("review_booked") },
+    { label: "Proposals Sent", value: countByStage("proposal_sent") },
+    { label: "Active Projects", value: activeProjectsCount },
+    { label: "Awaiting Follow-Up", value: countByStage("follow_up") },
+  ];
 
   return (
-    <DemoShell businessName={seed.business.name}>
-      <DemoPageHeader
-        description={`Customer inquiries for ${seed.business.name} — quotes, site visits, and jobs waiting to move forward.`}
-        title="Pipeline"
-      />
+    <main>
+      <header className="mb-5">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          Pipeline
+        </h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Open inquiries through consult and proposal. Deposit and kickoff move
+          customers into Projects.
+        </p>
+      </header>
 
-      <div className="overflow-hidden rounded-md border border-slate-200 bg-white">
-        <table className="min-w-full text-left text-sm">
-          <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
-            <tr>
-              <th className="px-3 py-2 font-medium">Business</th>
-              <th className="px-3 py-2 font-medium">Contact</th>
-              <th className="px-3 py-2 font-medium">Stage</th>
-              <th className="px-3 py-2 font-medium">Follow-up</th>
-            </tr>
-          </thead>
-          <tbody>
-            {seed.leads.map((lead) => (
-              <tr
-                className="border-t border-slate-100 hover:bg-slate-50"
-                key={lead.id}
-              >
-                <td className="px-3 py-2.5">
-                  <Link
-                    className="font-medium text-slate-900 hover:underline"
-                    href={`/demo/pipeline/${lead.id}`}
-                  >
-                    {lead.businessName}
-                  </Link>
-                  <p className="text-xs text-slate-500 line-clamp-1">
-                    {lead.message}
-                  </p>
-                </td>
-                <td className="px-3 py-2.5">
-                  <p>{lead.contactName}</p>
-                  <p className="text-xs text-slate-500">{lead.email}</p>
-                </td>
-                <td className="px-3 py-2.5">{leadStageLabel(lead.stage)}</td>
-                <td className="px-3 py-2.5">{lead.nextFollowUpAt ?? "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </DemoShell>
+      <section className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {kpis.map((kpi) => (
+          <div
+            className="rounded-md border border-slate-200 bg-white px-3 py-3"
+            key={kpi.label}
+          >
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {kpi.label}
+            </p>
+            <p className="mt-1 text-xl font-semibold text-slate-900">
+              {kpi.value}
+            </p>
+          </div>
+        ))}
+      </section>
+
+      <LeadsPanel
+        activitiesByLeadId={data.activitiesByLeadId}
+        eventsByLeadId={data.eventsByLeadId}
+        readOnly
+        rows={leads}
+      />
+    </main>
   );
 }

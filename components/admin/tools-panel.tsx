@@ -10,7 +10,13 @@ import { ToolsTable } from "@/components/admin/tools-table";
 import { Button } from "@/components/ui/button";
 import type { ToolRow } from "@/lib/tools";
 
-export function ToolsPanel({ rows }: { rows: ToolRow[] }) {
+export function ToolsPanel({
+  rows,
+  readOnly = false,
+}: {
+  rows: ToolRow[];
+  readOnly?: boolean;
+}) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
   const [mode, setMode] = useState<"create" | "edit">("create");
@@ -58,10 +64,12 @@ export function ToolsPanel({ rows }: { rows: ToolRow[] }) {
         <p className="text-sm text-muted-foreground">
           Track software, hosting, and services your business depends on.
         </p>
-        <Button onClick={openCreate} type="button" variant="accent">
-          <Plus aria-hidden className="size-4" />
-          Add tool
-        </Button>
+        {!readOnly ? (
+          <Button onClick={openCreate} type="button" variant="accent">
+            <Plus aria-hidden className="size-4" />
+            Add tool
+          </Button>
+        ) : null}
       </div>
 
       {error ? (
@@ -72,22 +80,24 @@ export function ToolsPanel({ rows }: { rows: ToolRow[] }) {
 
       <ToolsTable
         deletingId={deletingId}
-        onDelete={handleDelete}
-        onEdit={openEdit}
+        onDelete={readOnly ? undefined : handleDelete}
+        onEdit={readOnly ? undefined : openEdit}
         rows={rows}
       />
 
-      <ToolForm
-        initialRow={selectedRow}
-        key={`${mode}-${selectedRow?.id ?? "new"}-${formOpen ? "open" : "closed"}`}
-        mode={mode}
-        onClose={() => setFormOpen(false)}
-        onSaved={() => {
-          setFormOpen(false);
-          router.refresh();
-        }}
-        open={formOpen}
-      />
+      {!readOnly ? (
+        <ToolForm
+          initialRow={selectedRow}
+          key={`${mode}-${selectedRow?.id ?? "new"}-${formOpen ? "open" : "closed"}`}
+          mode={mode}
+          onClose={() => setFormOpen(false)}
+          onSaved={() => {
+            setFormOpen(false);
+            router.refresh();
+          }}
+          open={formOpen}
+        />
+      ) : null}
     </div>
   );
 }

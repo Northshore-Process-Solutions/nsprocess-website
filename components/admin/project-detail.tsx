@@ -25,6 +25,7 @@ import {
 import { LeadReplyDialog } from "@/components/admin/lead-reply-dialog";
 import { ProjectTasksPanel } from "@/components/admin/project-tasks-panel";
 import { PurchasesPanel } from "@/components/admin/purchases-panel";
+import { usePortal } from "@/components/portal/portal-provider";
 import { Button } from "@/components/ui/button";
 import type { ActivityRow } from "@/lib/activities";
 import {
@@ -78,6 +79,7 @@ type ProjectDetailProps = {
   events: CalendarEventWithRelations[];
   tasks: ProjectTaskRow[];
   purchases: PurchaseWithRelations[];
+  readOnly?: boolean;
 };
 
 type EditSection = "identity" | "schedule" | "delivery" | null;
@@ -255,8 +257,10 @@ export function ProjectDetail({
   events,
   tasks,
   purchases,
+  readOnly = false,
 }: ProjectDetailProps) {
   const router = useRouter();
+  const { href } = usePortal();
   const [name, setName] = useState(project.name);
   const [status, setStatus] = useState<ProjectStatus>(project.status);
   const [priority, setPriority] = useState<ProjectPriority>(
@@ -411,7 +415,7 @@ export function ProjectDetail({
         <div className="min-w-0">
           <Link
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900"
-            href="/crm/projects"
+            href={href("/projects")}
           >
             <ArrowLeft aria-hidden className="size-4" />
             Back to Projects
@@ -420,10 +424,12 @@ export function ProjectDetail({
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
               {name}
             </h1>
-            <EditPencil
-              label="Edit project name, status, and priority"
-              onClick={() => openEdit("identity")}
-            />
+            {!readOnly ? (
+              <EditPencil
+                label="Edit project name, status, and priority"
+                onClick={() => openEdit("identity")}
+              />
+            ) : null}
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <span
@@ -445,7 +451,7 @@ export function ProjectDetail({
             {project.organizations ? (
               <Link
                 className="rounded border border-slate-200 bg-white px-2.5 py-0.5 text-xs font-medium text-slate-700 hover:border-slate-400"
-                href={`/crm/organizations/${project.organizations.id}`}
+                href={href(`/organizations/${project.organizations.id}`)}
               >
                 {project.organizations.name}
               </Link>
@@ -457,16 +463,18 @@ export function ProjectDetail({
             ) : null}
           </div>
         </div>
-        <Button
-          disabled={!lead}
-          onClick={() => setReplyOpen(true)}
-          size="sm"
-          type="button"
-          variant="outline"
-        >
-          <Mail aria-hidden className="size-4" />
-          Email
-        </Button>
+        {!readOnly && lead ? (
+          <Button
+            disabled={!lead}
+            onClick={() => setReplyOpen(true)}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            <Mail aria-hidden className="size-4" />
+            Email
+          </Button>
+        ) : null}
       </div>
 
       <section className="grid gap-3 sm:grid-cols-3">
@@ -517,10 +525,12 @@ export function ProjectDetail({
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
               Schedule
             </p>
-            <EditPencil
-              label="Edit project schedule"
-              onClick={() => openEdit("schedule")}
-            />
+            {!readOnly ? (
+              <EditPencil
+                label="Edit project schedule"
+                onClick={() => openEdit("schedule")}
+              />
+            ) : null}
           </div>
           <dl className="mt-1 space-y-1 text-sm">
             <div className="flex items-baseline justify-between gap-3">
@@ -553,6 +563,7 @@ export function ProjectDetail({
             leadId={project.lead_id}
             organizationId={project.organization_id}
             projectId={project.id}
+            readOnly={readOnly}
           />
         </div>
 
@@ -598,20 +609,33 @@ export function ProjectDetail({
               </p>
             ) : null}
 
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <Button onClick={openCreateEvent} size="sm" type="button" variant="outline">
-                <Plus aria-hidden className="size-4" />
-                Schedule
-              </Button>
-              <Button
-                onClick={() => setEventsOpen(true)}
-                size="sm"
-                type="button"
-                variant="outline"
-              >
-                View all
-              </Button>
-            </div>
+            {!readOnly ? (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <Button onClick={openCreateEvent} size="sm" type="button" variant="outline">
+                  <Plus aria-hidden className="size-4" />
+                  Schedule
+                </Button>
+                <Button
+                  onClick={() => setEventsOpen(true)}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  View all
+                </Button>
+              </div>
+            ) : upcoming.length > 0 ? (
+              <div className="mt-3">
+                <Button
+                  onClick={() => setEventsOpen(true)}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  View all
+                </Button>
+              </div>
+            ) : null}
           </section>
 
           <section className="rounded-md border border-slate-200 bg-white p-4">
@@ -624,10 +648,12 @@ export function ProjectDetail({
                   Scope of work and internal PM notes
                 </p>
               </div>
-              <EditPencil
-                label="Edit delivery scope and notes"
-                onClick={() => openEdit("delivery")}
-              />
+              {!readOnly ? (
+                <EditPencil
+                  label="Edit delivery scope and notes"
+                  onClick={() => openEdit("delivery")}
+                />
+              ) : null}
             </div>
 
             <div className="mt-3 space-y-3">
@@ -674,7 +700,7 @@ export function ProjectDetail({
                     {project.organizations ? (
                       <Link
                         className="hover:underline"
-                        href={`/crm/organizations/${project.organizations.id}`}
+                        href={href(`/organizations/${project.organizations.id}`)}
                       >
                         {lead.business_name}
                       </Link>
@@ -755,6 +781,7 @@ export function ProjectDetail({
               organization_id: project.organization_id,
             },
           ]}
+          readOnly={readOnly}
           rows={purchases}
           showLinks={false}
         />

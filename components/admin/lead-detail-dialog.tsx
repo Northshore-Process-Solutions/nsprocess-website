@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CalendarDays, FileText, Pencil, Trash2 } from "lucide-react";
 
 import { ActivityPanel } from "@/components/admin/activity-panel";
+import { usePortal } from "@/components/portal/portal-provider";
 import { Button } from "@/components/ui/button";
 import type { ActivityRow } from "@/lib/activities";
 import {
@@ -18,8 +19,8 @@ type LeadDetailDialogProps = {
   activities?: ActivityRow[];
   deleting?: boolean;
   onClose: () => void;
-  onEdit: (lead: LeadRow) => void;
-  onDelete: (lead: LeadRow) => void;
+  onEdit?: (lead: LeadRow) => void;
+  onDelete?: (lead: LeadRow) => void;
 };
 
 function DetailItem({
@@ -48,6 +49,7 @@ export function LeadDetailDialog({
   onEdit,
   onDelete,
 }: LeadDetailDialogProps) {
+  const { href, isDemo } = usePortal();
   if (!open || !lead) return null;
 
   return (
@@ -60,14 +62,16 @@ export function LeadDetailDialog({
         <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              Lead details
+              Lead
             </p>
-            <h2 className="mt-1 text-2xl font-bold tracking-tight">
+            <h2 className="mt-1 text-xl font-semibold tracking-tight">
               {lead.business_name}
             </h2>
-            <p className="mt-1 text-sm text-muted-foreground">{lead.title}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {leadStageLabel(lead.stage)} · {leadSourceLabel(lead.source)}
+            </p>
           </div>
-          <Button onClick={onClose} type="button" variant="ghost">
+          <Button onClick={onClose} type="button" variant="outline">
             Close
           </Button>
         </div>
@@ -75,77 +79,27 @@ export function LeadDetailDialog({
         <div className="overflow-y-auto px-5 py-5 sm:px-6">
           <dl className="grid gap-4 sm:grid-cols-2">
             <DetailItem label="Contact" value={lead.contact_name} />
-            <DetailItem
-              label="Email"
-              value={
-                <a
-                  className="text-accent hover:underline"
-                  href={`mailto:${lead.email}`}
-                >
-                  {lead.email}
-                </a>
-              }
-            />
+            <DetailItem label="Email" value={lead.email} />
             <DetailItem label="Phone" value={lead.phone || "—"} />
-            <DetailItem label="Source" value={leadSourceLabel(lead.source)} />
-            <DetailItem label="Stage" value={leadStageLabel(lead.stage)} />
             <DetailItem
               label="Follow-up"
-              value={lead.next_follow_up_at || "—"}
+              value={lead.next_follow_up_at || "Not set"}
             />
-            <DetailItem
-              label="Created"
-              value={new Date(lead.created_at).toLocaleString()}
-            />
-            <DetailItem
-              label="Updated"
-              value={new Date(lead.updated_at).toLocaleString()}
-            />
-            <DetailItem
-              label="Business"
-              value={
-                lead.organization_id ? (
+            <DetailItem label="Message" value={lead.message || "—"} />
+            {lead.organization_id ? (
+              <DetailItem
+                label="Business"
+                value={
                   <Link
                     className="text-accent hover:underline"
-                    href={`/crm/organizations/${lead.organization_id}`}
+                    href={href(`/organizations/${lead.organization_id}`)}
                   >
-                    View business
+                    Open account hub
                   </Link>
-                ) : (
-                  "Not linked"
-                )
-              }
-            />
-          </dl>
-
-          <div className="mt-6 space-y-4">
-            <DetailItem
-              label="Inquiry message"
-              value={
-                <p className="whitespace-pre-wrap font-normal leading-6 text-foreground/90">
-                  {lead.message || "—"}
-                </p>
-              }
-            />
-            <DetailItem
-              label="Internal notes"
-              value={
-                <p className="whitespace-pre-wrap font-normal leading-6 text-foreground/90">
-                  {lead.notes || "—"}
-                </p>
-              }
-            />
-            {lead.lost_reason ? (
-              <DetailItem
-                label="Lost reason"
-                value={
-                  <p className="whitespace-pre-wrap font-normal leading-6 text-foreground/90">
-                    {lead.lost_reason}
-                  </p>
                 }
               />
             ) : null}
-          </div>
+          </dl>
 
           <div className="mt-8">
             <ActivityPanel
@@ -153,40 +107,53 @@ export function LeadDetailDialog({
               compact
               leadId={lead.id}
               organizationId={lead.organization_id}
+              readOnly={isDemo}
             />
           </div>
         </div>
 
         <div className="flex flex-col-reverse gap-3 border-t border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <Button
-            disabled={deleting}
-            onClick={() => onDelete(lead)}
-            type="button"
-            variant="outline"
-          >
-            <Trash2 aria-hidden className="size-4" />
-            {deleting ? "Deleting…" : "Delete lead"}
-          </Button>
+          {onDelete ? (
+            <Button
+              disabled={deleting}
+              onClick={() => onDelete(lead)}
+              type="button"
+              variant="outline"
+            >
+              <Trash2 aria-hidden className="size-4" />
+              {deleting ? "Deleting…" : "Delete lead"}
+            </Button>
+          ) : (
+            <span />
+          )}
           <div className="flex flex-col-reverse gap-3 sm:flex-row">
             <Button asChild type="button" variant="outline">
-              <Link href={`/crm/calendar?leadId=${lead.id}`}>
+              <Link href={href(`/calendar?leadId=${lead.id}`)}>
                 <CalendarDays aria-hidden className="size-4" />
                 Schedule
               </Link>
             </Button>
-            <Button asChild type="button" variant="outline">
-              <Link href={`/crm/proposals/new?leadId=${lead.id}`}>
-                <FileText aria-hidden className="size-4" />
-                Proposal
-              </Link>
-            </Button>
+            {!isDemo ? (
+              <Button asChild type="button" variant="outline">
+                <Link href={href(`/proposals/new?leadId=${lead.id}`)}>
+                  <FileText aria-hidden className="size-4" />
+                  Proposal
+                </Link>
+              </Button>
+            ) : null}
             <Button onClick={onClose} type="button" variant="outline">
               Close
             </Button>
-            <Button onClick={() => onEdit(lead)} type="button" variant="accent">
-              <Pencil aria-hidden className="size-4" />
-              Edit lead
-            </Button>
+            {onEdit ? (
+              <Button
+                onClick={() => onEdit(lead)}
+                type="button"
+                variant="accent"
+              >
+                <Pencil aria-hidden className="size-4" />
+                Edit lead
+              </Button>
+            ) : null}
           </div>
         </div>
       </div>

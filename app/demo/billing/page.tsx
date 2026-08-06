@@ -1,10 +1,15 @@
 import Link from "next/link";
+import {
+  FileSignature,
+  FileText,
+  Receipt,
+  ScrollText,
+} from "lucide-react";
 
-import { DemoShell } from "@/components/demo/demo-shell";
-import { DemoPageHeader } from "@/components/demo/demo-ui";
+import { BillingSubnav } from "@/components/admin/billing-subnav";
 import { formatMoney } from "@/lib/billing";
-import { loadDemoSeed } from "@/lib/demo/data";
-import type { DemoDoc } from "@/lib/demo/types";
+import { loadDemoCrmData } from "@/lib/demo/data";
+import { portalPath } from "@/lib/portal/paths";
 
 export const metadata = {
   title: "Demo Billing",
@@ -12,63 +17,113 @@ export const metadata = {
 };
 
 export default async function DemoBillingPage() {
-  const seed = await loadDemoSeed();
+  const data = await loadDemoCrmData();
+  const base = portalPath("demo");
+
+  const proposalDrafts = data.proposals.filter((row) => row.status === "draft")
+    .length;
+  const proposalSent = data.proposals.filter((row) => row.status === "sent")
+    .length;
+  const agreementDrafts = data.agreements.filter((row) => row.status === "draft")
+    .length;
+  const agreementSigned = data.agreements.filter(
+    (row) => row.status === "signed",
+  ).length;
+  const invoiceOpen = data.invoices.filter((row) =>
+    ["draft", "sent"].includes(row.status),
+  ).length;
+  const invoicePaid = data.invoices.filter((row) => row.status === "paid")
+    .length;
+
+  const openBalance = data.invoices
+    .filter((row) => ["draft", "sent"].includes(row.status))
+    .reduce(
+      (sum, row) =>
+        sum + Math.max(0, Number(row.total_amount ?? 0) - Number(row.amount_paid ?? 0)),
+      0,
+    );
+
+  const cards = [
+    {
+      href: `${base}/proposals`,
+      title: "Proposals",
+      description: "Draft and send engagement offers after consults.",
+      icon: FileText,
+      meta: `${proposalDrafts} drafts · ${proposalSent} sent`,
+    },
+    {
+      href: `${base}/agreements`,
+      title: "Agreements",
+      description: "Lock scope and terms once a proposal is ready.",
+      icon: FileSignature,
+      meta: `${agreementDrafts} drafts · ${agreementSigned} signed`,
+    },
+    {
+      href: `${base}/invoices`,
+      title: "Invoices",
+      description: "Deposit, progress, and final payment requests.",
+      icon: Receipt,
+      meta: `${invoiceOpen} open · ${invoicePaid} paid`,
+    },
+    {
+      href: `${base}/statements`,
+      title: "Statements",
+      description: "Generate a printable account snapshot by business.",
+      icon: ScrollText,
+      meta: `Open balance ${formatMoney(openBalance)}`,
+    },
+  ];
 
   return (
-    <DemoShell businessName={seed.business.name}>
-      <DemoPageHeader
-        description={`Proposals, agreements, and invoices ${seed.business.name} sends to customers.`}
-        title="Billing"
-      />
+    <main>
+      <header className="mb-5">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          Billing
+        </h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Proposals, agreements, invoices, and statements — one place for client
+          paperwork and collections.
+        </p>
+        <BillingSubnav current="overview" />
+      </header>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <DocList
-          hrefBase="/demo/billing/proposals"
-          rows={seed.proposals}
-          title="Proposals"
-        />
-        <DocList
-          hrefBase="/demo/billing/agreements"
-          rows={seed.agreements}
-          title="Agreements"
-        />
-        <DocList
-          hrefBase="/demo/billing/invoices"
-          rows={seed.invoices}
-          title="Invoices"
-        />
-      </div>
-    </DemoShell>
-  );
-}
-
-function DocList({
-  title,
-  rows,
-  hrefBase,
-}: {
-  title: string;
-  rows: DemoDoc[];
-  hrefBase: string;
-}) {
-  return (
-    <section className="rounded-md border border-slate-200 bg-white p-4">
-      <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
-      <ul className="mt-3 divide-y divide-slate-100 rounded-md border border-slate-200">
-        {rows.map((row) => (
-          <li key={row.id}>
+      <section className="grid gap-3 sm:grid-cols-2">
+        {cards.map((card) => {
+          const Icon = card.icon;
+          return (
             <Link
-              className="block px-3 py-2.5 hover:bg-slate-50"
-              href={`${hrefBase}/${row.id}`}
+              className="rounded-md border border-slate-200 bg-white p-4 transition hover:border-slate-400"
+              href={card.href}
+              key={card.href}
             >
-              <p className="text-sm font-medium text-slate-900">{row.title}</p>
-              <p className="mt-0.5 text-xs text-slate-500">
-                {row.number} · {row.status} · {formatMoney(row.total)}
-              </p>
+              <div className="flex items-start gap-3">
+                <Icon aria-hidden className="mt-0.5 size-4 text-slate-500" />
+                <div>
+                  <h2 className="text-sm font-semibold text-slate-900">
+                    {card.title}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {card.description}
+                  </p>
+                  <p className="mt-2 text-xs font-medium text-slate-500">
+                    {card.meta}
+                  </p>
+                </div>
+              </div>
             </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
+          );
+        })}
+      </section>
+
+      <section className="mt-5 rounded-md border border-slate-200 bg-white p-4">
+        <h2 className="text-sm font-semibold text-slate-900">Suggested flow</h2>
+        <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm text-slate-600">
+          <li>Send a Proposal after the consult.</li>
+          <li>Create an Agreement from the proposal and get it signed.</li>
+          <li>Issue a deposit Invoice; mark paid when funds clear.</li>
+          <li>Generate a Statement anytime a client asks for a balance view.</li>
+        </ol>
+      </section>
+    </main>
   );
 }

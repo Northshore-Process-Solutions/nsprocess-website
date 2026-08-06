@@ -7,17 +7,22 @@ import { useState } from "react";
 
 import { deleteProposal } from "@/app/crm/proposals/actions";
 import { ProposalsTable } from "@/components/admin/proposals-table";
+import { usePortal } from "@/components/portal/portal-provider";
 import { Button } from "@/components/ui/button";
 import type { ProposalWithItems } from "@/lib/proposals";
 
 export function ProposalsPanel({
   rows,
-  newHref = "/crm/proposals/new",
+  newHref,
+  readOnly = false,
 }: {
   rows: ProposalWithItems[];
   newHref?: string;
+  readOnly?: boolean;
 }) {
   const router = useRouter();
+  const { href } = usePortal();
+  const createHref = newHref ?? href("/proposals/new");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,14 +47,16 @@ export function ProposalsPanel({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button asChild variant="accent">
-          <Link href={newHref}>
-            <Plus aria-hidden className="size-4" />
-            New proposal
-          </Link>
-        </Button>
-      </div>
+      {!readOnly ? (
+        <div className="flex justify-end">
+          <Button asChild variant="accent">
+            <Link href={createHref}>
+              <Plus aria-hidden className="size-4" />
+              New proposal
+            </Link>
+          </Button>
+        </div>
+      ) : null}
 
       {error ? (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-900">
@@ -59,7 +66,7 @@ export function ProposalsPanel({
 
       <ProposalsTable
         deletingId={deletingId}
-        onDelete={handleDelete}
+        onDelete={readOnly ? undefined : handleDelete}
         rows={rows}
       />
     </div>

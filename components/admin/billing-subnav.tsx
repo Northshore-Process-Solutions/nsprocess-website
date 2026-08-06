@@ -1,21 +1,16 @@
+"use client";
+
 import Link from "next/link";
 
+import { usePortal } from "@/components/portal/portal-provider";
 import { cn } from "@/lib/utils";
 
-const links = [
-  { href: "/crm/billing", label: "Overview", key: "overview" as const },
-  { href: "/crm/proposals", label: "Proposals", key: "proposals" as const },
-  {
-    href: "/crm/agreements",
-    label: "Agreements",
-    key: "agreements" as const,
-  },
-  { href: "/crm/invoices", label: "Invoices", key: "invoices" as const },
-  {
-    href: "/crm/statements",
-    label: "Statements",
-    key: "statements" as const,
-  },
+const linkDefs = [
+  { path: "/billing", label: "Overview", key: "overview" as const },
+  { path: "/proposals", label: "Proposals", key: "proposals" as const },
+  { path: "/agreements", label: "Agreements", key: "agreements" as const },
+  { path: "/invoices", label: "Invoices", key: "invoices" as const },
+  { path: "/statements", label: "Statements", key: "statements" as const },
 ];
 
 export type BillingSubnavKey =
@@ -26,12 +21,14 @@ export type BillingSubnavKey =
   | "statements";
 
 export function BillingSubnav({ current }: { current: BillingSubnavKey }) {
+  const { href } = usePortal();
+
   return (
     <nav
       aria-label="Billing sections"
       className="mt-3 flex flex-wrap gap-x-1 gap-y-0 border-b border-slate-200"
     >
-      {links.map((link) => {
+      {linkDefs.map((link) => {
         const active = current === link.key;
         return (
           <Link
@@ -41,9 +38,9 @@ export function BillingSubnav({ current }: { current: BillingSubnavKey }) {
                 ? "border-slate-900 text-slate-900"
                 : "border-transparent text-slate-500 hover:text-slate-800",
             )}
-            href={link.href}
-            key={link.href}
-            >
+            href={href(link.path)}
+            key={link.key}
+          >
             {link.label}
           </Link>
         );

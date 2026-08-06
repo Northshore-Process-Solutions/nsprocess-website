@@ -1,15 +1,10 @@
-import { DemoDocDetailPage } from "@/components/demo/demo-doc-detail";
+import { redirect } from "next/navigation";
 
-export const metadata = {
-  title: "Demo Proposal",
-  robots: { index: false, follow: false },
-};
-
-export default async function Page({
+export default async function DemoBillingProposalRedirectPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <DemoDocDetailPage id={id} kind="proposals" />;
+  redirect(`/demo/proposals/${id}`);
 }

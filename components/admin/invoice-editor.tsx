@@ -13,6 +13,7 @@ import {
   type InvoiceInput,
 } from "@/app/crm/invoices/actions";
 import { Button } from "@/components/ui/button";
+import { usePortal } from "@/components/portal/portal-provider";
 import { computeTotals, formatMoney, type LineItemInput } from "@/lib/billing";
 import {
   emptyInvoiceFormValues,
@@ -49,6 +50,7 @@ export function InvoiceEditor({
   defaults,
 }: InvoiceEditorProps) {
   const router = useRouter();
+  const { href, isDemo } = usePortal();
   const [values, setValues] = useState(() =>
     mode === "edit" && initialInvoice
       ? invoiceToFormValues(initialInvoice)
@@ -141,6 +143,7 @@ export function InvoiceEditor({
 
   async function onSave(event: React.FormEvent) {
     event.preventDefault();
+    if (isDemo) return;
     setLoading(true);
     setError(null);
     setSaved(false);
@@ -229,7 +232,7 @@ export function InvoiceEditor({
         <div>
           <Link
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900"
-            href="/crm/invoices"
+            href={href("/invoices")}
           >
             <ArrowLeft aria-hidden className="size-4" />
             Back to Invoices
@@ -248,11 +251,11 @@ export function InvoiceEditor({
           )}
         </div>
         <div className="flex flex-wrap gap-2">
-          {initialInvoice ? (
+          {initialInvoice && !isDemo ? (
             <>
               <Button asChild type="button" variant="outline">
                 <Link
-                  href={`/crm/invoices/${initialInvoice.id}/pdf`}
+                  href={href(`/invoices/${initialInvoice.id}/pdf`)}
                   target="_blank"
                 >
                   <FileDown aria-hidden className="size-4" />
@@ -285,9 +288,11 @@ export function InvoiceEditor({
               </Button>
             </>
           ) : null}
-          <Button disabled={loading} type="submit" variant="accent">
-            {loading ? "Saving…" : mode === "create" ? "Create draft" : "Save"}
-          </Button>
+          {!isDemo ? (
+            <Button disabled={loading} type="submit" variant="accent">
+              {loading ? "Saving…" : mode === "create" ? "Create draft" : "Save"}
+            </Button>
+          ) : null}
         </div>
       </div>
 

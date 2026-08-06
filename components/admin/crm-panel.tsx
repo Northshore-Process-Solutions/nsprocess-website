@@ -10,7 +10,13 @@ import { OrganizationForm } from "@/components/admin/organization-form";
 import { Button } from "@/components/ui/button";
 import { matchesCrmSearch, type CrmTableRow } from "@/lib/crm";
 
-export function CrmPanel({ rows }: { rows: CrmTableRow[] }) {
+export function CrmPanel({
+  rows,
+  readOnly = false,
+}: {
+  rows: CrmTableRow[];
+  readOnly?: boolean;
+}) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
   const [mode, setMode] = useState<"create" | "edit">("create");
@@ -76,15 +82,17 @@ export function CrmPanel({ rows }: { rows: CrmTableRow[] }) {
             value={query}
           />
         </label>
-        <Button
-          className="shrink-0"
-          onClick={openCreate}
-          type="button"
-          variant="accent"
-        >
-          <Plus aria-hidden className="size-4" />
-          Add business
-        </Button>
+        {!readOnly ? (
+          <Button
+            className="shrink-0"
+            onClick={openCreate}
+            type="button"
+            variant="accent"
+          >
+            <Plus aria-hidden className="size-4" />
+            Add business
+          </Button>
+        ) : null}
       </div>
 
       {error ? (
@@ -98,25 +106,29 @@ export function CrmPanel({ rows }: { rows: CrmTableRow[] }) {
         emptyMessage={
           query.trim()
             ? "No businesses match your search."
-            : "Use Add business to create your first vendor or customer record."
+            : readOnly
+              ? "No customer businesses in this demo yet."
+              : "Use Add business to create your first vendor or customer record."
         }
         emptyTitle={query.trim() ? "No matches" : "No businesses yet"}
-        onDelete={handleDelete}
-        onEdit={openEdit}
+        onDelete={readOnly ? undefined : handleDelete}
+        onEdit={readOnly ? undefined : openEdit}
         rows={filteredRows}
       />
 
-      <OrganizationForm
-        initialRow={selectedRow}
-        key={`${mode}-${selectedRow?.id ?? "new"}-${formOpen ? "open" : "closed"}`}
-        mode={mode}
-        onClose={() => setFormOpen(false)}
-        onSaved={() => {
-          setFormOpen(false);
-          router.refresh();
-        }}
-        open={formOpen}
-      />
+      {!readOnly ? (
+        <OrganizationForm
+          initialRow={selectedRow}
+          key={`${mode}-${selectedRow?.id ?? "new"}-${formOpen ? "open" : "closed"}`}
+          mode={mode}
+          onClose={() => setFormOpen(false)}
+          onSaved={() => {
+            setFormOpen(false);
+            router.refresh();
+          }}
+          open={formOpen}
+        />
+      ) : null}
     </div>
   );
 }

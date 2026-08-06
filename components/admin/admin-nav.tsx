@@ -3,57 +3,64 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { usePortal } from "@/components/portal/portal-provider";
 import { cn } from "@/lib/utils";
 
-const links = [
-  { href: "/crm", label: "Home", key: "home" as const, match: (p: string) => p === "/crm" },
+const linkDefs = [
   {
-    href: "/crm/pipeline",
+    path: "",
+    label: "Home",
+    key: "home" as const,
+    match: (p: string, base: string) => p === base,
+  },
+  {
+    path: "/pipeline",
     label: "Pipeline",
     key: "pipeline" as const,
-    match: (p: string) => p.startsWith("/crm/pipeline"),
+    match: (p: string, base: string) => p.startsWith(`${base}/pipeline`),
   },
   {
-    href: "/crm/businesses",
+    path: "/businesses",
     label: "Businesses",
     key: "crm" as const,
-    match: (p: string) =>
-      p.startsWith("/crm/businesses") || p.startsWith("/crm/organizations"),
+    match: (p: string, base: string) =>
+      p.startsWith(`${base}/businesses`) ||
+      p.startsWith(`${base}/organizations`),
   },
   {
-    href: "/crm/billing",
+    path: "/billing",
     label: "Billing",
     key: "billing" as const,
-    match: (p: string) =>
-      p.startsWith("/crm/billing") ||
-      p.startsWith("/crm/proposals") ||
-      p.startsWith("/crm/agreements") ||
-      p.startsWith("/crm/invoices") ||
-      p.startsWith("/crm/statements"),
+    match: (p: string, base: string) =>
+      p.startsWith(`${base}/billing`) ||
+      p.startsWith(`${base}/proposals`) ||
+      p.startsWith(`${base}/agreements`) ||
+      p.startsWith(`${base}/invoices`) ||
+      p.startsWith(`${base}/statements`),
   },
   {
-    href: "/crm/projects",
+    path: "/projects",
     label: "Projects",
     key: "projects" as const,
-    match: (p: string) => p.startsWith("/crm/projects"),
+    match: (p: string, base: string) => p.startsWith(`${base}/projects`),
   },
   {
-    href: "/crm/calendar",
+    path: "/calendar",
     label: "Calendar",
     key: "calendar" as const,
-    match: (p: string) => p.startsWith("/crm/calendar"),
+    match: (p: string, base: string) => p.startsWith(`${base}/calendar`),
   },
   {
-    href: "/crm/purchases",
+    path: "/purchases",
     label: "Purchases",
     key: "purchases" as const,
-    match: (p: string) => p.startsWith("/crm/purchases"),
+    match: (p: string, base: string) => p.startsWith(`${base}/purchases`),
   },
   {
-    href: "/crm/tools",
+    path: "/tools",
     label: "Stack",
     key: "stack" as const,
-    match: (p: string) => p.startsWith("/crm/tools"),
+    match: (p: string, base: string) => p.startsWith(`${base}/tools`),
   },
 ];
 
@@ -70,13 +77,15 @@ export type AdminNavKey =
 
 export function AdminNav({ current }: { current?: AdminNavKey } = {}) {
   const pathname = usePathname() ?? "/crm";
+  const { href, basePath } = usePortal();
 
   return (
     <nav aria-label="Admin sections" className="flex gap-0 overflow-x-auto">
-      {links.map((link) => {
+      {linkDefs.map((link) => {
+        const linkHref = href(link.path);
         const active = current
           ? current === link.key
-          : link.match(pathname);
+          : link.match(pathname, basePath);
 
         return (
           <Link
@@ -86,8 +95,8 @@ export function AdminNav({ current }: { current?: AdminNavKey } = {}) {
                 ? "border-slate-900 text-slate-900"
                 : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800",
             )}
-            href={link.href}
-            key={link.href}
+            href={linkHref}
+            key={link.path || "home"}
           >
             {link.label}
           </Link>

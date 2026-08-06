@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FileText, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { usePortal } from "@/components/portal/portal-provider";
 import { formatMoney } from "@/lib/billing";
 import {
   invoiceBalance,
@@ -22,7 +23,7 @@ const statusStyles: Record<string, string> = {
 
 type InvoicesTableProps = {
   rows: InvoiceWithItems[];
-  onDelete: (row: InvoiceWithItems) => void;
+  onDelete?: (row: InvoiceWithItems) => void;
   deletingId?: string | null;
 };
 
@@ -31,6 +32,7 @@ export function InvoicesTable({
   onDelete,
   deletingId = null,
 }: InvoicesTableProps) {
+  const { href, isDemo } = usePortal();
   if (rows.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
@@ -67,7 +69,7 @@ export function InvoicesTable({
                 <td className="px-4 py-4">
                   <Link
                     className="font-semibold text-accent hover:underline"
-                    href={`/crm/invoices/${row.id}`}
+                    href={href(`/invoices/${row.id}`)}
                   >
                     {row.title}
                   </Link>
@@ -110,30 +112,34 @@ export function InvoicesTable({
                     <Button asChild size="icon" variant="outline">
                       <Link
                         aria-label={`Edit ${row.title}`}
-                        href={`/crm/invoices/${row.id}`}
+                        href={href(`/invoices/${row.id}`)}
                       >
                         <Pencil aria-hidden className="size-4" />
                       </Link>
                     </Button>
-                    <Button asChild size="icon" variant="outline">
-                      <Link
-                        aria-label={`Open PDF for ${row.title}`}
-                        href={`/crm/invoices/${row.id}/pdf`}
-                        target="_blank"
+                    {!isDemo ? (
+                      <Button asChild size="icon" variant="outline">
+                        <Link
+                          aria-label={`Open PDF for ${row.title}`}
+                          href={href(`/invoices/${row.id}/pdf`)}
+                          target="_blank"
+                        >
+                          <FileText aria-hidden className="size-4" />
+                        </Link>
+                      </Button>
+                    ) : null}
+                    {onDelete ? (
+                      <Button
+                        aria-label={`Delete ${row.title}`}
+                        disabled={deletingId === row.id}
+                        onClick={() => onDelete(row)}
+                        size="icon"
+                        type="button"
+                        variant="outline"
                       >
-                        <FileText aria-hidden className="size-4" />
-                      </Link>
-                    </Button>
-                    <Button
-                      aria-label={`Delete ${row.title}`}
-                      disabled={deletingId === row.id}
-                      onClick={() => onDelete(row)}
-                      size="icon"
-                      type="button"
-                      variant="outline"
-                    >
-                      <Trash2 aria-hidden className="size-4" />
-                    </Button>
+                        <Trash2 aria-hidden className="size-4" />
+                      </Button>
+                    ) : null}
                   </div>
                 </td>
               </tr>

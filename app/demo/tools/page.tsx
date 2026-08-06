@@ -1,55 +1,111 @@
-import { DemoShell } from "@/components/demo/demo-shell";
-import { DemoPageHeader, DemoStat } from "@/components/demo/demo-ui";
-import { formatMoney } from "@/lib/billing";
-import { loadDemoSeed } from "@/lib/demo/data";
+import Link from "next/link";
+import { Layers3, WalletCards } from "lucide-react";
+
+import { ToolsPanel } from "@/components/admin/tools-panel";
+import { loadDemoCrmData } from "@/lib/demo/data";
+import { portalPath } from "@/lib/portal/paths";
 
 export const metadata = {
   title: "Demo Stack",
   robots: { index: false, follow: false },
 };
 
-export default async function DemoToolsPage() {
-  const seed = await loadDemoSeed();
-  const active = seed.tools.filter((tool) => tool.status === "active");
-  const monthly = seed.tools
-    .filter((tool) => tool.status === "active")
-    .reduce((sum, tool) => sum + tool.monthlyCost, 0);
+type DemoToolsPageProps = {
+  searchParams?: Promise<{
+    status?: string;
+  }>;
+};
+
+const filters = [
+  { label: "All", value: "all" },
+  { label: "Active", value: "active" },
+  { label: "Trial", value: "trial" },
+  { label: "Inactive", value: "inactive" },
+  { label: "Cancelled", value: "cancelled" },
+  { label: "Replacing", value: "replacing" },
+];
+
+export default async function DemoToolsPage({ searchParams }: DemoToolsPageProps) {
+  const params = await searchParams;
+  const statusFilter = params?.status ?? "all";
+  const data = await loadDemoCrmData();
+  const base = portalPath("demo");
+
+  const tools = data.tools;
+  const rows =
+    statusFilter === "all"
+      ? tools
+      : tools.filter((tool) => tool.status === statusFilter);
+
+  const activeCount = tools.filter((tool) => tool.status === "active").length;
+  const monthlySpend = tools
+    .filter(
+      (tool) =>
+        tool.status === "active" &&
+        tool.billing_cadence === "monthly" &&
+        tool.billing_amount !== null,
+    )
+    .reduce((sum, tool) => sum + Number(tool.billing_amount ?? 0), 0);
 
   return (
-    <DemoShell businessName={seed.business.name}>
-      <DemoPageHeader
-        description={`Internal tools and vendors that keep ${seed.business.name} running.`}
-        title="Stack"
-      />
+    <main>
+      <header className="mb-5">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          Stack
+        </h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Internal tools and vendors that keep your business running.
+        </p>
+      </header>
 
-      <section className="mb-4 grid gap-3 sm:grid-cols-3">
-        <DemoStat label="Tools" value={String(seed.tools.length)} />
-        <DemoStat label="Active" value={String(active.length)} />
-        <DemoStat label="Monthly" value={formatMoney(monthly)} />
+      <section className="mb-6 grid gap-4 sm:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
+          <div className="flex items-center gap-3">
+            <Layers3 aria-hidden className="size-5 text-accent" />
+            <div>
+              <p className="text-sm text-muted-foreground">Active tools</p>
+              <p className="text-2xl font-bold">{activeCount}</p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
+          <div className="flex items-center gap-3">
+            <WalletCards aria-hidden className="size-5 text-accent" />
+            <div>
+              <p className="text-sm text-muted-foreground">
+                Known monthly spend
+              </p>
+              <p className="text-2xl font-bold">${monthlySpend.toFixed(2)}</p>
+            </div>
+          </div>
+        </div>
       </section>
 
-      <ul className="divide-y divide-slate-100 overflow-hidden rounded-md border border-slate-200 bg-white">
-        {seed.tools.map((tool) => (
-          <li className="px-4 py-3" key={tool.id}>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium text-slate-900">{tool.name}</p>
-                <p className="mt-0.5 text-xs text-slate-500">
-                  {tool.category} · {tool.notes}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-slate-500">{tool.status}</p>
-                <p className="mt-0.5 text-sm font-medium text-slate-900">
-                  {tool.monthlyCost > 0
-                    ? `${formatMoney(tool.monthlyCost)}/mo`
-                    : "—"}
-                </p>
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </DemoShell>
+      <nav aria-label="Stack filters" className="mb-5 flex flex-wrap gap-2">
+        {filters.map((filter) => {
+          const active = statusFilter === filter.value;
+          const href =
+            filter.value === "all"
+              ? `${base}/tools`
+              : `${base}/tools?status=${filter.value}`;
+
+          return (
+            <Link
+              className={
+                active
+                  ? "rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+                  : "rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+              }
+              href={href}
+              key={filter.value}
+            >
+              {filter.label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <ToolsPanel readOnly rows={rows} />
+    </main>
   );
 }

@@ -22,7 +22,7 @@ export function DemoIntakeForm() {
         setError(result.error ?? "Could not build the demo.");
         return;
       }
-      router.replace("/demo/home");
+      router.replace("/demo");
       router.refresh();
     });
   }
@@ -88,11 +88,11 @@ export function DemoIntakeForm() {
       </label>
 
       <label className="block space-y-1.5 text-sm font-medium text-slate-700">
-        What does the business do, and what’s messy today?
+        What do you do, and what’s hardest to keep organized?
         <textarea
           className="min-h-28 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
           name="description"
-          placeholder="We install and service residential HVAC. Leads come in from the website and referrals; we need cleaner job tracking from estimate to invoice."
+          placeholder="We install and service residential HVAC. Leads come in from the website and referrals; tracking jobs from estimate to invoice gets messy."
           required
         />
       </label>
@@ -103,8 +103,7 @@ export function DemoIntakeForm() {
 
       {pending ? (
         <p className="text-sm text-slate-500">
-          AI is populating a private sandbox for this browser session only. This
-          never touches North Shore Process Solutions’ live CRM.
+          We’re putting together a private demo for you — just a moment.
         </p>
       ) : null}
     </form>

@@ -1,76 +1,88 @@
-import Link from "next/link";
-
-import { DemoShell } from "@/components/demo/demo-shell";
-import { DemoPageHeader, DemoStat } from "@/components/demo/demo-ui";
-import { demoCustomers, loadDemoSeed } from "@/lib/demo/data";
+import { CalendarPanel } from "@/components/admin/calendar-panel";
+import { loadDemoCrmData } from "@/lib/demo/data";
+import {
+  getMonthQueryRange,
+  monthKey,
+  parseMonthParam,
+  type CalendarEventWithRelations,
+} from "@/lib/calendar";
 
 export const metadata = {
   title: "Demo Calendar",
   robots: { index: false, follow: false },
 };
 
-export default async function DemoCalendarPage() {
-  const seed = await loadDemoSeed();
-  const customers = demoCustomers(seed);
-  const sorted = [...seed.events].sort(
-    (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
-  );
+type DemoCalendarPageProps = {
+  searchParams?: Promise<{
+    month?: string;
+    leadId?: string;
+  }>;
+};
+
+export default async function DemoCalendarPage({
+  searchParams,
+}: DemoCalendarPageProps) {
+  const params = await searchParams;
+  const yearMonth = parseMonthParam(params?.month);
+  const leadId = params?.leadId ?? null;
+  const data = await loadDemoCrmData();
+  const { rangeStart, rangeEnd } = getMonthQueryRange(yearMonth);
+
+  const events = data.events
+    .filter(
+      (event) => event.starts_at >= rangeStart && event.starts_at <= rangeEnd,
+    )
+    .map((event) => {
+      const lead = event.lead_id
+        ? data.leads.find((row) => row.id === event.lead_id)
+        : null;
+      const org = event.organization_id
+        ? data.organizations.find((row) => row.id === event.organization_id)
+        : null;
+
+      return {
+        ...event,
+        leads: lead
+          ? {
+              id: lead.id,
+              business_name: lead.business_name,
+              contact_name: lead.contact_name,
+            }
+          : null,
+        organizations: org ? { id: org.id, name: org.name } : null,
+      } satisfies CalendarEventWithRelations;
+    });
+
+  const leads = data.leads.map((lead) => ({
+    id: lead.id,
+    business_name: lead.business_name,
+    contact_name: lead.contact_name,
+    organization_id: lead.organization_id,
+  }));
+
+  const organizations = data.organizations.map((org) => ({
+    id: org.id,
+    name: org.name,
+  }));
 
   return (
-    <DemoShell businessName={seed.business.name}>
-      <DemoPageHeader
-        description={`Estimates, installs, and follow-ups for ${seed.business.name}.`}
-        title="Calendar"
+    <main>
+      <header className="mb-5">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          Calendar
+        </h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Booked consults, onsites, calls, and follow-ups in one place.
+        </p>
+      </header>
+
+      <CalendarPanel
+        events={events}
+        initialLeadId={leadId}
+        leads={leads}
+        month={monthKey(yearMonth)}
+        organizations={organizations}
       />
-
-      <section className="mb-4 grid gap-3 sm:grid-cols-2">
-        <DemoStat label="Upcoming" value={String(sorted.length)} />
-        <DemoStat
-          label="This week"
-          value={String(
-            sorted.filter(
-              (event) =>
-                new Date(event.startsAt).getTime() <=
-                Date.now() + 7 * 24 * 60 * 60 * 1000,
-            ).length,
-          )}
-        />
-      </section>
-
-      <ul className="divide-y divide-slate-100 overflow-hidden rounded-md border border-slate-200 bg-white">
-        {sorted.map((event) => {
-          const customer = customers.find(
-            (row) => row.name === event.businessName,
-          );
-          return (
-            <li className="px-4 py-3" key={event.id}>
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-900">
-                    {event.title}
-                  </p>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    {new Date(event.startsAt).toLocaleString()} ·{" "}
-                    {event.eventType}
-                  </p>
-                </div>
-                {customer ? (
-                  <Link
-                    className="shrink-0 text-xs font-medium text-slate-600 hover:text-slate-900"
-                    href={`/demo/businesses/${customer.id}`}
-                  >
-                    {customer.name}
-                  </Link>
-                ) : (
-                  <span className="text-xs text-slate-500">
-                    {event.businessName}
-                  </span>
-                )}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    </DemoShell>
+    </main>
   );
 }

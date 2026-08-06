@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { usePortal } from "@/components/portal/portal-provider";
 import {
   formatPurchaseAmount,
   purchaseTypeLabel,
@@ -18,8 +21,8 @@ const typeStyles: Record<string, string> = {
 
 type PurchasesTableProps = {
   rows: PurchaseWithRelations[];
-  onEdit: (row: PurchaseWithRelations) => void;
-  onDelete: (row: PurchaseWithRelations) => void;
+  onEdit?: (row: PurchaseWithRelations) => void;
+  onDelete?: (row: PurchaseWithRelations) => void;
   deletingId?: string | null;
   showLinks?: boolean;
 };
@@ -31,6 +34,8 @@ export function PurchasesTable({
   deletingId = null,
   showLinks = true,
 }: PurchasesTableProps) {
+  const { href } = usePortal();
+
   if (rows.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
@@ -58,7 +63,9 @@ export function PurchasesTable({
                   <th className="px-4 py-3 font-semibold">Project</th>
                 </>
               ) : null}
-              <th className="px-4 py-3 font-semibold">Actions</th>
+              {onEdit || onDelete ? (
+                <th className="px-4 py-3 font-semibold">Actions</th>
+              ) : null}
             </tr>
           </thead>
           <tbody>
@@ -69,13 +76,8 @@ export function PurchasesTable({
               >
                 <td className="px-4 py-4">
                   <div className="font-semibold">{row.name}</div>
-                  {row.quantity !== null && row.quantity !== undefined ? (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Qty {row.quantity}
-                    </p>
-                  ) : null}
                   {row.notes ? (
-                    <p className="mt-2 max-w-xs text-xs leading-5 text-muted-foreground">
+                    <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
                       {row.notes}
                     </p>
                   ) : null}
@@ -102,7 +104,7 @@ export function PurchasesTable({
                       {row.organizations ? (
                         <Link
                           className="font-medium text-accent hover:underline"
-                          href={`/crm/organizations/${row.organizations.id}`}
+                          href={href(`/organizations/${row.organizations.id}`)}
                         >
                           {row.organizations.name}
                         </Link>
@@ -114,7 +116,7 @@ export function PurchasesTable({
                       {row.projects ? (
                         <Link
                           className="font-medium text-accent hover:underline"
-                          href={`/crm/projects/${row.projects.id}`}
+                          href={href(`/projects/${row.projects.id}`)}
                         >
                           {row.projects.name}
                         </Link>
@@ -124,29 +126,35 @@ export function PurchasesTable({
                     </td>
                   </>
                 ) : null}
-                <td className="px-4 py-4">
-                  <div className="flex gap-2">
-                    <Button
-                      aria-label={`Edit ${row.name}`}
-                      onClick={() => onEdit(row)}
-                      size="icon"
-                      type="button"
-                      variant="outline"
-                    >
-                      <Pencil aria-hidden className="size-4" />
-                    </Button>
-                    <Button
-                      aria-label={`Delete ${row.name}`}
-                      disabled={deletingId === row.id}
-                      onClick={() => onDelete(row)}
-                      size="icon"
-                      type="button"
-                      variant="outline"
-                    >
-                      <Trash2 aria-hidden className="size-4" />
-                    </Button>
-                  </div>
-                </td>
+                {onEdit || onDelete ? (
+                  <td className="px-4 py-4">
+                    <div className="flex gap-2">
+                      {onEdit ? (
+                        <Button
+                          aria-label={`Edit ${row.name}`}
+                          onClick={() => onEdit(row)}
+                          size="icon"
+                          type="button"
+                          variant="outline"
+                        >
+                          <Pencil aria-hidden className="size-4" />
+                        </Button>
+                      ) : null}
+                      {onDelete ? (
+                        <Button
+                          aria-label={`Delete ${row.name}`}
+                          disabled={deletingId === row.id}
+                          onClick={() => onDelete(row)}
+                          size="icon"
+                          type="button"
+                          variant="outline"
+                        >
+                          <Trash2 aria-hidden className="size-4" />
+                        </Button>
+                      ) : null}
+                    </div>
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>

@@ -18,10 +18,12 @@ export function LeadsPanel({
   rows,
   activitiesByLeadId = {},
   eventsByLeadId = {},
+  readOnly = false,
 }: {
   rows: LeadRow[];
   activitiesByLeadId?: Record<string, ActivityRow[]>;
   eventsByLeadId?: Record<string, CalendarEventRow[]>;
+  readOnly?: boolean;
 }) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
@@ -86,12 +88,14 @@ export function LeadsPanel({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button onClick={openCreate} type="button" variant="accent">
-          <Plus aria-hidden className="size-4" />
-          Add lead
-        </Button>
-      </div>
+      {!readOnly ? (
+        <div className="flex justify-end">
+          <Button onClick={openCreate} type="button" variant="accent">
+            <Plus aria-hidden className="size-4" />
+            Add lead
+          </Button>
+        </div>
+      ) : null}
 
       {error ? (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-900">
@@ -102,7 +106,7 @@ export function LeadsPanel({
       <LeadsTable
         activitiesByLeadId={activitiesByLeadId}
         eventsByLeadId={eventsByLeadId}
-        onReply={openReply}
+        onReply={readOnly ? undefined : openReply}
         onView={openView}
         rows={rows}
       />
@@ -116,45 +120,49 @@ export function LeadsPanel({
         onClose={() => {
           setDetailOpen(false);
         }}
-        onDelete={handleDelete}
-        onEdit={openEdit}
+        onDelete={readOnly ? undefined : handleDelete}
+        onEdit={readOnly ? undefined : openEdit}
         open={detailOpen}
       />
 
-      <LeadForm
-        activities={
-          selectedRow ? (activitiesByLeadId[selectedRow.id] ?? []) : []
-        }
-        initialRow={selectedRow}
-        key={`${mode}-${selectedRow?.id ?? "new"}-${formOpen ? "open" : "closed"}`}
-        mode={mode}
-        onClose={() => {
-          setFormOpen(false);
-          if (mode === "edit" && selectedRow) {
-            setDetailOpen(true);
-          }
-        }}
-        onSaved={() => {
-          setFormOpen(false);
-          setDetailOpen(false);
-          router.refresh();
-        }}
-        open={formOpen}
-      />
+      {!readOnly ? (
+        <>
+          <LeadForm
+            activities={
+              selectedRow ? (activitiesByLeadId[selectedRow.id] ?? []) : []
+            }
+            initialRow={selectedRow}
+            key={`${mode}-${selectedRow?.id ?? "new"}-${formOpen ? "open" : "closed"}`}
+            mode={mode}
+            onClose={() => {
+              setFormOpen(false);
+              if (mode === "edit" && selectedRow) {
+                setDetailOpen(true);
+              }
+            }}
+            onSaved={() => {
+              setFormOpen(false);
+              setDetailOpen(false);
+              router.refresh();
+            }}
+            open={formOpen}
+          />
 
-      <LeadReplyDialog
-        lead={replyLead}
-        onClose={() => {
-          setReplyOpen(false);
-          setReplyLead(null);
-        }}
-        onSent={() => {
-          setReplyOpen(false);
-          setReplyLead(null);
-          router.refresh();
-        }}
-        open={replyOpen}
-      />
+          <LeadReplyDialog
+            lead={replyLead}
+            onClose={() => {
+              setReplyOpen(false);
+              setReplyLead(null);
+            }}
+            onSent={() => {
+              setReplyOpen(false);
+              setReplyLead(null);
+              router.refresh();
+            }}
+            open={replyOpen}
+          />
+        </>
+      ) : null}
     </div>
   );
 }

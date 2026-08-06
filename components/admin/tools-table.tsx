@@ -14,8 +14,8 @@ const statusStyles: Record<string, string> = {
 
 type ToolsTableProps = {
   rows: ToolRow[];
-  onEdit: (row: ToolRow) => void;
-  onDelete: (row: ToolRow) => void;
+  onEdit?: (row: ToolRow) => void;
+  onDelete?: (row: ToolRow) => void;
   deletingId?: string | null;
 };
 
@@ -49,7 +49,9 @@ export function ToolsTable({
               <th className="px-4 py-3 font-semibold">Billing</th>
               <th className="px-4 py-3 font-semibold">Renewal</th>
               <th className="px-4 py-3 font-semibold">Status</th>
-              <th className="px-4 py-3 font-semibold">Actions</th>
+              {onEdit || onDelete ? (
+                <th className="px-4 py-3 font-semibold">Actions</th>
+              ) : null}
             </tr>
           </thead>
           <tbody>
@@ -115,29 +117,35 @@ export function ToolsTable({
                     {row.status}
                   </span>
                 </td>
-                <td className="px-4 py-4">
-                  <div className="flex gap-2">
-                    <Button
-                      aria-label={`Edit ${row.name}`}
-                      onClick={() => onEdit(row)}
-                      size="icon"
-                      type="button"
-                      variant="outline"
-                    >
-                      <Pencil aria-hidden className="size-4" />
-                    </Button>
-                    <Button
-                      aria-label={`Delete ${row.name}`}
-                      disabled={deletingId === row.id}
-                      onClick={() => onDelete(row)}
-                      size="icon"
-                      type="button"
-                      variant="outline"
-                    >
-                      <Trash2 aria-hidden className="size-4" />
-                    </Button>
-                  </div>
-                </td>
+                {onEdit || onDelete ? (
+                  <td className="px-4 py-4">
+                    <div className="flex gap-2">
+                      {onEdit ? (
+                        <Button
+                          aria-label={`Edit ${row.name}`}
+                          onClick={() => onEdit(row)}
+                          size="icon"
+                          type="button"
+                          variant="outline"
+                        >
+                          <Pencil aria-hidden className="size-4" />
+                        </Button>
+                      ) : null}
+                      {onDelete ? (
+                        <Button
+                          aria-label={`Delete ${row.name}`}
+                          disabled={deletingId === row.id}
+                          onClick={() => onDelete(row)}
+                          size="icon"
+                          type="button"
+                          variant="outline"
+                        >
+                          <Trash2 aria-hidden className="size-4" />
+                        </Button>
+                      ) : null}
+                    </div>
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>

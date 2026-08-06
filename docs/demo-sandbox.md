@@ -4,6 +4,17 @@ Public visitors can open `/demo`, describe their business, and get a private
 CRM walkthrough seeded by AI from **their** point of view: they are the company
 operator. Pipeline leads are their customers; projects are their jobs.
 
+## Same UI as live CRM
+
+Demo routes under `/demo` mount the **same portal UI components** as `/crm`
+(`AdminShell`, `LeadsPanel`, `CrmPanel`, billing panels, `ProjectDetail`, etc.).
+Only the data source differs: each session reads typed seed JSON from
+`public.demo_sessions`, mapped through `lib/demo/map-to-crm.ts`. Mutations are
+disabled or read-only for now — save/delete/create actions are hidden or no-op
+in demo mode.
+
+Intake lives at `/demo/start`. After a ready session, home is `/demo`.
+
 ## Isolation guarantees
 
 1. **Session-scoped** — each visitor gets a signed `nsps_demo_session` cookie and one `demo_sessions` row.
@@ -15,7 +26,7 @@ operator. Pipeline leads are their customers; projects are their jobs.
 - `SUPABASE_SERVICE_ROLE_KEY` — server-only; used exclusively by demo sandbox code
   - Supabase Dashboard → Project Settings → API → `service_role` (secret)
   - Add to `.env.local` as `SUPABASE_SERVICE_ROLE_KEY=...`
-  - Add the same value in Vercel → Project → Settings → Environment Variables (Production + Preview)
+  - Add the same value in Vercel → Project Settings → Environment Variables (Production + Preview)
   - Restart `npm run dev` after adding it locally
   - Never prefix with `NEXT_PUBLIC_`
 - `OPENAI_API_KEY` — seeds the demo (falls back to a local template if generation fails)
@@ -24,16 +35,17 @@ operator. Pipeline leads are their customers; projects are their jobs.
 
 ## Flow
 
-1. Marketing CTA → `/demo`
-2. Intake form → create `building` session + cookie
+1. Marketing CTA → `/demo` (redirects to `/demo/start` if no session)
+2. Intake form at `/demo/start` → create `building` session + cookie
 3. AI `generateObject` builds a typed seed (pipeline, billing, projects, events)
-4. Session marked `ready` → `/demo/home`
+4. Session marked `ready` → `/demo` (portal home)
 5. Visitor explores the same tabs as the live portal: Home, Pipeline, Businesses, Billing, Projects, Calendar, Purchases, Stack — with click-through detail pages
 6. Session expires after 3 hours, or visitor clicks **End demo**
 7. Optional cron hits `POST /api/demo/purge` to delete expired rows
 
 ## What this is not
 
-- Not a full clone of every CRM editor
+- Not wired to live Supabase CRM tables for reads or writes
+- Not demo-specific PDF routes (PDF links hidden in demo tables)
 - Not e-sign / Stripe / live email from the sandbox
 - Not shared “Demo Co” data for all visitors

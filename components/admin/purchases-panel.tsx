@@ -20,6 +20,7 @@ export function PurchasesPanel({
   projects,
   defaults,
   showLinks = true,
+  readOnly = false,
 }: {
   rows: PurchaseWithRelations[];
   businesses: PurchaseBusinessOption[];
@@ -29,6 +30,7 @@ export function PurchasesPanel({
     projectId?: string | null;
   };
   showLinks?: boolean;
+  readOnly?: boolean;
 }) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
@@ -77,12 +79,14 @@ export function PurchasesPanel({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button onClick={openCreate} type="button" variant="accent">
-          <Plus aria-hidden className="size-4" />
-          Add purchase
-        </Button>
-      </div>
+      {!readOnly ? (
+        <div className="flex justify-end">
+          <Button onClick={openCreate} type="button" variant="accent">
+            <Plus aria-hidden className="size-4" />
+            Add purchase
+          </Button>
+        </div>
+      ) : null}
 
       {error ? (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-900">
@@ -92,25 +96,27 @@ export function PurchasesPanel({
 
       <PurchasesTable
         deletingId={deletingId}
-        onDelete={handleDelete}
-        onEdit={openEdit}
+        onDelete={readOnly ? undefined : handleDelete}
+        onEdit={readOnly ? undefined : openEdit}
         rows={rows}
         showLinks={showLinks}
       />
 
-      <PurchaseForm
-        businesses={businesses}
-        defaults={defaults}
-        initialRow={selectedRow}
-        mode={mode}
-        onClose={() => setFormOpen(false)}
-        onSaved={() => {
-          setFormOpen(false);
-          router.refresh();
-        }}
-        open={formOpen}
-        projects={projects}
-      />
+      {!readOnly ? (
+        <PurchaseForm
+          businesses={businesses}
+          defaults={defaults}
+          initialRow={selectedRow}
+          mode={mode}
+          onClose={() => setFormOpen(false)}
+          onSaved={() => {
+            setFormOpen(false);
+            router.refresh();
+          }}
+          open={formOpen}
+          projects={projects}
+        />
+      ) : null}
     </div>
   );
 }

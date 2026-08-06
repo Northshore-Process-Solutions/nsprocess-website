@@ -17,6 +17,7 @@ import { deleteOrganization } from "@/app/crm/actions";
 import { ActivityPanel } from "@/components/admin/activity-panel";
 import { OrganizationForm } from "@/components/admin/organization-form";
 import { PurchasesPanel } from "@/components/admin/purchases-panel";
+import { usePortal } from "@/components/portal/portal-provider";
 import { Button } from "@/components/ui/button";
 import type { ActivityRow } from "@/lib/activities";
 import {
@@ -98,6 +99,7 @@ type OrganizationDetailProps = {
   proposals: ProposalWithItems[];
   agreements: AgreementRow[];
   invoices: InvoiceRow[];
+  readOnly?: boolean;
 };
 
 function StatusPill({
@@ -166,8 +168,10 @@ export function OrganizationDetail({
   proposals,
   agreements,
   invoices,
+  readOnly = false,
 }: OrganizationDetailProps) {
   const router = useRouter();
+  const { href } = usePortal();
   const [formOpen, setFormOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -220,7 +224,7 @@ export function OrganizationDetail({
       return;
     }
 
-    router.push("/crm/businesses");
+    router.push(href("/businesses"));
     router.refresh();
   }
 
@@ -230,7 +234,7 @@ export function OrganizationDetail({
         <div>
           <Link
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900"
-            href="/crm/businesses"
+            href={href("/businesses")}
           >
             <ArrowLeft aria-hidden className="size-4" />
             Back to Businesses
@@ -267,30 +271,32 @@ export function OrganizationDetail({
             ) : null}
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => {
-              setError(null);
-              setFormOpen(true);
-            }}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            <Pencil aria-hidden className="size-3.5" />
-            Edit
-          </Button>
-          <Button
-            disabled={deleting}
-            onClick={handleDelete}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            <Trash2 aria-hidden className="size-3.5" />
-            {deleting ? "Deleting…" : "Delete"}
-          </Button>
-        </div>
+        {!readOnly ? (
+          <div className="flex gap-2">
+            <Button
+              onClick={() => {
+                setError(null);
+                setFormOpen(true);
+              }}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              <Pencil aria-hidden className="size-3.5" />
+              Edit
+            </Button>
+            <Button
+              disabled={deleting}
+              onClick={handleDelete}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              <Trash2 aria-hidden className="size-3.5" />
+              {deleting ? "Deleting…" : "Delete"}
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       {error ? (
@@ -442,13 +448,13 @@ export function OrganizationDetail({
             <>
               <Button asChild size="sm" variant="outline">
                 <Link
-                  href={`/crm/statements?organizationId=${organization.id}`}
+                  href={href(`/statements?organizationId=${organization.id}`)}
                 >
                   Statement
                 </Link>
               </Button>
               <Button asChild size="sm" variant="outline">
-                <Link href="/crm/billing">Billing</Link>
+                <Link href={href("/billing")}>Billing</Link>
               </Button>
             </>
           }
@@ -459,7 +465,7 @@ export function OrganizationDetail({
             <BillingSnapshotRow
               empty="No proposals yet"
               href={
-                latestProposal ? `/crm/proposals/${latestProposal.id}` : null
+                latestProposal ? href(`/proposals/${latestProposal.id}`) : null
               }
               label="Latest proposal"
               meta={
@@ -473,7 +479,7 @@ export function OrganizationDetail({
               empty="No agreements yet"
               href={
                 latestAgreement
-                  ? `/crm/agreements/${latestAgreement.id}`
+                  ? href(`/agreements/${latestAgreement.id}`)
                   : null
               }
               label="Latest agreement"
@@ -488,7 +494,7 @@ export function OrganizationDetail({
               empty="No invoices yet"
               href={
                 (latestOpenInvoice ?? latestInvoice)
-                  ? `/crm/invoices/${(latestOpenInvoice ?? latestInvoice)!.id}`
+                  ? href(`/invoices/${(latestOpenInvoice ?? latestInvoice)!.id}`)
                   : null
               }
               label={latestOpenInvoice ? "Open invoice" : "Latest invoice"}
@@ -519,7 +525,7 @@ export function OrganizationDetail({
         <HubCard
           actions={
             <Button asChild size="sm" variant="outline">
-              <Link href="/crm/pipeline">Pipeline</Link>
+              <Link href={href("/pipeline")}>Pipeline</Link>
             </Button>
           }
           description="Open inquiries still in motion"
@@ -568,7 +574,7 @@ export function OrganizationDetail({
         <HubCard
           actions={
             <Button asChild size="sm" variant="outline">
-              <Link href="/crm/projects">Projects</Link>
+              <Link href={href("/projects")}>Projects</Link>
             </Button>
           }
           description="Delivery work after deposit"
@@ -585,7 +591,7 @@ export function OrganizationDetail({
                 <li key={project.id}>
                   <Link
                     className="flex items-start justify-between gap-3 px-3 py-2.5 transition hover:bg-slate-50"
-                    href={`/crm/projects/${project.id}`}
+                    href={href(`/projects/${project.id}`)}
                   >
                     <div>
                       <p className="text-sm font-medium text-slate-900">
@@ -616,7 +622,7 @@ export function OrganizationDetail({
         <HubCard
           actions={
             <Button asChild size="sm" variant="outline">
-              <Link href="/crm/purchases">Purchases</Link>
+              <Link href={href("/purchases")}>Purchases</Link>
             </Button>
           }
           description="Spend linked to this account or its projects"
@@ -630,6 +636,7 @@ export function OrganizationDetail({
               name: project.name,
               organization_id: project.organization_id,
             }))}
+            readOnly={readOnly}
             rows={purchases}
             showLinks
           />
@@ -643,6 +650,7 @@ export function OrganizationDetail({
         <ActivityPanel
           activities={activities}
           organizationId={organization.id}
+          readOnly={readOnly}
         />
       </HubCard>
 
@@ -708,7 +716,7 @@ export function OrganizationDetail({
               empty="No proposals"
               items={proposals.map((proposal) => ({
                 id: proposal.id,
-                href: `/crm/proposals/${proposal.id}`,
+                href: href(`/proposals/${proposal.id}`),
                 title: proposal.title,
                 meta: `${proposal.proposal_number} · ${formatProposalMoney(proposal.total_amount)}`,
                 status: proposalStatusLabel(proposal.status),
@@ -721,7 +729,7 @@ export function OrganizationDetail({
               empty="No agreements"
               items={agreements.map((agreement) => ({
                 id: agreement.id,
-                href: `/crm/agreements/${agreement.id}`,
+                href: href(`/agreements/${agreement.id}`),
                 title: agreement.title,
                 meta: `${agreement.agreement_number} · ${formatMoney(agreement.total_amount)}`,
                 status: agreementStatusLabel(agreement.status),
@@ -734,7 +742,7 @@ export function OrganizationDetail({
               empty="No invoices"
               items={invoices.map((invoice) => ({
                 id: invoice.id,
-                href: `/crm/invoices/${invoice.id}`,
+                href: href(`/invoices/${invoice.id}`),
                 title: invoice.title,
                 meta: `${invoice.invoice_number} · ${formatMoney(invoiceBalance(invoice))} due`,
                 status: invoiceStatusLabel(invoice.status),
@@ -746,17 +754,19 @@ export function OrganizationDetail({
         </HubCard>
       )}
 
-      <OrganizationForm
-        initialRow={organization}
-        key={`edit-${organization.id}-${formOpen ? "open" : "closed"}`}
-        mode="edit"
-        onClose={() => setFormOpen(false)}
-        onSaved={() => {
-          setFormOpen(false);
-          router.refresh();
-        }}
-        open={formOpen}
-      />
+      {!readOnly ? (
+        <OrganizationForm
+          initialRow={organization}
+          key={`edit-${organization.id}-${formOpen ? "open" : "closed"}`}
+          mode="edit"
+          onClose={() => setFormOpen(false)}
+          onSaved={() => {
+            setFormOpen(false);
+            router.refresh();
+          }}
+          open={formOpen}
+        />
+      ) : null}
     </div>
   );
 }

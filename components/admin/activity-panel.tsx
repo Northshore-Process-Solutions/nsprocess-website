@@ -40,6 +40,7 @@ type ActivityPanelProps = {
   leadId?: string | null;
   projectId?: string | null;
   compact?: boolean;
+  readOnly?: boolean;
 };
 
 export function ActivityPanel({
@@ -48,6 +49,7 @@ export function ActivityPanel({
   leadId = null,
   projectId = null,
   compact = false,
+  readOnly = false,
 }: ActivityPanelProps) {
   const router = useRouter();
   const [values, setValues] = useState(emptyActivityFormValues);
@@ -132,17 +134,19 @@ export function ActivityPanel({
             {projectId ? " for this project" : " for this workflow"}.
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setError(null);
-            setShowForm((current) => !current);
-          }}
-          type="button"
-          variant="outline"
-        >
-          <Plus aria-hidden className="size-4" />
-          {showForm ? "Cancel" : "Log activity"}
-        </Button>
+        {!readOnly ? (
+          <Button
+            onClick={() => {
+              setError(null);
+              setShowForm((current) => !current);
+            }}
+            type="button"
+            variant="outline"
+          >
+            <Plus aria-hidden className="size-4" />
+            {showForm ? "Cancel" : "Log activity"}
+          </Button>
+        ) : null}
       </div>
 
       {error ? (
@@ -151,7 +155,7 @@ export function ActivityPanel({
         </div>
       ) : null}
 
-      {showForm ? (
+      {!readOnly && showForm ? (
         <form className="mt-4 space-y-4 rounded-2xl border border-border bg-background p-4" onSubmit={onSubmit}>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-2 text-sm font-semibold">
@@ -293,16 +297,18 @@ export function ActivityPanel({
                       ) : null}
                     </div>
                   </div>
-                  <Button
-                    aria-label="Delete activity"
-                    disabled={deletingId === activity.id}
-                    onClick={() => onDelete(activity)}
-                    size="icon"
-                    type="button"
-                    variant="outline"
-                  >
-                    <Trash2 aria-hidden className="size-4" />
-                  </Button>
+                  {!readOnly ? (
+                    <Button
+                      aria-label="Delete activity"
+                      disabled={deletingId === activity.id}
+                      onClick={() => onDelete(activity)}
+                      size="icon"
+                      type="button"
+                      variant="outline"
+                    >
+                      <Trash2 aria-hidden className="size-4" />
+                    </Button>
+                  ) : null}
                 </div>
               </li>
             );

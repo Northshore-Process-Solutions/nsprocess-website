@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CalendarDays, Eye, Mail } from "lucide-react";
 
 import { ActionHoverTooltip } from "@/components/admin/action-hover-tooltip";
+import { usePortal } from "@/components/portal/portal-provider";
 import { Button } from "@/components/ui/button";
 import {
   formatActivityWhen,
@@ -39,7 +40,7 @@ type LeadsTableProps = {
   eventsByLeadId?: Record<string, CalendarEventRow[]>;
   activitiesByLeadId?: Record<string, ActivityRow[]>;
   onView: (row: LeadRow) => void;
-  onReply: (row: LeadRow) => void;
+  onReply?: (row: LeadRow) => void;
 };
 
 function EmailPreview({ activity }: { activity: ActivityRow | null }) {
@@ -66,11 +67,13 @@ function LeadEmailAction({
 }: {
   lead: LeadRow;
   activities: ActivityRow[];
-  onReply: (row: LeadRow) => void;
+  onReply?: (row: LeadRow) => void;
 }) {
   const lastSent = latestEmailActivity(activities, "sent");
   const lastReceived = latestEmailActivity(activities, "received");
   const hasEmail = Boolean(lastSent || lastReceived);
+
+  if (!onReply) return null;
 
   return (
     <ActionHoverTooltip
@@ -216,6 +219,7 @@ function LeadCalendarAction({
   lead: LeadRow;
   events: CalendarEventRow[];
 }) {
+  const { href } = usePortal();
   const upcoming = events.filter(
     (event) => new Date(event.starts_at).getTime() >= Date.now(),
   );
@@ -265,7 +269,7 @@ function LeadCalendarAction({
         type="button"
         variant="outline"
       >
-        <Link href={`/crm/calendar?leadId=${lead.id}`}>
+        <Link href={href(`/calendar?leadId=${lead.id}`)}>
           <CalendarDays aria-hidden className="size-4" />
         </Link>
       </Button>

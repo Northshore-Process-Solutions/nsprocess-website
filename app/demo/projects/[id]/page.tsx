@@ -1,19 +1,9 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { DemoShell } from "@/components/demo/demo-shell";
-import {
-  DemoCard,
-  DemoPageHeader,
-  DemoRow,
-  DemoStat,
-} from "@/components/demo/demo-ui";
-import { formatMoney } from "@/lib/billing";
-import {
-  demoCustomers,
-  findProject,
-  loadDemoSeed,
-} from "@/lib/demo/data";
+import { ProjectDetail } from "@/components/admin/project-detail";
+import { loadDemoCrmData } from "@/lib/demo/data";
+import { findDemoProject } from "@/lib/demo/map-to-crm";
+import type { CalendarEventWithRelations } from "@/lib/calendar";
 
 export const metadata = {
   title: "Demo Project",
@@ -26,130 +16,60 @@ export default async function DemoProjectDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const seed = await loadDemoSeed();
-  const project = findProject(seed, id);
+  const data = await loadDemoCrmData();
+  const project = findDemoProject(data, id);
   if (!project) notFound();
 
-  const customer = demoCustomers(seed).find(
-    (row) => row.name === project.businessName,
+  const lead = project.lead_id
+    ? (data.leads.find((row) => row.id === project.lead_id) ?? null)
+    : null;
+
+  const activities = data.activities.filter(
+    (row) =>
+      row.project_id === id ||
+      (project.lead_id && row.lead_id === project.lead_id),
   );
-  const relatedEvents = seed.events.filter(
-    (event) => event.businessName === project.businessName,
-  );
-  const relatedPurchases = seed.purchases.filter(
-    (row) => row.businessName === project.businessName,
-  );
-  const relatedInvoices = seed.invoices.filter(
-    (doc) => doc.businessName === project.businessName,
-  );
+
+  const events = data.events
+    .filter(
+      (row) =>
+        row.project_id === id ||
+        (project.lead_id && row.lead_id === project.lead_id),
+    )
+    .map((event) => {
+      const eventLead = event.lead_id
+        ? data.leads.find((row) => row.id === event.lead_id)
+        : null;
+      const org = event.organization_id
+        ? data.organizations.find((row) => row.id === event.organization_id)
+        : null;
+
+      return {
+        ...event,
+        leads: eventLead
+          ? {
+              id: eventLead.id,
+              business_name: eventLead.business_name,
+              contact_name: eventLead.contact_name,
+            }
+          : null,
+        organizations: org ? { id: org.id, name: org.name } : null,
+      } satisfies CalendarEventWithRelations;
+    });
+
+  const purchases = data.purchases.filter((row) => row.project_id === id);
 
   return (
-    <DemoShell businessName={seed.business.name}>
-      <DemoPageHeader
-        backHref="/demo/projects"
-        backLabel="Projects"
-        description={project.scope ?? project.nextAction}
-        title={project.name}
+    <main>
+      <ProjectDetail
+        activities={activities}
+        events={events}
+        lead={lead}
+        project={project}
+        purchases={purchases}
+        readOnly
+        tasks={[]}
       />
-
-      <section className="mb-4 grid gap-3 sm:grid-cols-3">
-        <DemoStat label="Status" value={project.status.replaceAll("_", " ")} />
-        <DemoStat
-          label="Start"
-          value={project.startDate ?? "—"}
-        />
-        <DemoStat
-          label="Target"
-          value={project.targetDate ?? "—"}
-        />
-      </section>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <DemoCard title="Delivery">
-          <dl className="space-y-2">
-            <DemoRow label="Customer" value={project.businessName} />
-            <DemoRow label="Next action" value={project.nextAction} />
-            <DemoRow
-              label="Scope"
-              value={project.scope ?? project.nextAction}
-            />
-          </dl>
-          {customer ? (
-            <p className="mt-4 text-sm">
-              <Link
-                className="font-medium text-slate-900 underline"
-                href={`/demo/businesses/${customer.id}`}
-              >
-                Open business hub
-              </Link>
-            </p>
-          ) : null}
-        </DemoCard>
-
-        <DemoCard title="Schedule">
-          <ul className="space-y-2 text-sm">
-            {relatedEvents.length > 0 ? (
-              relatedEvents.map((event) => (
-                <li key={event.id}>
-                  <Link
-                    className="font-medium text-slate-900 hover:underline"
-                    href="/demo/calendar"
-                  >
-                    {event.title}
-                  </Link>
-                  <p className="text-xs text-slate-500">
-                    {new Date(event.startsAt).toLocaleString()} ·{" "}
-                    {event.eventType}
-                  </p>
-                </li>
-              ))
-            ) : (
-              <li className="text-slate-500">No scheduled events.</li>
-            )}
-          </ul>
-        </DemoCard>
-
-        <DemoCard title="Purchases">
-          <ul className="space-y-2 text-sm">
-            {relatedPurchases.length > 0 ? (
-              relatedPurchases.map((row) => (
-                <li key={row.id}>
-                  <p className="font-medium text-slate-900">
-                    {row.description}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {row.vendor} · {formatMoney(row.amount)}
-                  </p>
-                </li>
-              ))
-            ) : (
-              <li className="text-slate-500">No purchases on this job yet.</li>
-            )}
-          </ul>
-        </DemoCard>
-
-        <DemoCard title="Billing">
-          <ul className="space-y-2 text-sm">
-            {relatedInvoices.length > 0 ? (
-              relatedInvoices.map((doc) => (
-                <li key={doc.id}>
-                  <Link
-                    className="font-medium text-slate-900 hover:underline"
-                    href={`/demo/billing/invoices/${doc.id}`}
-                  >
-                    {doc.number}
-                  </Link>
-                  <p className="text-xs text-slate-500">
-                    {doc.status} · {formatMoney(doc.total)}
-                  </p>
-                </li>
-              ))
-            ) : (
-              <li className="text-slate-500">No invoices yet.</li>
-            )}
-          </ul>
-        </DemoCard>
-      </div>
-    </DemoShell>
+    </main>
   );
 }

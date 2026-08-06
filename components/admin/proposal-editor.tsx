@@ -20,6 +20,7 @@ import {
   type ProposalInput,
 } from "@/app/crm/proposals/actions";
 import { Button } from "@/components/ui/button";
+import { usePortal } from "@/components/portal/portal-provider";
 import {
   computeProposalTotals,
   emptyProposalFormValues,
@@ -51,6 +52,7 @@ export function ProposalEditor({
   defaults,
 }: ProposalEditorProps) {
   const router = useRouter();
+  const { href, isDemo } = usePortal();
   const [values, setValues] = useState(() =>
     mode === "edit" && initialProposal
       ? proposalToFormValues(initialProposal)
@@ -143,6 +145,7 @@ export function ProposalEditor({
 
   async function onSave(event: React.FormEvent) {
     event.preventDefault();
+    if (isDemo) return;
     setLoading(true);
     setError(null);
     setSaved(false);
@@ -228,7 +231,7 @@ export function ProposalEditor({
         <div>
           <Link
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900"
-            href="/crm/proposals"
+            href={href("/proposals")}
           >
             <ArrowLeft aria-hidden className="size-4" />
             Back to Proposals
@@ -247,11 +250,11 @@ export function ProposalEditor({
           )}
         </div>
         <div className="flex flex-wrap gap-2">
-          {initialProposal ? (
+          {initialProposal && !isDemo ? (
             <>
               <Button asChild type="button" variant="outline">
                 <Link
-                  href={`/crm/proposals/${initialProposal.id}/pdf`}
+                  href={href(`/proposals/${initialProposal.id}/pdf`)}
                   target="_blank"
                 >
                   <FileDown aria-hidden className="size-4" />
@@ -260,7 +263,9 @@ export function ProposalEditor({
               </Button>
               <Button asChild type="button" variant="outline">
                 <Link
-                  href={`/crm/agreements/new?proposalId=${initialProposal.id}`}
+                  href={href(
+                    `/agreements/new?proposalId=${initialProposal.id}`,
+                  )}
                 >
                   <FileSignature aria-hidden className="size-4" />
                   Create agreement
@@ -280,9 +285,11 @@ export function ProposalEditor({
               </Button>
             </>
           ) : null}
-          <Button disabled={loading} type="submit" variant="accent">
-            {loading ? "Saving…" : mode === "create" ? "Create draft" : "Save"}
-          </Button>
+          {!isDemo ? (
+            <Button disabled={loading} type="submit" variant="accent">
+              {loading ? "Saving…" : mode === "create" ? "Create draft" : "Save"}
+            </Button>
+          ) : null}
         </div>
       </div>
 

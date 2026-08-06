@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FileText, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { usePortal } from "@/components/portal/portal-provider";
 import {
   agreementStatusLabel,
   type AgreementWithItems,
@@ -20,7 +21,7 @@ const statusStyles: Record<string, string> = {
 
 type AgreementsTableProps = {
   rows: AgreementWithItems[];
-  onDelete: (row: AgreementWithItems) => void;
+  onDelete?: (row: AgreementWithItems) => void;
   deletingId?: string | null;
 };
 
@@ -29,6 +30,7 @@ export function AgreementsTable({
   onDelete,
   deletingId = null,
 }: AgreementsTableProps) {
+  const { href, isDemo } = usePortal();
   if (rows.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
@@ -64,7 +66,7 @@ export function AgreementsTable({
                 <td className="px-4 py-4">
                   <Link
                     className="font-semibold text-accent hover:underline"
-                    href={`/crm/agreements/${row.id}`}
+                    href={href(`/agreements/${row.id}`)}
                   >
                     {row.title}
                   </Link>
@@ -101,30 +103,34 @@ export function AgreementsTable({
                     <Button asChild size="icon" variant="outline">
                       <Link
                         aria-label={`Edit ${row.title}`}
-                        href={`/crm/agreements/${row.id}`}
+                        href={href(`/agreements/${row.id}`)}
                       >
                         <Pencil aria-hidden className="size-4" />
                       </Link>
                     </Button>
-                    <Button asChild size="icon" variant="outline">
-                      <Link
-                        aria-label={`Open PDF for ${row.title}`}
-                        href={`/crm/agreements/${row.id}/pdf`}
-                        target="_blank"
+                    {!isDemo ? (
+                      <Button asChild size="icon" variant="outline">
+                        <Link
+                          aria-label={`Open PDF for ${row.title}`}
+                          href={href(`/agreements/${row.id}/pdf`)}
+                          target="_blank"
+                        >
+                          <FileText aria-hidden className="size-4" />
+                        </Link>
+                      </Button>
+                    ) : null}
+                    {onDelete ? (
+                      <Button
+                        aria-label={`Delete ${row.title}`}
+                        disabled={deletingId === row.id}
+                        onClick={() => onDelete(row)}
+                        size="icon"
+                        type="button"
+                        variant="outline"
                       >
-                        <FileText aria-hidden className="size-4" />
-                      </Link>
-                    </Button>
-                    <Button
-                      aria-label={`Delete ${row.title}`}
-                      disabled={deletingId === row.id}
-                      onClick={() => onDelete(row)}
-                      size="icon"
-                      type="button"
-                      variant="outline"
-                    >
-                      <Trash2 aria-hidden className="size-4" />
-                    </Button>
+                        <Trash2 aria-hidden className="size-4" />
+                      </Button>
+                    ) : null}
                   </div>
                 </td>
               </tr>

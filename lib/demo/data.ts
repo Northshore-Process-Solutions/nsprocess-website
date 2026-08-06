@@ -1,5 +1,9 @@
 import { redirect } from "next/navigation";
 
+import {
+  mapDemoSeedToCrm,
+  type DemoCrmData,
+} from "@/lib/demo/map-to-crm";
 import { requireReadyDemoSession } from "@/lib/demo/session";
 import type { DemoSeed, DemoSeedInput } from "@/lib/demo/types";
 
@@ -16,12 +20,23 @@ export function normalizeDemoSeed(seed: DemoSeedInput): DemoSeed {
   };
 }
 
+function demoSessionRedirect(error: string | null) {
+  redirect(
+    error?.includes("expired") ? "/demo/start?expired=1" : "/demo/start",
+  );
+}
+
 export async function loadDemoSeed(): Promise<DemoSeed> {
   const { session, error } = await requireReadyDemoSession();
   if (!session?.seed) {
-    redirect(error?.includes("expired") ? "/demo?expired=1" : "/demo");
+    demoSessionRedirect(error);
   }
-  return normalizeDemoSeed(session.seed);
+  return normalizeDemoSeed(session!.seed!);
+}
+
+export async function loadDemoCrmData(): Promise<DemoCrmData> {
+  const seed = await loadDemoSeed();
+  return mapDemoSeedToCrm(seed);
 }
 
 export function findLead(seed: DemoSeed, id: string) {

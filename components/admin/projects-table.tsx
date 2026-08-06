@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { CalendarDays, Eye } from "lucide-react";
 
 import { ActionHoverTooltip } from "@/components/admin/action-hover-tooltip";
+import { usePortal } from "@/components/portal/portal-provider";
 import { Button } from "@/components/ui/button";
 import {
   isNextActionOverdue,
@@ -53,6 +54,7 @@ function PreviewField({
 }
 
 function ProjectViewAction({ row }: { row: ProjectWithOrganization }) {
+  const { href } = usePortal();
   return (
     <ActionHoverTooltip
       content={
@@ -107,7 +109,7 @@ function ProjectViewAction({ row }: { row: ProjectWithOrganization }) {
         type="button"
         variant="outline"
       >
-        <Link href={`/crm/projects/${row.id}`}>
+        <Link href={href(`/projects/${row.id}`)}>
           <Eye aria-hidden className="size-4" />
         </Link>
       </Button>
@@ -116,9 +118,10 @@ function ProjectViewAction({ row }: { row: ProjectWithOrganization }) {
 }
 
 function ProjectCalendarAction({ row }: { row: ProjectWithOrganization }) {
-  const href = row.lead_id
-    ? `/crm/calendar?leadId=${row.lead_id}`
-    : "/crm/calendar";
+  const { href } = usePortal();
+  const calendarHref = row.lead_id
+    ? href(`/calendar?leadId=${row.lead_id}`)
+    : href("/calendar");
 
   return (
     <ActionHoverTooltip
@@ -136,7 +139,7 @@ function ProjectCalendarAction({ row }: { row: ProjectWithOrganization }) {
         type="button"
         variant="outline"
       >
-        <Link href={href}>
+        <Link href={calendarHref}>
           <CalendarDays aria-hidden className="size-4" />
         </Link>
       </Button>

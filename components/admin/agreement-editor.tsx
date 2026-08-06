@@ -12,6 +12,7 @@ import {
   type AgreementInput,
 } from "@/app/crm/agreements/actions";
 import { Button } from "@/components/ui/button";
+import { usePortal } from "@/components/portal/portal-provider";
 import {
   AGREEMENT_STATUSES,
   agreementToFormValues,
@@ -38,6 +39,7 @@ export function AgreementEditor({
   defaults,
 }: AgreementEditorProps) {
   const router = useRouter();
+  const { href, isDemo } = usePortal();
   const [values, setValues] = useState(() =>
     mode === "edit" && initialAgreement
       ? agreementToFormValues(initialAgreement)
@@ -132,6 +134,7 @@ export function AgreementEditor({
 
   async function onSave(event: React.FormEvent) {
     event.preventDefault();
+    if (isDemo) return;
     setLoading(true);
     setError(null);
     setSaved(false);
@@ -197,7 +200,7 @@ export function AgreementEditor({
         <div>
           <Link
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900"
-            href="/crm/agreements"
+            href={href("/agreements")}
           >
             <ArrowLeft aria-hidden className="size-4" />
             Back to Agreements
@@ -216,11 +219,11 @@ export function AgreementEditor({
           )}
         </div>
         <div className="flex flex-wrap gap-2">
-          {initialAgreement ? (
+          {initialAgreement && !isDemo ? (
             <>
               <Button asChild type="button" variant="outline">
                 <Link
-                  href={`/crm/agreements/${initialAgreement.id}/pdf`}
+                  href={href(`/agreements/${initialAgreement.id}/pdf`)}
                   target="_blank"
                 >
                   <FileDown aria-hidden className="size-4" />
@@ -229,7 +232,9 @@ export function AgreementEditor({
               </Button>
               <Button asChild type="button" variant="outline">
                 <Link
-                  href={`/crm/invoices/new?agreementId=${initialAgreement.id}&mode=deposit`}
+                  href={href(
+                    `/invoices/new?agreementId=${initialAgreement.id}&mode=deposit`,
+                  )}
                 >
                   <Receipt aria-hidden className="size-4" />
                   Deposit invoice
@@ -237,7 +242,9 @@ export function AgreementEditor({
               </Button>
               <Button asChild type="button" variant="outline">
                 <Link
-                  href={`/crm/invoices/new?agreementId=${initialAgreement.id}&mode=full`}
+                  href={href(
+                    `/invoices/new?agreementId=${initialAgreement.id}&mode=full`,
+                  )}
                 >
                   Full invoice
                 </Link>
@@ -256,9 +263,11 @@ export function AgreementEditor({
               </Button>
             </>
           ) : null}
-          <Button disabled={loading} type="submit" variant="accent">
-            {loading ? "Saving…" : mode === "create" ? "Create draft" : "Save"}
-          </Button>
+          {!isDemo ? (
+            <Button disabled={loading} type="submit" variant="accent">
+              {loading ? "Saving…" : mode === "create" ? "Create draft" : "Save"}
+            </Button>
+          ) : null}
         </div>
       </div>
 

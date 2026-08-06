@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { ExternalLink, Pencil, Trash2 } from "lucide-react";
 
+import { usePortal } from "@/components/portal/portal-provider";
 import { Button } from "@/components/ui/button";
 import { relationshipTypeLabel, type CrmTableRow } from "@/lib/crm";
 import { cn } from "@/lib/utils";
@@ -14,8 +17,8 @@ const statusStyles: Record<string, string> = {
 
 type CrmTableProps = {
   rows: CrmTableRow[];
-  onEdit: (row: CrmTableRow) => void;
-  onDelete: (row: CrmTableRow) => void;
+  onEdit?: (row: CrmTableRow) => void;
+  onDelete?: (row: CrmTableRow) => void;
   deletingId?: string | null;
   emptyTitle?: string;
   emptyMessage?: string;
@@ -29,6 +32,9 @@ export function CrmTable({
   emptyTitle = "No businesses yet",
   emptyMessage = "Use Add business to create your first vendor or customer record.",
 }: CrmTableProps) {
+  const { href } = usePortal();
+  const showActions = Boolean(onEdit || onDelete);
+
   if (rows.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
@@ -51,7 +57,9 @@ export function CrmTable({
               <th className="px-4 py-3 font-semibold">Phone</th>
               <th className="px-4 py-3 font-semibold">Status</th>
               <th className="px-4 py-3 font-semibold">Category</th>
-              <th className="px-4 py-3 font-semibold">Actions</th>
+              {showActions ? (
+                <th className="px-4 py-3 font-semibold">Actions</th>
+              ) : null}
             </tr>
           </thead>
           <tbody>
@@ -64,7 +72,7 @@ export function CrmTable({
                   <div className="flex flex-col items-start gap-1">
                     <Link
                       className="font-semibold text-foreground transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      href={`/crm/organizations/${row.id}`}
+                      href={href(`/organizations/${row.id}`)}
                     >
                       {row.name}
                     </Link>
@@ -135,29 +143,35 @@ export function CrmTable({
                 <td className="px-4 py-4 text-muted-foreground">
                   {row.category || "—"}
                 </td>
-                <td className="px-4 py-4">
-                  <div className="flex gap-2">
-                    <Button
-                      aria-label={`Edit ${row.name}`}
-                      onClick={() => onEdit(row)}
-                      size="icon"
-                      type="button"
-                      variant="outline"
-                    >
-                      <Pencil aria-hidden className="size-4" />
-                    </Button>
-                    <Button
-                      aria-label={`Delete ${row.name}`}
-                      disabled={deletingId === row.id}
-                      onClick={() => onDelete(row)}
-                      size="icon"
-                      type="button"
-                      variant="outline"
-                    >
-                      <Trash2 aria-hidden className="size-4" />
-                    </Button>
-                  </div>
-                </td>
+                {showActions ? (
+                  <td className="px-4 py-4">
+                    <div className="flex gap-2">
+                      {onEdit ? (
+                        <Button
+                          aria-label={`Edit ${row.name}`}
+                          onClick={() => onEdit(row)}
+                          size="icon"
+                          type="button"
+                          variant="outline"
+                        >
+                          <Pencil aria-hidden className="size-4" />
+                        </Button>
+                      ) : null}
+                      {onDelete ? (
+                        <Button
+                          aria-label={`Delete ${row.name}`}
+                          disabled={deletingId === row.id}
+                          onClick={() => onDelete(row)}
+                          size="icon"
+                          type="button"
+                          variant="outline"
+                        >
+                          <Trash2 aria-hidden className="size-4" />
+                        </Button>
+                      ) : null}
+                    </div>
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>

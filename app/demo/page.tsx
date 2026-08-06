@@ -1,58 +1,81 @@
-import Link from "next/link";
+import { redirect } from "next/navigation";
 
-import { DemoIntakeForm } from "@/components/demo/demo-intake-form";
-import { Button } from "@/components/ui/button";
+import { PortalHome } from "@/components/portal/portal-home";
+import { mapDemoSeedToCrm } from "@/lib/demo/map-to-crm";
+import { requireReadyDemoSession } from "@/lib/demo/session";
 
 export const metadata = {
-  title: "Interactive CRM Demo",
+  title: "Demo Home",
   robots: { index: false, follow: false },
 };
 
-type DemoStartPageProps = {
+type DemoHomePageProps = {
   searchParams?: Promise<{ expired?: string }>;
 };
 
-export default async function DemoStartPage({
-  searchParams,
-}: DemoStartPageProps) {
+function todayDateOnly() {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+}
+
+function daysAheadIso(days: number) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString();
+}
+
+export default async function DemoHomePage({ searchParams }: DemoHomePageProps) {
   const params = await searchParams;
-  const expired = params?.expired === "1";
+  if (params?.expired === "1") {
+    redirect("/demo/start?expired=1");
+  }
+
+  const { session, error } = await requireReadyDemoSession();
+  if (!session?.seed) {
+    redirect(
+      error?.includes("expired") ? "/demo/start?expired=1" : "/demo/start",
+    );
+  }
+
+  const data = mapDemoSeedToCrm(session.seed);
+  const today = todayDateOnly();
+  const weekOut = daysAheadIso(7);
+
+  const leadsDue = data.leads.filter(
+    (lead) =>
+      !["deposit_received", "won", "lost"].includes(lead.stage) &&
+      (!lead.next_follow_up_at || lead.next_follow_up_at <= today),
+  );
+
+  const readyForBilling = data.leads.filter((lead) =>
+    ["review_completed", "proposal_sent"].includes(lead.stage),
+  );
+
+  const drafts = data.proposals.filter((row) => row.status === "draft");
+
+  const openInvoices = data.invoices.filter((row) =>
+    ["draft", "sent"].includes(row.status),
+  );
+
+  const events = data.events.filter(
+    (event) =>
+      event.starts_at >= new Date().toISOString() &&
+      event.starts_at <= weekOut,
+  );
+
+  const activeProjects = data.projects.filter((project) =>
+    ["planning", "active", "on_hold"].includes(project.status),
+  );
 
   return (
-    <main className="min-h-screen bg-[#f1f3f5] px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-2xl">
-        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-          Interactive demo
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
-          Run the CRM as your business
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-slate-600">
-          Tell us what you do. AI builds a private sandbox where you are the
-          company — HVAC install jobs for an HVAC shop, patient inquiries for a
-          dental office, and so on. It never touches North Shore Process
-          Solutions’ live CRM.
-        </p>
-
-        {expired ? (
-          <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-            That demo session expired. Start a new one below.
-          </div>
-        ) : null}
-
-        <div className="mt-6 rounded-md border border-slate-200 bg-white p-5">
-          <DemoIntakeForm />
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-3 text-sm">
-          <Button asChild size="sm" variant="outline">
-            <Link href="/">Back to site</Link>
-          </Button>
-          <Button asChild size="sm" variant="outline">
-            <Link href="/contact">Book a real Process Review</Link>
-          </Button>
-        </div>
-      </div>
-    </main>
+    <PortalHome
+      drafts={drafts}
+      events={events}
+      invoices={openInvoices}
+      leadsDue={leadsDue}
+      mode="demo"
+      projects={activeProjects}
+      readyForBilling={readyForBilling}
+    />
   );
 }

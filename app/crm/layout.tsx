@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type React from "react";
 
 import { AdminShell } from "@/components/admin/admin-shell";
+import { PortalProvider } from "@/components/portal/portal-provider";
 
 export const metadata: Metadata = {
   title: "NSPS Portal",
@@ -16,5 +17,9 @@ export default function CrmLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <AdminShell>{children}</AdminShell>;
+  return (
+    <PortalProvider mode="live">
+      <AdminShell>{children}</AdminShell>
+    </PortalProvider>
+  );
 }
