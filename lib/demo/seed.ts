@@ -1,7 +1,10 @@
-import { generateObject } from "ai";
+import { generateObject, type LanguageModel } from "ai";
 import { z } from "zod";
 
-import { getDemoSeedModel } from "@/lib/ai/openai";
+import {
+  getDemoSeedFallbackModel,
+  getDemoSeedModel,
+} from "@/lib/ai/openai";
 import type { DemoIntake, DemoSeed } from "@/lib/demo/types";
 
 const seedSchema = z.object({
@@ -154,11 +157,7 @@ const seedSchema = z.object({
 });
 
 export async function generateDemoSeed(intake: DemoIntake): Promise<DemoSeed> {
-  try {
-    const { object } = await generateObject({
-      model: getDemoSeedModel(),
-      schema: seedSchema,
-      system: `You generate CRM demo seed data from the POINT OF VIEW of the visitor's company.
+  const system = `You generate CRM demo seed data from the POINT OF VIEW of the visitor's company.
 
 The visitor IS the business owner/operator. The CRM is THEIR operating system for running jobs — not a consultancy selling to them.
 
@@ -202,8 +201,9 @@ Rules:
 - Keep all names fictional but plausible for the stated customer type.
 - leads.businessName must never include workflow words like inquiry, job, lead, quote, prospect, or lettered placeholders (A/B/C).
 - At least 3 of 5 leads (or all leads if fewer) must clearly match the primary customer type from intake.description.
-- Every leads.message must be first-person customer voice (website form style), not an internal summary or status note.`,
-      prompt: `Build a company-operator CRM demo seed for this intake:
+- Every leads.message must be first-person customer voice (website form style), not an internal summary or status note.`;
+
+  const prompt = `Build a company-operator CRM demo seed for this intake:
 ${JSON.stringify(intake, null, 2)}
 
 Today's date: ${new Date().toISOString().slice(0, 10)}
@@ -217,8 +217,31 @@ Remember: the visitor runs ${intake.businessName || "this company"}. Populate TH
 leads.message examples of the tone required (adapt to this industry/customer type; do not copy verbatim):
 - "My laptop keeps freezing when I open Excel. Can someone look at it this week?"
 - "Hi — our office printers are jamming constantly. Looking for a service visit and maybe a maintenance plan."
-- "We're a town department needing 8 desktops quoted for a grant purchase. Who should I email the specs to?"`,
-    });
+- "We're a town department needing 8 desktops quoted for a grant purchase. Who should I email the specs to?"`;
+
+  try {
+    let object: z.infer<typeof seedSchema>;
+    try {
+      object = await generateSeedObject({
+        model: getDemoSeedModel(),
+        prompt,
+        system,
+      });
+    } catch (primaryError) {
+      const primaryMessage =
+        primaryError instanceof Error
+          ? primaryError.message
+          : "primary model failed";
+      console.warn(
+        "[demo-seed] Luna/primary generateObject failed; retrying with fallback:",
+        primaryMessage,
+      );
+      object = await generateSeedObject({
+        model: getDemoSeedFallbackModel(),
+        prompt,
+        system,
+      });
+    }
 
     return {
       ...object,
@@ -241,4 +264,18 @@ leads.message examples of the tone required (adapt to this industry/customer typ
       `Could not build demo data with AI (${message}). Check OPENAI_API_KEY and try again.`,
     );
   }
+}
+
+async function generateSeedObject(input: {
+  model: LanguageModel;
+  system: string;
+  prompt: string;
+}) {
+  const { object } = await generateObject({
+    model: input.model,
+    schema: seedSchema,
+    system: input.system,
+    prompt: input.prompt,
+  });
+  return object;
 }

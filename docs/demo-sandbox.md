@@ -32,7 +32,9 @@ Intake lives at `/demo/start`. After a ready session, home is `/demo`.
   - Never prefix with `NEXT_PUBLIC_`
 - `OPENAI_API_KEY` — required to build demo seed data (no silent template fallback)
   - Add to `.env.local` and Vercel env vars
-  - Demo seed uses `gpt-4.1` via `getDemoSeedModel()`
+  - Demo seed uses `gpt-5.6-luna` via `getDemoSeedModel()`, with one retry on
+    `gpt-4.1` via `getDemoSeedFallbackModel()` if generation fails
+  - Optional overrides: `DEMO_SEED_MODEL`, `DEMO_SEED_FALLBACK_MODEL`
 - `DEMO_SESSION_SECRET` — optional; signs the demo cookie (falls back to service role key)
 - `DEMO_PURGE_SECRET` — optional; required as `Authorization: Bearer …` for `/api/demo/purge`
 

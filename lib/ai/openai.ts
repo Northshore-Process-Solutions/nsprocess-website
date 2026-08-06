@@ -16,8 +16,20 @@ export function getDraftModel() {
   return openai("gpt-4.1-mini");
 }
 
-/** Stronger model for demo seed generation (intake fidelity matters). */
+/**
+ * Fast/cheap default for demo CRM seed generation.
+ * Override with DEMO_SEED_MODEL if needed.
+ */
 export function getDemoSeedModel() {
   getOpenAIApiKey();
-  return openai("gpt-4.1");
+  return openai(process.env.DEMO_SEED_MODEL?.trim() || "gpt-5.6-luna");
+}
+
+/**
+ * Stronger one-shot fallback when Luna fails schema/generation.
+ * Override with DEMO_SEED_FALLBACK_MODEL if needed.
+ */
+export function getDemoSeedFallbackModel() {
+  getOpenAIApiKey();
+  return openai(process.env.DEMO_SEED_FALLBACK_MODEL?.trim() || "gpt-4.1");
 }
