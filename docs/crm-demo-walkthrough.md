@@ -4,26 +4,29 @@ Use this script to demo the portal end to end from a new Pipeline inquiry throug
 
 ## Demo Setup
 
-Start at `/crm`. If you are signed out, use `/crm/login`.
+Have two browser contexts ready:
+
+1. Public site: `/contact` (or the homepage CTA into Free Process Review)
+2. Portal: `/crm` (sign in at `/crm/login` if needed)
 
 Suggested demo business:
 
 - Business: `Northshore Demo Co`
-- Contact: `Jordan Smith`
-- Email: use an address you control for email tests, or `demo@example.com` if you will not send
+- Contact: `Jordan Smith` (First / Last on the form)
+- Email: use an address you control so the auto-reply is visible, or `demo@example.com` if you will not send
 - Phone: `(978) 555-0142`
-- Need: `We need a cleaner way to intake jobs, track approvals, and know what is ready to invoice.`
+- Need / message: `We need a cleaner way to intake jobs, track approvals, and know what is ready to invoice.`
 
-## 1. Create The Pipeline Inquiry
+## 1. Capture The Inquiry From The Website
 
-1. Go to `Pipeline`.
-2. Create a new inquiry.
-3. Enter the demo business/contact details.
-4. Set the source to whatever is easiest to explain, such as `Manual` or `Referral`.
-5. Save the lead.
-6. Confirm the lead appears in Pipeline.
+1. Open the public site and go to `/contact`.
+2. Submit a Free Process Review request with the demo details above.
+3. Confirm the form shows success.
+4. Switch to the portal and open `Pipeline`.
+5. Confirm `Northshore Demo Co` appears as a `New inquiry` with source `website_form`.
+6. Optionally open `Today` and show it sitting in follow-ups.
 
-What to say: Pipeline is where new work starts before it is a customer or project.
+What to say: Real work starts on the website. The CRM does not invent the lead — the form writes it into Pipeline automatically.
 
 ## 2. Move The Lead Toward A Proposal
 

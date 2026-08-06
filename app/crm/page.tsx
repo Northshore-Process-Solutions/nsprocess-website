@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/billing";
 import { leadStageLabel, type LeadRow } from "@/lib/leads";
 import { invoiceBalance, type InvoiceRow } from "@/lib/invoices";
@@ -207,21 +206,6 @@ export default async function AdminTodayPage() {
           title="4. Delivery"
         />
       </div>
-
-      <section className="mt-5 flex flex-wrap gap-2 border-t border-slate-200 pt-4">
-        <Button asChild size="sm" variant="outline">
-          <Link href="/crm/pipeline">Open Pipeline</Link>
-        </Button>
-        <Button asChild size="sm" variant="outline">
-          <Link href="/crm/billing">Open Billing</Link>
-        </Button>
-        <Button asChild size="sm" variant="outline">
-          <Link href="/crm/businesses">Open Businesses</Link>
-        </Button>
-        <Button asChild size="sm" variant="outline">
-          <Link href="/crm/projects">Open Projects</Link>
-        </Button>
-      </section>
     </main>
   );
 }
