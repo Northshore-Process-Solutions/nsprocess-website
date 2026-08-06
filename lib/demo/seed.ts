@@ -91,9 +91,11 @@ const seedSchema = z.object({
         status: z.enum(["planning", "active", "on_hold", "completed"]),
         nextAction: z.string(),
         businessName: z.string(),
-        scope: z.string().optional(),
-        startDate: z.string().nullable().optional(),
-        targetDate: z.string().nullable().optional(),
+        // OpenAI strict JSON schema requires every property to be listed in
+        // `required` — use nullable, not optional.
+        scope: z.string(),
+        startDate: z.string().nullable(),
+        targetDate: z.string().nullable(),
       }),
     )
     .min(1)
@@ -150,269 +152,6 @@ const seedSchema = z.object({
     .max(8),
 });
 
-function industryLabel(intake: DemoIntake) {
-  return intake.industry.trim() || "local service";
-}
-
-function fallbackSeed(intake: DemoIntake): DemoSeed {
-  const companyName = intake.businessName.trim() || "Demo Business";
-  const ownerName = intake.contactName.trim() || "Jordan Smith";
-  const location = intake.location.trim() || "North Shore, MA";
-  const industry = industryLabel(intake);
-  const today = new Date();
-  const isoDay = (offset: number) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() + offset);
-    return d.toISOString().slice(0, 10);
-  };
-  const isoStamp = (offsetHours: number) => {
-    const d = new Date(today);
-    d.setHours(d.getHours() + offsetHours);
-    return d.toISOString();
-  };
-
-  // Generic but job-shaped fallback; AI path should be industry-specific.
-  // Vary labels by intake so a rebuild after End demo never looks identical.
-  const desc = `${intake.description} ${industry}`.toLowerCase();
-  const isPublicSector =
-    /\b(state|municipal|government|public.?sector|school|town of|city of|dot|dpw|contract)\b/.test(
-      desc,
-    );
-  const slug = `${industry}-${companyName}`
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .slice(0, 24);
-  const customerA = isPublicSector
-    ? "Town of Amesbury DPW"
-    : `${industry} inquiry A (${slug})`;
-  const customerB = isPublicSector
-    ? "MA DOT District 4"
-    : `${industry} job B (${companyName.split(" ")[0] || "Client"})`;
-  const customerC = isPublicSector
-    ? "Salem Public Schools"
-    : `${industry} lead C`;
-
-  return {
-    business: {
-      id: "company-1",
-      name: companyName,
-      category: industry,
-      location,
-      email: "office@example.com",
-      phone: "(978) 555-0100",
-      contactName: ownerName,
-      notes:
-        intake.description ||
-        `${companyName} demo workspace for running ${industry} jobs.`,
-      openBalance: 3200,
-    },
-    leads: [
-      {
-        id: "lead-1",
-        businessName: customerA,
-        contactName: "Alex Rivera",
-        email: "alex.rivera@example.com",
-        phone: "(978) 555-0141",
-        stage: "follow_up",
-        source: "website_form",
-        nextFollowUpAt: isoDay(0),
-        message: isPublicSector
-          ? `Hi — we need on-site ${industry} support for our staff machines before the next fiscal quarter. Can someone come to ${customerA} next week and send a quote?`
-          : `Hi, my computer has been really slow and I think it might have viruses. Looking for a cleanup and what times you have available.`,
-      },
-      {
-        id: "lead-2",
-        businessName: customerB,
-        contactName: "Sam Lee",
-        email: "sam@harborcafe.example",
-        phone: "(978) 555-0142",
-        stage: "review_completed",
-        source: "referral",
-        nextFollowUpAt: isoDay(1),
-        message: isPublicSector
-          ? `Following up from our walkthrough — please send the written proposal for the ${industry} work we discussed, including timeline and deposit.`
-          : `You came by last week for the estimate. Could you send the written quote when you have a chance? Want to get this scheduled.`,
-      },
-      {
-        id: "lead-3",
-        businessName: customerC,
-        contactName: "Taylor Brooks",
-        email: "tbrooks@oakdale.example",
-        phone: "(978) 555-0143",
-        stage: "new_inquiry",
-        source: "website_form",
-        nextFollowUpAt: isoDay(0),
-        message: isPublicSector
-          ? `We manage several buildings and need ${industry} help across a few sites. What's your availability and typical turnaround for a multi-location quote?`
-          : `I have a few devices that need attention (laptop + desktop). Can you tell me pricing and how soon you could get to them?`,
-      },
-    ],
-    proposals: [
-      {
-        id: "prop-1",
-        number: "PROP-DEMO-0001",
-        title: `${customerB} — ${industry} proposal`,
-        status: "sent",
-        total: 8400,
-        businessName: customerB,
-        issuedAt: isoDay(-3),
-      },
-      {
-        id: "prop-2",
-        number: "PROP-DEMO-0002",
-        title: `${customerA} — ${industry} quote`,
-        status: "draft",
-        total: 4100,
-        businessName: customerA,
-        issuedAt: isoDay(-1),
-      },
-    ],
-    agreements: [
-      {
-        id: "agr-1",
-        number: "AGR-DEMO-0001",
-        title: `${customerB} — job agreement`,
-        status: "signed",
-        total: 8400,
-        businessName: customerB,
-        issuedAt: isoDay(-2),
-      },
-    ],
-    invoices: [
-      {
-        id: "inv-1",
-        number: "INV-DEMO-0001",
-        title: `${customerB} — deposit`,
-        status: "sent",
-        total: 3200,
-        businessName: customerB,
-        issuedAt: isoDay(-1),
-      },
-    ],
-    projects: [
-      {
-        id: "proj-1",
-        name: `${customerB} — ${industry} install`,
-        status: "active",
-        nextAction: "Confirm equipment delivery and crew day",
-        businessName: customerB,
-        scope: `Full ${industry} install at ${customerB}: equipment set, startup, and customer walkthrough.`,
-        startDate: isoDay(-5),
-        targetDate: isoDay(10),
-      },
-      {
-        id: "proj-2",
-        name: `${customerA} — estimate follow-through`,
-        status: "planning",
-        nextAction: "Send written quote after site measurements",
-        businessName: customerA,
-        scope: `Quote package for ${customerA} after the estimate visit.`,
-        startDate: isoDay(-1),
-        targetDate: isoDay(7),
-      },
-    ],
-    events: [
-      {
-        id: "evt-1",
-        title: `Install — ${customerB}`,
-        startsAt: isoStamp(48),
-        eventType: "onsite",
-        businessName: customerB,
-      },
-      {
-        id: "evt-2",
-        title: `Estimate visit — ${customerA}`,
-        startsAt: isoStamp(24),
-        eventType: "onsite",
-        businessName: customerA,
-      },
-    ],
-    purchases: [
-      {
-        id: "pur-1",
-        description: `Equipment for ${customerB} job`,
-        amount: 2100,
-        purchasedAt: isoDay(-4),
-        vendor: "Supply House Direct",
-        businessName: customerB,
-        purchaseType: "materials",
-      },
-      {
-        id: "pur-2",
-        description: "Shop consumables restock",
-        amount: 185,
-        purchasedAt: isoDay(-2),
-        vendor: "Local Parts Counter",
-        businessName: companyName,
-        purchaseType: "supplies",
-      },
-      {
-        id: "pur-3",
-        description: "Fuel / truck week",
-        amount: 140,
-        purchasedAt: isoDay(-1),
-        vendor: "Fleet Fuel",
-        businessName: companyName,
-        purchaseType: "ops",
-      },
-    ],
-    tools: [
-      {
-        id: "tool-1",
-        name: "Job scheduling board",
-        category: "Operations",
-        status: "active",
-        notes: "Crew days and estimate slots",
-        monthlyCost: 0,
-      },
-      {
-        id: "tool-2",
-        name: "QuickBooks Online",
-        category: "Finance",
-        status: "active",
-        notes: "Invoices and deposits",
-        monthlyCost: 55,
-      },
-      {
-        id: "tool-3",
-        name: "Google Workspace",
-        category: "Communication",
-        status: "active",
-        notes: "Email and shared folders",
-        monthlyCost: 18,
-      },
-      {
-        id: "tool-4",
-        name: "Field photo app",
-        category: "Field",
-        status: "evaluating",
-        notes: "Before/after job documentation",
-        monthlyCost: 12,
-      },
-    ],
-    activities: [
-      {
-        id: "act-1",
-        summary: `${customerC} submitted a web inquiry`,
-        occurredAt: isoStamp(-72),
-        kind: "note",
-      },
-      {
-        id: "act-2",
-        summary: `Completed site review at ${customerB}`,
-        occurredAt: isoStamp(-48),
-        kind: "note",
-      },
-      {
-        id: "act-3",
-        summary: `Sent proposal to ${customerB}`,
-        occurredAt: isoStamp(-24),
-        kind: "email",
-      },
-    ],
-  };
-}
-
 export async function generateDemoSeed(intake: DemoIntake): Promise<DemoSeed> {
   try {
     const { object } = await generateObject({
@@ -425,7 +164,9 @@ The visitor IS the business owner/operator. The CRM is THEIR operating system fo
 Critical framing:
 - business = the visitor's company (the CRM owner). Example: "North Shore Comfort HVAC".
 - leads = THEIR customers/prospects. Never make the visitor's company a lead.
-- leads.businessName = customer/account label that matches the REAL customer type implied by intake.
+- leads.businessName = a realistic customer/account name only (company, residence, town department, school, etc.). It must look like a real CRM account label.
+  Good: "Rivera Residence", "Harbor Street Cafe", "Town of Amesbury DPW", "Oakdale Property Group".
+  Bad: "HVAC inquiry A", "HVAC job B", "HVAC lead C", "Computer Repair lead 1", anything with inquiry/job/lead/quote/customer A-B-C as the name.
 - leads.contactName = the customer's contact person.
 - leads.message = the raw website contact-form / inquiry text written IN THE CUSTOMER'S VOICE (first person). It must sound like something a person typed into a "Contact us" or "Request a quote" box — short, natural, a bit messy is fine. NEVER a third-person CRM summary.
   Bad: "New Computer Repair quote request — wants pricing and schedule options."
@@ -458,6 +199,7 @@ Rules:
 - At least one lead follow-up due today or earlier.
 - Include a clear path: inquiry → proposal → agreement/deposit invoice → active job/project.
 - Keep all names fictional but plausible for the stated customer type.
+- leads.businessName must never include workflow words like inquiry, job, lead, quote, prospect, or lettered placeholders (A/B/C).
 - At least 3 of 5 leads (or all leads if fewer) must clearly match the primary customer type from intake.description.
 - Every leads.message must be first-person customer voice (website form style), not an internal summary or status note.`,
       prompt: `Build a company-operator CRM demo seed for this intake:
@@ -482,7 +224,12 @@ leads.message examples of the tone required (adapt to this industry/customer typ
       purchases: object.purchases ?? [],
       tools: object.tools ?? [],
     };
-  } catch {
-    return fallbackSeed(intake);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Demo seed generation failed.";
+    console.error("[demo-seed] generateObject failed:", message, error);
+    throw new Error(
+      `Could not build demo data with AI (${message}). Check OPENAI_API_KEY and try again.`,
+    );
   }
 }

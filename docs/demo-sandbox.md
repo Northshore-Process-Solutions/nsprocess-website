@@ -30,7 +30,9 @@ Intake lives at `/demo/start`. After a ready session, home is `/demo`.
   - Add the same value in Vercel → Project Settings → Environment Variables (Production + Preview)
   - Restart `npm run dev` after adding it locally
   - Never prefix with `NEXT_PUBLIC_`
-- `OPENAI_API_KEY` — seeds the demo (falls back to a local template if generation fails)
+- `OPENAI_API_KEY` — required to build demo seed data (no silent template fallback)
+  - Add to `.env.local` and Vercel env vars
+  - Demo seed uses `gpt-4.1` via `getDemoSeedModel()`
 - `DEMO_SESSION_SECRET` — optional; signs the demo cookie (falls back to service role key)
 - `DEMO_PURGE_SECRET` — optional; required as `Authorization: Bearer …` for `/api/demo/purge`
 
