@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 
 import { PortalHome } from "@/components/portal/portal-home";
+import { isCustomerStage, type LeadRow } from "@/lib/leads";
 import type { InvoiceRow } from "@/lib/invoices";
-import type { LeadRow } from "@/lib/leads";
 import type { ProposalRow } from "@/lib/proposals";
 import type { ProjectWithOrganization } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
@@ -34,21 +34,24 @@ export default async function AdminTodayPage() {
     { data: consultLeads },
     { data: acceptedProposals },
     { data: proposalDrafts },
+    { data: sentProposals },
     { data: openInvoices },
     { data: upcomingEvents },
     { data: activeProjects },
+    { data: agreements },
+    { data: customerLeads },
   ] = await Promise.all([
     supabase
       .from("leads")
       .select("*")
-      .not("stage", "in", "(deposit_received,won,lost)")
+      .not("stage", "in", "(deposit_received,won,lost,proposal_accepted)")
       .or(`next_follow_up_at.is.null,next_follow_up_at.lte.${today}`)
       .order("next_follow_up_at", { ascending: true, nullsFirst: true })
       .limit(8),
     supabase
       .from("leads")
       .select("*")
-      .in("stage", ["review_completed", "proposal_sent"])
+      .eq("stage", "review_completed")
       .order("updated_at", { ascending: false })
       .limit(6),
     supabase
@@ -56,7 +59,7 @@ export default async function AdminTodayPage() {
       .select("*")
       .eq("status", "accepted")
       .order("client_responded_at", { ascending: false, nullsFirst: false })
-      .limit(6),
+      .limit(8),
     supabase
       .from("proposals")
       .select("*")
@@ -64,11 +67,17 @@ export default async function AdminTodayPage() {
       .order("updated_at", { ascending: false })
       .limit(5),
     supabase
+      .from("proposals")
+      .select("*")
+      .eq("status", "sent")
+      .order("updated_at", { ascending: false })
+      .limit(5),
+    supabase
       .from("invoices")
       .select("*")
       .in("status", ["draft", "sent"])
       .order("due_at", { ascending: true, nullsFirst: false })
-      .limit(6),
+      .limit(8),
     supabase
       .from("calendar_events")
       .select("id, title, starts_at, event_type")
@@ -90,18 +99,37 @@ export default async function AdminTodayPage() {
       .in("status", ["planning", "active", "on_hold"])
       .order("next_action_at", { ascending: true, nullsFirst: false })
       .limit(6),
+    supabase
+      .from("agreements")
+      .select("id, status, proposal_id, lead_id")
+      .in("status", ["draft", "sent", "signed"])
+      .order("updated_at", { ascending: false })
+      .limit(40),
+    supabase
+      .from("leads")
+      .select("id, stage")
+      .in("stage", ["deposit_received", "won"]),
   ]);
+
+  const customerLeadIds = new Set(
+    ((customerLeads ?? []) as Array<{ id: string; stage: string }>)
+      .filter((lead) => isCustomerStage(lead.stage as LeadRow["stage"]))
+      .map((lead) => lead.id),
+  );
 
   return (
     <PortalHome
-      acceptedDeals={(acceptedProposals ?? []) as ProposalRow[]}
-      drafts={(proposalDrafts ?? []) as ProposalRow[]}
+      acceptedProposals={(acceptedProposals ?? []) as ProposalRow[]}
+      agreements={agreements ?? []}
+      customerLeadIds={customerLeadIds}
+      draftProposals={(proposalDrafts ?? []) as ProposalRow[]}
       events={upcomingEvents ?? []}
       invoices={(openInvoices ?? []) as InvoiceRow[]}
       leadsDue={(followUpLeads ?? []) as LeadRow[]}
       mode="live"
       projects={(activeProjects ?? []) as ProjectWithOrganization[]}
-      readyForBilling={(consultLeads ?? []) as LeadRow[]}
+      readyToPropose={(consultLeads ?? []) as LeadRow[]}
+      sentProposals={(sentProposals ?? []) as ProposalRow[]}
     />
   );
 }

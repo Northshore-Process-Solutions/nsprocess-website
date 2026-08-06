@@ -1,11 +1,18 @@
 import Link from "next/link";
 
 import { formatMoney } from "@/lib/billing";
-import { leadStageLabel, type LeadRow } from "@/lib/leads";
-import { invoiceBalance, type InvoiceRow } from "@/lib/invoices";
+import {
+  buildHomeDashboard,
+  type AgreementLite,
+  type HomeQueueItem,
+  type StatusTone,
+} from "@/lib/portal/home-dashboard";
+import type { InvoiceRow } from "@/lib/invoices";
+import type { LeadRow } from "@/lib/leads";
 import type { ProposalRow } from "@/lib/proposals";
 import type { ProjectWithOrganization } from "@/lib/projects";
-import { portalPath, type PortalMode } from "@/lib/portal/paths";
+import { cn } from "@/lib/utils";
+import type { PortalMode } from "@/lib/portal/paths";
 
 type EventLite = {
   id: string;
@@ -17,27 +24,41 @@ type EventLite = {
 export function PortalHome({
   mode,
   leadsDue,
-  readyForBilling,
-  acceptedDeals,
-  drafts,
+  readyToPropose,
+  draftProposals,
+  sentProposals,
+  acceptedProposals,
+  customerLeadIds,
+  agreements,
   invoices,
   events,
   projects,
 }: {
   mode: PortalMode;
   leadsDue: LeadRow[];
-  readyForBilling: LeadRow[];
-  acceptedDeals: ProposalRow[];
-  drafts: ProposalRow[];
+  readyToPropose: LeadRow[];
+  draftProposals: ProposalRow[];
+  sentProposals: ProposalRow[];
+  acceptedProposals: ProposalRow[];
+  customerLeadIds?: Set<string>;
+  agreements: AgreementLite[];
   invoices: InvoiceRow[];
   events: EventLite[];
   projects: ProjectWithOrganization[];
 }) {
-  const href = (path = "") => portalPath(mode, path);
-  const openInvoiceBalance = invoices.reduce(
-    (sum, row) => sum + invoiceBalance(row),
-    0,
-  );
+  const dash = buildHomeDashboard({
+    mode,
+    leadsDue,
+    readyToPropose,
+    draftProposals,
+    sentProposals,
+    acceptedProposals,
+    customerLeadIds,
+    agreements,
+    invoices,
+    events,
+    projects,
+  });
 
   return (
     <main>
@@ -46,123 +67,69 @@ export function PortalHome({
           Home
         </h1>
         <p className="mt-1 text-sm text-slate-600">
-          Start here. Work the queues below in order when you are unsure what
-          to do next.
+          Morning command center — who to call, what to send, what to collect.
         </p>
       </header>
 
       <section className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard
-          href={href("/pipeline")}
+          href={dash.href("/pipeline")}
           label="Follow-ups due"
-          value={String(leadsDue.length)}
+          value={String(dash.followUpsDueCount)}
         />
         <StatCard
-          href={href("/pipeline")}
+          href={dash.href("/pipeline")}
           label="Ready to propose"
-          value={String(readyForBilling.length)}
+          value={String(dash.readyToProposeCount)}
         />
         <StatCard
-          emphasize={acceptedDeals.length > 0}
-          href={href("/pipeline?phase=accepted")}
-          label="Accepted — next step"
-          value={String(acceptedDeals.length)}
+          emphasize={dash.acceptedJobsCount > 0}
+          href={dash.href("/pipeline?phase=accepted")}
+          label="Accepted jobs"
+          value={String(dash.acceptedJobsCount)}
         />
         <StatCard
-          href={href("/invoices")}
+          emphasizeMoney
+          href={dash.href("/invoices")}
           label="Open invoice $"
-          value={formatMoney(openInvoiceBalance)}
+          value={formatMoney(dash.openInvoiceBalance)}
         />
         <StatCard
-          href={href("/calendar")}
+          href={dash.href("/calendar")}
           label="Events this week"
-          value={String(events.length)}
+          value={String(dash.eventsCount)}
         />
       </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <QueueCard
-          empty="No follow-ups waiting."
-          href={href("/pipeline")}
-          items={leadsDue.map((lead) => ({
-            key: lead.id,
-            href: href(`/pipeline?leadId=${lead.id}`),
-            meta: leadStageLabel(lead.stage),
-            title: lead.business_name,
-            detail: lead.next_follow_up_at
-              ? `Due ${lead.next_follow_up_at}`
-              : "No follow-up date",
-          }))}
+          empty="No pipeline work waiting."
+          href={dash.href("/pipeline")}
+          items={dash.pipeline}
           title="Pipeline"
         />
-
         <QueueCard
-          empty="No accepted proposals waiting on agreement or deposit."
-          href={href("/pipeline?phase=accepted")}
-          items={acceptedDeals.map((proposal) => ({
-            key: proposal.id,
-            href: href(`/proposals/${proposal.id}`),
-            meta: "Accepted",
-            title: proposal.client_business_name,
-            detail: `${proposal.proposal_number} · Agreement → deposit invoice`,
-          }))}
-          title="Close the deal"
+          empty="No accepted jobs need follow-up."
+          href={dash.href("/pipeline?phase=accepted")}
+          items={dash.acceptedJobs}
+          title="Accepted Jobs"
         />
-
         <QueueCard
-          empty="Nothing waiting on a proposal."
-          href={href("/billing")}
-          items={[
-            ...readyForBilling.map((lead) => ({
-              key: lead.id,
-              href: href(`/proposals/new?leadId=${lead.id}`),
-              meta: leadStageLabel(lead.stage),
-              title: lead.business_name,
-              detail: "Create or continue proposal",
-            })),
-            ...drafts.map((proposal) => ({
-              key: proposal.id,
-              href: href(`/proposals/${proposal.id}`),
-              meta: "Draft proposal",
-              title: proposal.client_business_name,
-              detail: proposal.proposal_number,
-            })),
-            ...invoices.map((invoice) => ({
-              key: invoice.id,
-              href: href(`/invoices/${invoice.id}`),
-              meta: invoice.status,
-              title: invoice.client_business_name,
-              detail: `${invoice.invoice_number} · ${formatMoney(invoiceBalance(invoice))} due`,
-            })),
-          ]}
+          empty="Nothing to collect right now."
+          href={dash.href("/invoices")}
+          items={dash.billing}
           title="Billing"
         />
-
         <QueueCard
-          empty="No upcoming events in the next 7 days."
-          href={href("/calendar")}
-          items={events.map((event) => ({
-            key: event.id,
-            href: href("/calendar"),
-            meta: event.event_type,
-            title: event.title,
-            detail: new Date(event.starts_at).toLocaleString(),
-          }))}
+          empty="No appointments this week."
+          href={dash.href("/calendar")}
+          items={dash.calendar}
           title="Calendar"
         />
-
         <QueueCard
-          empty="No active projects."
-          href={href("/projects")}
-          items={projects.map((project) => ({
-            key: project.id,
-            href: href(`/projects/${project.id}`),
-            meta: project.status,
-            title: project.name,
-            detail: project.next_action
-              ? project.next_action
-              : (project.organizations?.name ?? "Open project"),
-          }))}
+          empty="No active projects right now."
+          href={dash.href("/projects")}
+          items={dash.projects}
           title="Projects"
         />
       </div>
@@ -175,36 +142,44 @@ function StatCard({
   value,
   href,
   emphasize = false,
+  emphasizeMoney = false,
 }: {
   label: string;
   value: string;
   href: string;
   emphasize?: boolean;
+  emphasizeMoney?: boolean;
 }) {
   return (
     <Link
       className={
         emphasize
           ? "rounded-md border border-lime-300 bg-lime-50 px-3 py-3 transition hover:border-lime-500"
-          : "rounded-md border border-slate-200 bg-white px-3 py-3 transition hover:border-slate-400"
+          : emphasizeMoney
+            ? "rounded-md border border-slate-300 bg-white px-3 py-3 shadow-sm transition hover:border-slate-500"
+            : "rounded-md border border-slate-200 bg-white px-3 py-3 transition hover:border-slate-400"
       }
       href={href}
     >
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+      <p
+        className={cn(
+          "text-xs font-medium uppercase tracking-wide",
+          emphasizeMoney ? "text-slate-700" : "text-slate-500",
+        )}
+      >
         {label}
       </p>
-      <p className="mt-1 text-xl font-semibold text-slate-900">{value}</p>
+      <p
+        className={cn(
+          "mt-1 tabular-nums text-slate-900",
+          emphasizeMoney ? "text-2xl font-bold tracking-tight" : "text-xl font-semibold",
+        )}
+      >
+        {value}
+      </p>
     </Link>
   );
 }
-
-type QueueItem = {
-  key: string;
-  href: string;
-  title: string;
-  meta: string;
-  detail: string;
-};
 
 function QueueCard({
   title,
@@ -215,14 +190,14 @@ function QueueCard({
   title: string;
   href: string;
   empty: string;
-  items: QueueItem[];
+  items: HomeQueueItem[];
 }) {
   return (
     <section className="rounded-md border border-slate-200 bg-white">
       <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
         <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
         <Link
-          className="text-xs font-medium text-slate-600 hover:text-slate-900"
+          className="text-[11px] font-normal text-slate-400 transition hover:text-slate-600"
           href={href}
         >
           View all
@@ -236,15 +211,18 @@ function QueueCard({
                 className="block px-3 py-2.5 transition hover:bg-slate-50"
                 href={item.href}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-medium text-slate-900">
-                    {item.title}
-                  </p>
-                  <span className="shrink-0 text-xs text-slate-500">
-                    {item.meta}
-                  </span>
+                <p className="text-sm font-semibold text-slate-900">
+                  {item.title}
+                </p>
+                <p className="mt-0.5 text-xs text-slate-600">{item.nextAction}</p>
+                <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                  <StatusBadge label={item.badge.label} tone={item.badge.tone} />
+                  {item.dueLabel ? (
+                    <span className="text-[11px] font-medium text-slate-500">
+                      {item.dueLabel}
+                    </span>
+                  ) : null}
                 </div>
-                <p className="mt-0.5 text-xs text-slate-500">{item.detail}</p>
               </Link>
             </li>
           ))}
@@ -254,4 +232,37 @@ function QueueCard({
       )}
     </section>
   );
+}
+
+function StatusBadge({ label, tone }: { label: string; tone: StatusTone }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold",
+        badgeToneClass(tone),
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
+function badgeToneClass(tone: StatusTone) {
+  switch (tone) {
+    case "blue":
+      return "bg-sky-100 text-sky-900";
+    case "orange":
+      return "bg-orange-100 text-orange-900";
+    case "green":
+      return "bg-emerald-100 text-emerald-900";
+    case "purple":
+      return "bg-violet-100 text-violet-900";
+    case "darkGreen":
+      return "bg-teal-800 text-white";
+    case "red":
+      return "bg-red-100 text-red-900";
+    case "gray":
+    default:
+      return "bg-slate-100 text-slate-700";
+  }
 }

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { PortalHome } from "@/components/portal/portal-home";
 import { mapDemoSeedToCrm } from "@/lib/demo/map-to-crm";
+import { isCustomerStage } from "@/lib/leads";
 import { requireReadyDemoSession } from "@/lib/demo/session";
 
 export const metadata = {
@@ -43,19 +44,22 @@ export default async function DemoHomePage({ searchParams }: DemoHomePageProps) 
 
   const leadsDue = data.leads.filter(
     (lead) =>
-      !["deposit_received", "won", "lost"].includes(lead.stage) &&
+      !["deposit_received", "won", "lost", "proposal_accepted"].includes(
+        lead.stage,
+      ) &&
       (!lead.next_follow_up_at || lead.next_follow_up_at <= today),
   );
 
-  const readyForBilling = data.leads.filter((lead) =>
-    ["review_completed", "proposal_sent"].includes(lead.stage),
+  const readyToPropose = data.leads.filter(
+    (lead) => lead.stage === "review_completed",
   );
 
-  const acceptedDeals = data.proposals.filter(
+  const acceptedProposals = data.proposals.filter(
     (row) => row.status === "accepted",
   );
 
-  const drafts = data.proposals.filter((row) => row.status === "draft");
+  const draftProposals = data.proposals.filter((row) => row.status === "draft");
+  const sentProposals = data.proposals.filter((row) => row.status === "sent");
 
   const openInvoices = data.invoices.filter((row) =>
     ["draft", "sent"].includes(row.status),
@@ -71,16 +75,32 @@ export default async function DemoHomePage({ searchParams }: DemoHomePageProps) 
     ["planning", "active", "on_hold"].includes(project.status),
   );
 
+  const customerLeadIds = new Set(
+    data.leads.filter((lead) => isCustomerStage(lead.stage)).map((lead) => lead.id),
+  );
+
+  const agreements = data.agreements
+    .filter((row) => ["draft", "sent", "signed"].includes(row.status))
+    .map((row) => ({
+      id: row.id,
+      status: row.status,
+      proposal_id: row.proposal_id,
+      lead_id: row.lead_id,
+    }));
+
   return (
     <PortalHome
-      acceptedDeals={acceptedDeals}
-      drafts={drafts}
+      acceptedProposals={acceptedProposals}
+      agreements={agreements}
+      customerLeadIds={customerLeadIds}
+      draftProposals={draftProposals}
       events={events}
       invoices={openInvoices}
       leadsDue={leadsDue}
       mode="demo"
       projects={activeProjects}
-      readyForBilling={readyForBilling}
+      readyToPropose={readyToPropose}
+      sentProposals={sentProposals}
     />
   );
 }
