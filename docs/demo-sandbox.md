@@ -1,7 +1,8 @@
 # Interactive CRM Demo Sandbox
 
 Public visitors can open `/demo`, describe their business, and get a private
-CRM walkthrough seeded by AI.
+CRM walkthrough seeded by AI from **their** point of view: they are the company
+operator. Pipeline leads are their customers; projects are their jobs.
 
 ## Isolation guarantees
 
@@ -12,6 +13,11 @@ CRM walkthrough seeded by AI.
 ## Required env vars
 
 - `SUPABASE_SERVICE_ROLE_KEY` — server-only; used exclusively by demo sandbox code
+  - Supabase Dashboard → Project Settings → API → `service_role` (secret)
+  - Add to `.env.local` as `SUPABASE_SERVICE_ROLE_KEY=...`
+  - Add the same value in Vercel → Project → Settings → Environment Variables (Production + Preview)
+  - Restart `npm run dev` after adding it locally
+  - Never prefix with `NEXT_PUBLIC_`
 - `OPENAI_API_KEY` — seeds the demo (falls back to a local template if generation fails)
 - `DEMO_SESSION_SECRET` — optional; signs the demo cookie (falls back to service role key)
 - `DEMO_PURGE_SECRET` — optional; required as `Authorization: Bearer …` for `/api/demo/purge`

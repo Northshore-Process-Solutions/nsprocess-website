@@ -9,7 +9,7 @@ export function createDemoAdminClient(): SupabaseClient {
 
   if (!key) {
     throw new Error(
-      "Missing SUPABASE_SERVICE_ROLE_KEY. Required for the interactive demo sandbox.",
+      "Missing SUPABASE_SERVICE_ROLE_KEY. Add the Supabase service_role secret to .env.local (and Vercel) — Project Settings → API → service_role. Never expose it as NEXT_PUBLIC_.",
     );
   }
 

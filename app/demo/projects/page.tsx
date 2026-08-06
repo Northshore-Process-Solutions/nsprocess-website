@@ -21,7 +21,7 @@ export default async function DemoProjectsPage() {
           Projects
         </h1>
         <p className="mt-1 text-sm text-slate-600">
-          Delivery work in the demo sandbox.
+          Active jobs {seed.business.name} is delivering for customers.
         </p>
       </header>
 

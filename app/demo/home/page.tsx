@@ -46,8 +46,9 @@ export default async function DemoHomePage() {
           Home
         </h1>
         <p className="mt-1 text-sm text-slate-600">
-          Private demo for {seed.business.name}. Work the queues below the same
-          way the real portal works.
+          You are logged in as {seed.business.name}. These queues are your
+          customers, jobs, and paperwork — not North Shore Process Solutions’
+          accounts.
         </p>
       </header>
 

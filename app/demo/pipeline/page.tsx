@@ -22,7 +22,8 @@ export default async function DemoPipelinePage() {
           Pipeline
         </h1>
         <p className="mt-1 text-sm text-slate-600">
-          Demo inquiries shaped around {seed.business.name}.
+          Customer inquiries for {seed.business.name} — quotes, site visits, and
+          jobs waiting to move forward.
         </p>
       </header>
 

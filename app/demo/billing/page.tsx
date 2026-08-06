@@ -22,7 +22,8 @@ export default async function DemoBillingPage() {
           Billing
         </h1>
         <p className="mt-1 text-sm text-slate-600">
-          Demo proposals, agreements, and invoices for {seed.business.name}.
+          Proposals, agreements, and invoices {seed.business.name} sends to
+          customers.
         </p>
       </header>
 

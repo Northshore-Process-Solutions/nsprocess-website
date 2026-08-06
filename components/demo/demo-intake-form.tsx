@@ -41,7 +41,7 @@ export function DemoIntakeForm() {
           <input
             className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
             name="businessName"
-            placeholder="Northshore Demo Co"
+            placeholder="North Shore Comfort HVAC"
             required
           />
         </label>
@@ -92,7 +92,7 @@ export function DemoIntakeForm() {
         <textarea
           className="min-h-28 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
           name="description"
-          placeholder="We schedule jobs in email and spreadsheets. Follow-up slips, and nobody knows what is ready to invoice."
+          placeholder="We install and service residential HVAC. Leads come in from the website and referrals; we need cleaner job tracking from estimate to invoice."
           required
         />
       </label>

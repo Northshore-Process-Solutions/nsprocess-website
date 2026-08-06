@@ -25,12 +25,12 @@ export default async function DemoStartPage({
           Interactive demo
         </p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
-          Build a private CRM walkthrough for your business
+          Run the CRM as your business
         </h1>
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          Tell us a little about the business. AI will populate a sandbox with
-          pipeline, billing, and project data shaped around that profile. The
-          sandbox is session-private and never touches North Shore Process
+          Tell us what you do. AI builds a private sandbox where you are the
+          company — HVAC install jobs for an HVAC shop, patient inquiries for a
+          dental office, and so on. It never touches North Shore Process
           Solutions’ live CRM.
         </p>
 
