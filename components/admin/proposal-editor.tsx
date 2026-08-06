@@ -4,8 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
+  Check,
+  Copy,
   FileDown,
   FileSignature,
+  Mail,
   Plus,
   Sparkles,
   Trash2,
@@ -20,13 +23,19 @@ import {
   updateProposal,
   type ProposalInput,
 } from "@/app/crm/proposals/actions";
+import {
+  ensureProposalShareLink,
+  sendProposalShareEmail,
+} from "@/app/share/proposals/actions";
 import { Button } from "@/components/ui/button";
 import { usePortal } from "@/components/portal/portal-provider";
+import { proposalSharePath } from "@/lib/proposal-share";
 import {
   computeProposalTotals,
   emptyProposalFormValues,
   formatProposalMoney,
   PROPOSAL_STATUSES,
+  proposalStatusLabel,
   proposalToFormValues,
   type ProposalItemInput,
   type ProposalStatus,
@@ -62,8 +71,13 @@ export function ProposalEditor({
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [drafting, setDrafting] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [emailing, setEmailing] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [shareNotice, setShareNotice] = useState<string | null>(null);
+  const [shareUrlPreview, setShareUrlPreview] = useState<string | null>(null);
 
   const totals = useMemo(() => {
     const parsedItems = values.items.map((item) => ({
@@ -209,6 +223,7 @@ export function ProposalEditor({
     if (!initialProposal) return;
     setSending(true);
     setError(null);
+    setShareNotice(null);
 
     // Persist current edits first
     const saveResult = await updateProposal(initialProposal.id, {
@@ -231,6 +246,73 @@ export function ProposalEditor({
 
     updateField("status", "sent");
     setSaved(true);
+    if (result.shareUrl) {
+      const path = result.shareUrl.replace(/^https?:\/\/[^/]+/, "");
+      const token = path.split("/").pop() ?? null;
+      if (token) {
+        setShareUrlPreview(
+          `${window.location.origin}${proposalSharePath(token)}`,
+        );
+      }
+      setShareNotice(
+        "Marked sent. Copy the client link below, or email it to them.",
+      );
+    }
+    router.refresh();
+  }
+
+  async function onCopyShareLink() {
+    if (!initialProposal || isDemo) return;
+    setSharing(true);
+    setError(null);
+    setShareNotice(null);
+
+    const result = await ensureProposalShareLink(initialProposal.id);
+    setSharing(false);
+
+    if (!result.ok || !result.token) {
+      setError(result.error ?? "Could not create share link.");
+      return;
+    }
+
+    const url = `${window.location.origin}${proposalSharePath(result.token)}`;
+    setShareUrlPreview(url);
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setShareNotice("Client link copied to clipboard.");
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setShareNotice("Copy this link and send it to the client:");
+    }
+  }
+
+  async function onEmailShareLink() {
+    if (!initialProposal || isDemo) return;
+    setEmailing(true);
+    setError(null);
+    setShareNotice(null);
+
+    const result = await sendProposalShareEmail(initialProposal.id);
+    setEmailing(false);
+
+    if (!result.ok) {
+      setError(result.error ?? "Could not email the link.");
+      if (result.token) {
+        setShareUrlPreview(
+          `${window.location.origin}${proposalSharePath(result.token)}`,
+        );
+      }
+      return;
+    }
+
+    if (result.token) {
+      setShareUrlPreview(
+        `${window.location.origin}${proposalSharePath(result.token)}`,
+      );
+    }
+    setShareNotice("Email sent to the client with a link to accept or decline.");
     router.refresh();
   }
 
@@ -294,6 +376,33 @@ export function ProposalEditor({
                         ? "Already sent"
                         : "Mark sent"}
                   </Button>
+                  <Button
+                    disabled={sharing}
+                    onClick={onCopyShareLink}
+                    type="button"
+                    variant="outline"
+                  >
+                    {copied ? (
+                      <Check aria-hidden className="size-4" />
+                    ) : (
+                      <Copy aria-hidden className="size-4" />
+                    )}
+                    {sharing ? "Preparing…" : copied ? "Copied" : "Copy link"}
+                  </Button>
+                  <Button
+                    disabled={emailing || !values.clientEmail.trim()}
+                    onClick={onEmailShareLink}
+                    title={
+                      values.clientEmail.trim()
+                        ? "Email the client a link to accept or decline"
+                        : "Add a client email first"
+                    }
+                    type="button"
+                    variant="outline"
+                  >
+                    <Mail aria-hidden className="size-4" />
+                    {emailing ? "Sending…" : "Email link"}
+                  </Button>
                 </>
               ) : null}
             </>
@@ -314,6 +423,41 @@ export function ProposalEditor({
       {saved ? (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-900">
           Saved.
+        </div>
+      ) : null}
+      {shareNotice ? (
+        <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm font-medium text-sky-950">
+          {shareNotice}
+          {shareUrlPreview ? (
+            <p className="mt-2 break-all font-normal text-sky-900/80">
+              {shareUrlPreview}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+      {initialProposal?.client_responded_at ? (
+        <div
+          className={
+            initialProposal.status === "accepted"
+              ? "rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950"
+              : "rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"
+          }
+        >
+          <p className="font-semibold">
+            Client {proposalStatusLabel(initialProposal.status).toLowerCase()}
+            {initialProposal.client_responded_at
+              ? ` · ${new Date(initialProposal.client_responded_at).toLocaleString()}`
+              : null}
+          </p>
+          {initialProposal.client_response ? (
+            <p className="mt-2 whitespace-pre-wrap font-normal">
+              {initialProposal.client_response}
+            </p>
+          ) : (
+            <p className="mt-2 font-normal text-muted-foreground">
+              No comment left.
+            </p>
+          )}
         </div>
       ) : null}
 

@@ -9,6 +9,10 @@ import {
   type ProposalItemInput,
   type ProposalStatus,
 } from "@/lib/proposals";
+import {
+  createProposalShareToken,
+  proposalShareUrl,
+} from "@/lib/proposal-share";
 import { createClient } from "@/lib/supabase/server";
 
 export type ProposalInput = {
@@ -33,6 +37,7 @@ export type ActionResult = {
   ok: boolean;
   error?: string;
   id?: string;
+  shareUrl?: string;
 };
 
 function clean(value?: string | null) {
@@ -440,18 +445,21 @@ export async function markProposalSent(id: string): Promise<ActionResult> {
 
   const { data: existing } = await auth.supabase
     .from("proposals")
-    .select("lead_id, organization_id, status")
+    .select("lead_id, organization_id, status, share_token")
     .eq("id", id)
     .maybeSingle();
 
   if (!existing) return { ok: false, error: "Proposal not found." };
 
+  const shareToken =
+    (existing.share_token as string | null) ?? createProposalShareToken();
   const now = new Date().toISOString();
   const { error } = await auth.supabase
     .from("proposals")
     .update({
       status: "sent",
       sent_at: now,
+      share_token: shareToken,
       updated_at: now,
     })
     .eq("id", id);
@@ -464,5 +472,5 @@ export async function markProposalSent(id: string): Promise<ActionResult> {
     leadId: existing.lead_id,
     organizationId: existing.organization_id,
   });
-  return { ok: true, id };
+  return { ok: true, id, shareUrl: proposalShareUrl(shareToken) };
 }

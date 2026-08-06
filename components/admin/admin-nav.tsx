@@ -20,6 +20,18 @@ const linkDefs = [
     match: (p: string, base: string) => p.startsWith(`${base}/pipeline`),
   },
   {
+    path: "/projects",
+    label: "Projects",
+    key: "projects" as const,
+    match: (p: string, base: string) => p.startsWith(`${base}/projects`),
+  },
+  {
+    path: "/calendar",
+    label: "Calendar",
+    key: "calendar" as const,
+    match: (p: string, base: string) => p.startsWith(`${base}/calendar`),
+  },
+  {
     path: "/businesses",
     label: "Businesses",
     key: "crm" as const,
@@ -37,18 +49,6 @@ const linkDefs = [
       p.startsWith(`${base}/agreements`) ||
       p.startsWith(`${base}/invoices`) ||
       p.startsWith(`${base}/statements`),
-  },
-  {
-    path: "/projects",
-    label: "Projects",
-    key: "projects" as const,
-    match: (p: string, base: string) => p.startsWith(`${base}/projects`),
-  },
-  {
-    path: "/calendar",
-    label: "Calendar",
-    key: "calendar" as const,
-    match: (p: string, base: string) => p.startsWith(`${base}/calendar`),
   },
   {
     path: "/purchases",

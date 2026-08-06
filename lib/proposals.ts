@@ -26,6 +26,10 @@ export type ProposalRow = {
   total_amount: number | string;
   sent_at: string | null;
   accepted_at: string | null;
+  share_token: string | null;
+  client_response: string | null;
+  client_responded_at: string | null;
+  declined_at: string | null;
   created_at: string;
   updated_at: string;
 };

@@ -20,16 +20,6 @@ const links = [
     match: (p: string) => p.startsWith("/demo/pipeline"),
   },
   {
-    href: "/demo/businesses",
-    label: "Businesses",
-    match: (p: string) => p.startsWith("/demo/businesses"),
-  },
-  {
-    href: "/demo/billing",
-    label: "Billing",
-    match: (p: string) => p.startsWith("/demo/billing"),
-  },
-  {
     href: "/demo/projects",
     label: "Projects",
     match: (p: string) => p.startsWith("/demo/projects"),
@@ -38,6 +28,16 @@ const links = [
     href: "/demo/calendar",
     label: "Calendar",
     match: (p: string) => p.startsWith("/demo/calendar"),
+  },
+  {
+    href: "/demo/businesses",
+    label: "Businesses",
+    match: (p: string) => p.startsWith("/demo/businesses"),
+  },
+  {
+    href: "/demo/billing",
+    label: "Billing",
+    match: (p: string) => p.startsWith("/demo/billing"),
   },
   {
     href: "/demo/purchases",
