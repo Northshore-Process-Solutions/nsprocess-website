@@ -13,6 +13,7 @@ import {
 import { useMemo, useState } from "react";
 
 import { draftProposalScope } from "@/app/crm/ai/actions";
+import { draftDemoProposalScope } from "@/app/demo/ai/actions";
 import {
   createProposal,
   markProposalSent,
@@ -178,13 +179,21 @@ export function ProposalEditor({
     setError(null);
     setSaved(false);
 
-    const result = await draftProposalScope({
-      businessName: values.clientBusinessName,
-      contactName: values.clientContactName,
-      title: values.title,
-      notes: values.notes,
-      existingScope: values.scopeSummary,
-    });
+    const result = isDemo
+      ? await draftDemoProposalScope({
+          businessName: values.clientBusinessName,
+          contactName: values.clientContactName,
+          title: values.title,
+          notes: values.notes,
+          existingScope: values.scopeSummary,
+        })
+      : await draftProposalScope({
+          businessName: values.clientBusinessName,
+          contactName: values.clientContactName,
+          title: values.title,
+          notes: values.notes,
+          existingScope: values.scopeSummary,
+        });
 
     setDrafting(false);
 
@@ -250,7 +259,7 @@ export function ProposalEditor({
           )}
         </div>
         <div className="flex flex-wrap gap-2">
-          {initialProposal && !isDemo ? (
+          {initialProposal ? (
             <>
               <Button asChild type="button" variant="outline">
                 <Link
@@ -261,28 +270,32 @@ export function ProposalEditor({
                   Open PDF
                 </Link>
               </Button>
-              <Button asChild type="button" variant="outline">
-                <Link
-                  href={href(
-                    `/agreements/new?proposalId=${initialProposal.id}`,
-                  )}
-                >
-                  <FileSignature aria-hidden className="size-4" />
-                  Create agreement
-                </Link>
-              </Button>
-              <Button
-                disabled={sending || values.status === "sent"}
-                onClick={onMarkSent}
-                type="button"
-                variant="outline"
-              >
-                {sending
-                  ? "Marking…"
-                  : values.status === "sent"
-                    ? "Already sent"
-                    : "Mark sent"}
-              </Button>
+              {!isDemo ? (
+                <>
+                  <Button asChild type="button" variant="outline">
+                    <Link
+                      href={href(
+                        `/agreements/new?proposalId=${initialProposal.id}`,
+                      )}
+                    >
+                      <FileSignature aria-hidden className="size-4" />
+                      Create agreement
+                    </Link>
+                  </Button>
+                  <Button
+                    disabled={sending || values.status === "sent"}
+                    onClick={onMarkSent}
+                    type="button"
+                    variant="outline"
+                  >
+                    {sending
+                      ? "Marking…"
+                      : values.status === "sent"
+                        ? "Already sent"
+                        : "Mark sent"}
+                  </Button>
+                </>
+              ) : null}
             </>
           ) : null}
           {!isDemo ? (

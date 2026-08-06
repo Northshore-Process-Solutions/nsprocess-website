@@ -27,10 +27,7 @@ export default async function DemoAgreementsPage({
   const data = await loadDemoCrmData();
   const base = portalPath("demo");
 
-  const agreements = data.agreements.map((row) => ({
-    ...row,
-    agreement_items: [],
-  }));
+  const agreements = data.agreements;
 
   const rows =
     statusFilter === "all"

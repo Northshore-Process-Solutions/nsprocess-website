@@ -4,7 +4,7 @@ import { BillingSubnav } from "@/components/admin/billing-subnav";
 import { InvoiceEditor } from "@/components/admin/invoice-editor";
 import { DemoPreviewBanner } from "@/components/demo/demo-preview-banner";
 import { loadDemoCrmData } from "@/lib/demo/data";
-import type { InvoiceWithItems } from "@/lib/invoices";
+import { findDemoInvoice } from "@/lib/demo/map-to-crm";
 
 export const metadata = {
   title: "Demo Invoice",
@@ -18,13 +18,8 @@ export default async function DemoInvoiceDetailPage({
 }) {
   const { id } = await params;
   const data = await loadDemoCrmData();
-  const invoice = data.invoices.find((row) => row.id === id);
-  if (!invoice) notFound();
-
-  const initialInvoice = {
-    ...invoice,
-    invoice_items: [],
-  } satisfies InvoiceWithItems;
+  const initialInvoice = findDemoInvoice(data, id);
+  if (!initialInvoice) notFound();
 
   return (
     <main className="max-w-5xl">

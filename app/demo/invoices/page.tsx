@@ -35,10 +35,7 @@ export default async function DemoInvoicesPage({
   const data = await loadDemoCrmData();
   const base = portalPath("demo");
 
-  const invoices = data.invoices.map((row) => ({
-    ...row,
-    invoice_items: [],
-  }));
+  const invoices = data.invoices;
 
   const rows = invoices.filter((row) => {
     const statusOk = statusFilter === "all" || row.status === statusFilter;

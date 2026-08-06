@@ -53,6 +53,18 @@ sessions. Start/End demo use hard navigations to avoid App Router client cache.
 ## What this is not
 
 - Not wired to live Supabase CRM tables for reads or writes
-- Not demo-specific PDF routes (PDF links hidden in demo tables)
 - Not e-sign / Stripe / live email from the sandbox
 - Not shared “Demo Co” data for all visitors
+
+## Billing PDFs in demo
+
+Demo supports printable views (same print/Save as PDF flow as live CRM):
+
+- `/demo/proposals/[id]/pdf`
+- `/demo/agreements/[id]/pdf`
+- `/demo/invoices/[id]/pdf`
+- `/demo/statements/view?organizationId=&from=&to=`
+
+Editors and tables show **Open PDF**. **Draft with AI** on proposals uses the
+demo session cookie (no CRM login) via `app/demo/ai/actions.ts`. Seeded line
+items, scope, and terms come from `lib/demo/map-to-crm.ts`.

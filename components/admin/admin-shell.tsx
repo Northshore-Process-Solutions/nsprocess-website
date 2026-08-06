@@ -20,6 +20,8 @@ function isBarePortalRoute(pathname: string, mode: "live" | "demo") {
     return false;
   }
   if (pathname === "/demo/start") return true;
+  if (pathname.includes("/pdf")) return true;
+  if (pathname.startsWith("/demo/statements/view")) return true;
   return false;
 }
 

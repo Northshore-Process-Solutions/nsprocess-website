@@ -219,7 +219,7 @@ export function AgreementEditor({
           )}
         </div>
         <div className="flex flex-wrap gap-2">
-          {initialAgreement && !isDemo ? (
+          {initialAgreement ? (
             <>
               <Button asChild type="button" variant="outline">
                 <Link
@@ -230,37 +230,41 @@ export function AgreementEditor({
                   Open PDF
                 </Link>
               </Button>
-              <Button asChild type="button" variant="outline">
-                <Link
-                  href={href(
-                    `/invoices/new?agreementId=${initialAgreement.id}&mode=deposit`,
-                  )}
-                >
-                  <Receipt aria-hidden className="size-4" />
-                  Deposit invoice
-                </Link>
-              </Button>
-              <Button asChild type="button" variant="outline">
-                <Link
-                  href={href(
-                    `/invoices/new?agreementId=${initialAgreement.id}&mode=full`,
-                  )}
-                >
-                  Full invoice
-                </Link>
-              </Button>
-              <Button
-                disabled={signing || values.status === "signed"}
-                onClick={onMarkSigned}
-                type="button"
-                variant="outline"
-              >
-                {signing
-                  ? "Marking…"
-                  : values.status === "signed"
-                    ? "Already signed"
-                    : "Mark signed"}
-              </Button>
+              {!isDemo ? (
+                <>
+                  <Button asChild type="button" variant="outline">
+                    <Link
+                      href={href(
+                        `/invoices/new?agreementId=${initialAgreement.id}&mode=deposit`,
+                      )}
+                    >
+                      <Receipt aria-hidden className="size-4" />
+                      Deposit invoice
+                    </Link>
+                  </Button>
+                  <Button asChild type="button" variant="outline">
+                    <Link
+                      href={href(
+                        `/invoices/new?agreementId=${initialAgreement.id}&mode=full`,
+                      )}
+                    >
+                      Full invoice
+                    </Link>
+                  </Button>
+                  <Button
+                    disabled={signing || values.status === "signed"}
+                    onClick={onMarkSigned}
+                    type="button"
+                    variant="outline"
+                  >
+                    {signing
+                      ? "Marking…"
+                      : values.status === "signed"
+                        ? "Already signed"
+                        : "Mark signed"}
+                  </Button>
+                </>
+              ) : null}
             </>
           ) : null}
           {!isDemo ? (

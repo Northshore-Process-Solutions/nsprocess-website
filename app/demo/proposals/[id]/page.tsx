@@ -4,7 +4,7 @@ import { BillingSubnav } from "@/components/admin/billing-subnav";
 import { ProposalEditor } from "@/components/admin/proposal-editor";
 import { DemoPreviewBanner } from "@/components/demo/demo-preview-banner";
 import { loadDemoCrmData } from "@/lib/demo/data";
-import type { ProposalWithItems } from "@/lib/proposals";
+import { findDemoProposal } from "@/lib/demo/map-to-crm";
 
 export const metadata = {
   title: "Demo Proposal",
@@ -18,13 +18,8 @@ export default async function DemoProposalDetailPage({
 }) {
   const { id } = await params;
   const data = await loadDemoCrmData();
-  const proposal = data.proposals.find((row) => row.id === id);
-  if (!proposal) notFound();
-
-  const initialProposal = {
-    ...proposal,
-    proposal_items: [],
-  } satisfies ProposalWithItems;
+  const initialProposal = findDemoProposal(data, id);
+  if (!initialProposal) notFound();
 
   return (
     <main className="max-w-5xl">

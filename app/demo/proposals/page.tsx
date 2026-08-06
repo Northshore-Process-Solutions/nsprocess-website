@@ -30,10 +30,7 @@ export default async function DemoProposalsPage({
   const data = await loadDemoCrmData();
   const base = portalPath("demo");
 
-  const proposals = data.proposals.map((row) => ({
-    ...row,
-    proposal_items: [],
-  }));
+  const proposals = data.proposals;
 
   const rows =
     statusFilter === "all"

@@ -32,7 +32,7 @@ export function InvoicesTable({
   onDelete,
   deletingId = null,
 }: InvoicesTableProps) {
-  const { href, isDemo } = usePortal();
+  const { href } = usePortal();
   if (rows.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
@@ -117,17 +117,15 @@ export function InvoicesTable({
                         <Pencil aria-hidden className="size-4" />
                       </Link>
                     </Button>
-                    {!isDemo ? (
-                      <Button asChild size="icon" variant="outline">
-                        <Link
-                          aria-label={`Open PDF for ${row.title}`}
-                          href={href(`/invoices/${row.id}/pdf`)}
-                          target="_blank"
-                        >
-                          <FileText aria-hidden className="size-4" />
-                        </Link>
-                      </Button>
-                    ) : null}
+                    <Button asChild size="icon" variant="outline">
+                      <Link
+                        aria-label={`Open PDF for ${row.title}`}
+                        href={href(`/invoices/${row.id}/pdf`)}
+                        target="_blank"
+                      >
+                        <FileText aria-hidden className="size-4" />
+                      </Link>
+                    </Button>
                     {onDelete ? (
                       <Button
                         aria-label={`Delete ${row.title}`}

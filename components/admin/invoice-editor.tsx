@@ -251,7 +251,7 @@ export function InvoiceEditor({
           )}
         </div>
         <div className="flex flex-wrap gap-2">
-          {initialInvoice && !isDemo ? (
+          {initialInvoice ? (
             <>
               <Button asChild type="button" variant="outline">
                 <Link
@@ -262,30 +262,34 @@ export function InvoiceEditor({
                   Open PDF
                 </Link>
               </Button>
-              <Button
-                disabled={sending || values.status === "sent" || values.status === "paid"}
-                onClick={onMarkSent}
-                type="button"
-                variant="outline"
-              >
-                {sending
-                  ? "Marking…"
-                  : values.status === "sent" || values.status === "paid"
-                    ? "Already sent"
-                    : "Mark sent"}
-              </Button>
-              <Button
-                disabled={paying || values.status === "paid"}
-                onClick={onMarkPaid}
-                type="button"
-                variant="outline"
-              >
-                {paying
-                  ? "Marking…"
-                  : values.status === "paid"
-                    ? "Already paid"
-                    : "Mark paid"}
-              </Button>
+              {!isDemo ? (
+                <>
+                  <Button
+                    disabled={sending || values.status === "sent" || values.status === "paid"}
+                    onClick={onMarkSent}
+                    type="button"
+                    variant="outline"
+                  >
+                    {sending
+                      ? "Marking…"
+                      : values.status === "sent" || values.status === "paid"
+                        ? "Already sent"
+                        : "Mark sent"}
+                  </Button>
+                  <Button
+                    disabled={paying || values.status === "paid"}
+                    onClick={onMarkPaid}
+                    type="button"
+                    variant="outline"
+                  >
+                    {paying
+                      ? "Marking…"
+                      : values.status === "paid"
+                        ? "Already paid"
+                        : "Mark paid"}
+                  </Button>
+                </>
+              ) : null}
             </>
           ) : null}
           {!isDemo ? (

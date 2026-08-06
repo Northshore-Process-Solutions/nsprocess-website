@@ -1,22 +1,25 @@
 import type { ActivityRow } from "@/lib/activities";
-import type { AgreementRow } from "@/lib/agreements";
+import type { AgreementRow, AgreementItemRow, AgreementWithItems } from "@/lib/agreements";
 import type { CalendarEventRow, CalendarEventType } from "@/lib/calendar";
 import {
   mapOrganizationToCrmRow,
   type CrmTableRow,
   type OrganizationRow,
 } from "@/lib/crm";
-import type { InvoiceRow } from "@/lib/invoices";
+import type { InvoiceRow, InvoiceItemRow, InvoiceWithItems } from "@/lib/invoices";
 import type { LeadRow, LeadSource, LeadStage } from "@/lib/leads";
-import type { ProposalRow, ProposalStatus } from "@/lib/proposals";
 import type {
-  ProjectRow,
+  ProposalItemRow,
+  ProposalStatus,
+  ProposalWithItems,
+} from "@/lib/proposals";
+import type {
   ProjectStatus,
   ProjectWithOrganization,
 } from "@/lib/projects";
 import type { PurchaseType, PurchaseWithRelations } from "@/lib/purchases";
 import type { ToolRow, ToolStatus } from "@/lib/tools";
-import type { DemoSeed } from "@/lib/demo/types";
+import type { DemoDoc, DemoSeed } from "@/lib/demo/types";
 import { normalizeDemoSeed } from "@/lib/demo/data";
 
 function stamp(iso?: string | null) {
@@ -26,6 +29,91 @@ function stamp(iso?: string | null) {
 function dateOnly(iso?: string | null) {
   if (!iso) return new Date().toISOString().slice(0, 10);
   return iso.slice(0, 10);
+}
+
+function proposalItemsForDoc(doc: DemoDoc): ProposalItemRow[] {
+  const labor = Math.round(doc.total * 0.65 * 100) / 100;
+  const materials = Math.round((doc.total - labor) * 100) / 100;
+  const created_at = stamp(doc.issuedAt);
+  return [
+    {
+      id: `${doc.id}-item-1`,
+      proposal_id: doc.id,
+      description: "Labor / services",
+      quantity: 1,
+      unit_price: labor,
+      line_total: labor,
+      sort_order: 0,
+      created_at,
+    },
+    {
+      id: `${doc.id}-item-2`,
+      proposal_id: doc.id,
+      description: "Materials / equipment",
+      quantity: 1,
+      unit_price: materials,
+      line_total: materials,
+      sort_order: 1,
+      created_at,
+    },
+  ];
+}
+
+function agreementItemsForDoc(doc: DemoDoc): AgreementItemRow[] {
+  const labor = Math.round(doc.total * 0.65 * 100) / 100;
+  const materials = Math.round((doc.total - labor) * 100) / 100;
+  const created_at = stamp(doc.issuedAt);
+  return [
+    {
+      id: `${doc.id}-item-1`,
+      agreement_id: doc.id,
+      description: "Labor / services",
+      quantity: 1,
+      unit_price: labor,
+      line_total: labor,
+      sort_order: 0,
+      created_at,
+    },
+    {
+      id: `${doc.id}-item-2`,
+      agreement_id: doc.id,
+      description: "Materials / equipment",
+      quantity: 1,
+      unit_price: materials,
+      line_total: materials,
+      sort_order: 1,
+      created_at,
+    },
+  ];
+}
+
+function invoiceItemsForDoc(doc: DemoDoc): InvoiceItemRow[] {
+  const created_at = stamp(doc.issuedAt);
+  return [
+    {
+      id: `${doc.id}-item-1`,
+      invoice_id: doc.id,
+      description: doc.title,
+      quantity: 1,
+      unit_price: doc.total,
+      line_total: doc.total,
+      sort_order: 0,
+      created_at,
+    },
+  ];
+}
+
+function scopeForDoc(doc: DemoDoc, industry: string) {
+  return `This proposal covers the ${industry || "service"} work outlined for ${doc.businessName}: ${doc.title}. Scope includes on-site assessment, agreed deliverables, and a customer walkthrough at completion. Changes outside this scope may adjust timeline and investment.`;
+}
+
+function termsForDoc() {
+  return [
+    "Payment: 30% deposit to schedule the work, with the balance due on completion unless otherwise agreed in writing.",
+    "Schedule: Work dates are confirmed after the deposit clears. Weather, site access, and material lead times may affect timing.",
+    "Changes: Material changes to scope will be quoted and approved before additional work proceeds.",
+    "Warranty: Workmanship is warranted for 90 days from completion unless a different term is noted above.",
+  ].join("\n\n");
 }
 
 function asLeadSource(value: string): LeadSource {
@@ -172,7 +260,10 @@ export function mapDemoSeedToCrm(raw: DemoSeed) {
     updated_at: stamp(),
   }));
 
-  const proposals: ProposalRow[] = seed.proposals.map((doc) => ({
+  const industry = seed.business.category || "service";
+  const defaultTerms = termsForDoc();
+
+  const proposals: ProposalWithItems[] = seed.proposals.map((doc) => ({
     id: doc.id,
     proposal_number: doc.number,
     title: doc.title,
@@ -191,8 +282,8 @@ export function mapDemoSeedToCrm(raw: DemoSeed) {
       null,
     issued_at: dateOnly(doc.issuedAt),
     valid_until: null,
-    scope_summary: doc.title,
-    terms: null,
+    scope_summary: scopeForDoc(doc, industry),
+    terms: defaultTerms,
     notes: null,
     deposit_percent: 30,
     subtotal: doc.total,
@@ -201,9 +292,10 @@ export function mapDemoSeedToCrm(raw: DemoSeed) {
     accepted_at: null,
     created_at: stamp(doc.issuedAt),
     updated_at: stamp(doc.issuedAt),
+    proposal_items: proposalItemsForDoc(doc),
   }));
 
-  const agreements: AgreementRow[] = seed.agreements.map((doc) => ({
+  const agreements: AgreementWithItems[] = seed.agreements.map((doc) => ({
     id: doc.id,
     agreement_number: doc.number,
     title: doc.title,
@@ -227,8 +319,8 @@ export function mapDemoSeedToCrm(raw: DemoSeed) {
       seed.leads.find((l) => l.businessName === doc.businessName)?.phone ??
       null,
     issued_at: dateOnly(doc.issuedAt),
-    scope_summary: doc.title,
-    terms: null,
+    scope_summary: scopeForDoc(doc, industry),
+    terms: defaultTerms,
     notes: null,
     deposit_percent: 30,
     subtotal: doc.total,
@@ -243,9 +335,10 @@ export function mapDemoSeedToCrm(raw: DemoSeed) {
     sent_at: stamp(doc.issuedAt),
     created_at: stamp(doc.issuedAt),
     updated_at: stamp(doc.issuedAt),
+    agreement_items: agreementItemsForDoc(doc),
   }));
 
-  const invoices: InvoiceRow[] = seed.invoices.map((doc) => ({
+  const invoices: InvoiceWithItems[] = seed.invoices.map((doc) => ({
     id: doc.id,
     invoice_number: doc.number,
     title: doc.title,
@@ -283,6 +376,7 @@ export function mapDemoSeedToCrm(raw: DemoSeed) {
     paid_at: doc.status.toLowerCase() === "paid" ? stamp(doc.issuedAt) : null,
     created_at: stamp(doc.issuedAt),
     updated_at: stamp(doc.issuedAt),
+    invoice_items: invoiceItemsForDoc(doc),
   }));
 
   const projects: ProjectWithOrganization[] = seed.projects.map((project) => {
@@ -431,6 +525,18 @@ export function findDemoProject(data: DemoCrmData, id: string) {
   return data.projects.find((project) => project.id === id) ?? null;
 }
 
+export function findDemoProposal(data: DemoCrmData, id: string) {
+  return data.proposals.find((row) => row.id === id) ?? null;
+}
+
+export function findDemoAgreement(data: DemoCrmData, id: string) {
+  return data.agreements.find((row) => row.id === id) ?? null;
+}
+
+export function findDemoInvoice(data: DemoCrmData, id: string) {
+  return data.invoices.find((row) => row.id === id) ?? null;
+}
+
 export function demoOrganizationBundle(data: DemoCrmData, id: string) {
   const org = findDemoOrganization(data, id);
   if (!org) return null;
@@ -446,9 +552,9 @@ export function demoOrganizationBundle(data: DemoCrmData, id: string) {
   const matchesOrg = (organizationId: string | null, leadId: string | null) =>
     organizationId === id || (leadId !== null && leadIds.has(leadId));
 
-  const proposals = data.proposals
-    .filter((row) => matchesOrg(row.organization_id, row.lead_id))
-    .map((row) => ({ ...row, proposal_items: [] }));
+  const proposals = data.proposals.filter((row) =>
+    matchesOrg(row.organization_id, row.lead_id),
+  );
 
   const agreements = data.agreements.filter((row) =>
     matchesOrg(row.organization_id, row.lead_id),

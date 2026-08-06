@@ -4,7 +4,7 @@ import { AgreementEditor } from "@/components/admin/agreement-editor";
 import { BillingSubnav } from "@/components/admin/billing-subnav";
 import { DemoPreviewBanner } from "@/components/demo/demo-preview-banner";
 import { loadDemoCrmData } from "@/lib/demo/data";
-import type { AgreementWithItems } from "@/lib/agreements";
+import { findDemoAgreement } from "@/lib/demo/map-to-crm";
 
 export const metadata = {
   title: "Demo Agreement",
@@ -18,13 +18,8 @@ export default async function DemoAgreementDetailPage({
 }) {
   const { id } = await params;
   const data = await loadDemoCrmData();
-  const agreement = data.agreements.find((row) => row.id === id);
-  if (!agreement) notFound();
-
-  const initialAgreement = {
-    ...agreement,
-    agreement_items: [],
-  } satisfies AgreementWithItems;
+  const initialAgreement = findDemoAgreement(data, id);
+  if (!initialAgreement) notFound();
 
   return (
     <main className="max-w-5xl">

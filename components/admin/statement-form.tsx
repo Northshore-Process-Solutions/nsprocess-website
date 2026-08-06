@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { usePortal } from "@/components/portal/portal-provider";
 import { Button } from "@/components/ui/button";
 import { todayDateOnly } from "@/lib/billing";
 
@@ -21,6 +22,7 @@ export function StatementForm({
   defaultOrganizationId,
 }: StatementFormProps) {
   const router = useRouter();
+  const { href } = usePortal();
   const [organizationId, setOrganizationId] = useState(
     defaultOrganizationId &&
       organizations.some((org) => org.id === defaultOrganizationId)
@@ -43,7 +45,7 @@ export function StatementForm({
       from,
       to,
     });
-    router.push(`/crm/statements/view?${params.toString()}`);
+    router.push(href(`/statements/view?${params.toString()}`));
   }
 
   return (
