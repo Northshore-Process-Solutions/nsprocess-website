@@ -114,7 +114,7 @@ export function LeadDetailDialog({
           </div>
         </div>
 
-        <div className="flex flex-col-reverse gap-3 border-t border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="flex flex-col gap-3 border-t border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           {onDelete ? (
             <Button
               disabled={deleting}
@@ -126,9 +126,9 @@ export function LeadDetailDialog({
               {deleting ? "Deleting…" : "Delete lead"}
             </Button>
           ) : (
-            <span />
+            <span className="hidden sm:block" />
           )}
-          <div className="flex flex-col-reverse gap-3 sm:flex-row">
+          <div className="flex flex-wrap gap-2 sm:justify-end">
             {onReply ? (
               <Button
                 onClick={() => onReply(lead)}
@@ -153,9 +153,6 @@ export function LeadDetailDialog({
                 </Link>
               </Button>
             ) : null}
-            <Button onClick={onClose} type="button" variant="outline">
-              Close
-            </Button>
             {onEdit ? (
               <Button
                 onClick={() => onEdit(lead)}
