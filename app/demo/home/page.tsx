@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import { DemoShell } from "@/components/demo/demo-shell";
+import { DemoPageHeader, DemoStat } from "@/components/demo/demo-ui";
 import { formatMoney } from "@/lib/billing";
-import { requireReadyDemoSession } from "@/lib/demo/session";
+import { loadDemoSeed } from "@/lib/demo/data";
 import { leadStageLabel } from "@/lib/leads";
 
 export const metadata = {
@@ -12,12 +12,7 @@ export const metadata = {
 };
 
 export default async function DemoHomePage() {
-  const { session, error } = await requireReadyDemoSession();
-  if (!session?.seed) {
-    redirect(error?.includes("expired") ? "/demo?expired=1" : "/demo");
-  }
-
-  const seed = session.seed;
+  const seed = await loadDemoSeed();
   const today = new Date().toISOString().slice(0, 10);
   const followUps = seed.leads.filter(
     (lead) =>
@@ -41,22 +36,19 @@ export default async function DemoHomePage() {
 
   return (
     <DemoShell businessName={seed.business.name}>
-      <header className="mb-5">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-          Home
-        </h1>
-        <p className="mt-1 text-sm text-slate-600">
-          You are logged in as {seed.business.name}. These queues are your
-          customers, jobs, and paperwork — not North Shore Process Solutions’
-          accounts.
-        </p>
-      </header>
+      <DemoPageHeader
+        description={`You are logged in as ${seed.business.name}. These queues are your customers, jobs, and paperwork — same layout as the live portal.`}
+        title="Home"
+      />
 
       <section className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Follow-ups due" value={String(followUps.length)} />
-        <Stat label="Ready to propose" value={String(readyToPropose.length)} />
-        <Stat label="Open invoice $" value={formatMoney(openInvoiceTotal)} />
-        <Stat label="Events this week" value={String(events.length)} />
+        <DemoStat label="Follow-ups due" value={String(followUps.length)} />
+        <DemoStat
+          label="Ready to propose"
+          value={String(readyToPropose.length)}
+        />
+        <DemoStat label="Open invoice $" value={formatMoney(openInvoiceTotal)} />
+        <DemoStat label="Events this week" value={String(events.length)} />
       </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -64,6 +56,7 @@ export default async function DemoHomePage() {
           empty="No follow-ups waiting."
           href="/demo/pipeline"
           items={followUps.map((lead) => ({
+            href: `/demo/pipeline/${lead.id}`,
             title: lead.businessName,
             meta: leadStageLabel(lead.stage),
             detail: lead.nextFollowUpAt
@@ -79,11 +72,13 @@ export default async function DemoHomePage() {
             ...seed.proposals
               .filter((doc) => doc.status.toLowerCase() === "draft")
               .map((doc) => ({
+                href: `/demo/billing/proposals/${doc.id}`,
                 title: doc.businessName,
                 meta: "Draft proposal",
                 detail: doc.number,
               })),
             ...openInvoices.map((doc) => ({
+              href: `/demo/billing/invoices/${doc.id}`,
               title: doc.businessName,
               meta: doc.status,
               detail: `${doc.number} · ${formatMoney(doc.total)}`,
@@ -93,8 +88,9 @@ export default async function DemoHomePage() {
         />
         <Queue
           empty="No upcoming events."
-          href="/demo/home"
+          href="/demo/calendar"
           items={events.map((event) => ({
+            href: "/demo/calendar",
             title: event.title,
             meta: event.eventType,
             detail: new Date(event.startsAt).toLocaleString(),
@@ -105,6 +101,7 @@ export default async function DemoHomePage() {
           empty="No active projects."
           href="/demo/projects"
           items={seed.projects.map((project) => ({
+            href: `/demo/projects/${project.id}`,
             title: project.name,
             meta: project.status,
             detail: project.nextAction,
@@ -113,17 +110,6 @@ export default async function DemoHomePage() {
         />
       </div>
     </DemoShell>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md border border-slate-200 bg-white px-3 py-3">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-        {label}
-      </p>
-      <p className="mt-1 text-xl font-semibold text-slate-900">{value}</p>
-    </div>
   );
 }
 
@@ -136,7 +122,12 @@ function Queue({
   title: string;
   href: string;
   empty: string;
-  items: Array<{ title: string; meta: string; detail: string }>;
+  items: Array<{
+    href: string;
+    title: string;
+    meta: string;
+    detail: string;
+  }>;
 }) {
   return (
     <section className="rounded-md border border-slate-200 bg-white">
@@ -152,16 +143,21 @@ function Queue({
       {items.length > 0 ? (
         <ul className="divide-y divide-slate-100">
           {items.map((item) => (
-            <li className="px-3 py-2.5" key={`${item.title}-${item.detail}`}>
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-sm font-medium text-slate-900">
-                  {item.title}
-                </p>
-                <span className="shrink-0 text-xs text-slate-500">
-                  {item.meta}
-                </span>
-              </div>
-              <p className="mt-0.5 text-xs text-slate-500">{item.detail}</p>
+            <li key={`${item.href}-${item.detail}`}>
+              <Link
+                className="block px-3 py-2.5 hover:bg-slate-50"
+                href={item.href}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm font-medium text-slate-900">
+                    {item.title}
+                  </p>
+                  <span className="shrink-0 text-xs text-slate-500">
+                    {item.meta}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-xs text-slate-500">{item.detail}</p>
+              </Link>
             </li>
           ))}
         </ul>

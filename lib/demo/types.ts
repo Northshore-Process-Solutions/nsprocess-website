@@ -46,6 +46,9 @@ export type DemoProject = {
   status: "planning" | "active" | "on_hold" | "completed";
   nextAction: string;
   businessName: string;
+  scope?: string;
+  startDate?: string | null;
+  targetDate?: string | null;
 };
 
 export type DemoEvent = {
@@ -54,6 +57,25 @@ export type DemoEvent = {
   startsAt: string;
   eventType: string;
   businessName: string;
+};
+
+export type DemoPurchase = {
+  id: string;
+  description: string;
+  amount: number;
+  purchasedAt: string;
+  vendor: string;
+  businessName: string;
+  purchaseType: string;
+};
+
+export type DemoTool = {
+  id: string;
+  name: string;
+  category: string;
+  status: "active" | "evaluating" | "retired";
+  notes: string;
+  monthlyCost: number;
 };
 
 export type DemoBusiness = {
@@ -76,12 +98,20 @@ export type DemoSeed = {
   invoices: DemoDoc[];
   projects: DemoProject[];
   events: DemoEvent[];
+  purchases: DemoPurchase[];
+  tools: DemoTool[];
   activities: Array<{
     id: string;
     summary: string;
     occurredAt: string;
     kind: string;
   }>;
+};
+
+/** Raw seed as stored/returned before normalize (older sessions may omit fields). */
+export type DemoSeedInput = Omit<DemoSeed, "purchases" | "tools"> & {
+  purchases?: DemoPurchase[];
+  tools?: DemoTool[];
 };
 
 export type DemoSessionRow = {

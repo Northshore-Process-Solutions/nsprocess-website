@@ -28,7 +28,7 @@ operator. Pipeline leads are their customers; projects are their jobs.
 2. Intake form → create `building` session + cookie
 3. AI `generateObject` builds a typed seed (pipeline, billing, projects, events)
 4. Session marked `ready` → `/demo/home`
-5. Visitor explores Home / Pipeline / Business / Billing / Projects
+5. Visitor explores the same tabs as the live portal: Home, Pipeline, Businesses, Billing, Projects, Calendar, Purchases, Stack — with click-through detail pages
 6. Session expires after 3 hours, or visitor clicks **End demo**
 7. Optional cron hits `POST /api/demo/purge` to delete expired rows
 

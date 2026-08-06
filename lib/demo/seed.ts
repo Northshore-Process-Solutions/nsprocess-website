@@ -91,10 +91,13 @@ const seedSchema = z.object({
         status: z.enum(["planning", "active", "on_hold", "completed"]),
         nextAction: z.string(),
         businessName: z.string(),
+        scope: z.string().optional(),
+        startDate: z.string().nullable().optional(),
+        targetDate: z.string().nullable().optional(),
       }),
     )
     .min(1)
-    .max(2),
+    .max(3),
   events: z
     .array(
       z.object({
@@ -107,6 +110,33 @@ const seedSchema = z.object({
     )
     .min(1)
     .max(3),
+  purchases: z
+    .array(
+      z.object({
+        id: z.string(),
+        description: z.string(),
+        amount: z.number(),
+        purchasedAt: z.string(),
+        vendor: z.string(),
+        businessName: z.string(),
+        purchaseType: z.string(),
+      }),
+    )
+    .min(2)
+    .max(5),
+  tools: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        category: z.string(),
+        status: z.enum(["active", "evaluating", "retired"]),
+        notes: z.string(),
+        monthlyCost: z.number(),
+      }),
+    )
+    .min(3)
+    .max(6),
   activities: z
     .array(
       z.object({
@@ -244,6 +274,19 @@ function fallbackSeed(intake: DemoIntake): DemoSeed {
         status: "active",
         nextAction: "Confirm equipment delivery and crew day",
         businessName: customerB,
+        scope: `Full ${industry} install at ${customerB}: equipment set, startup, and customer walkthrough.`,
+        startDate: isoDay(-5),
+        targetDate: isoDay(10),
+      },
+      {
+        id: "proj-2",
+        name: `${customerA} — estimate follow-through`,
+        status: "planning",
+        nextAction: "Send written quote after site measurements",
+        businessName: customerA,
+        scope: `Quote package for ${customerA} after the estimate visit.`,
+        startDate: isoDay(-1),
+        targetDate: isoDay(7),
       },
     ],
     events: [
@@ -260,6 +303,69 @@ function fallbackSeed(intake: DemoIntake): DemoSeed {
         startsAt: isoStamp(24),
         eventType: "onsite",
         businessName: customerA,
+      },
+    ],
+    purchases: [
+      {
+        id: "pur-1",
+        description: `Equipment for ${customerB} job`,
+        amount: 2100,
+        purchasedAt: isoDay(-4),
+        vendor: "Supply House Direct",
+        businessName: customerB,
+        purchaseType: "materials",
+      },
+      {
+        id: "pur-2",
+        description: "Shop consumables restock",
+        amount: 185,
+        purchasedAt: isoDay(-2),
+        vendor: "Local Parts Counter",
+        businessName: companyName,
+        purchaseType: "supplies",
+      },
+      {
+        id: "pur-3",
+        description: "Fuel / truck week",
+        amount: 140,
+        purchasedAt: isoDay(-1),
+        vendor: "Fleet Fuel",
+        businessName: companyName,
+        purchaseType: "ops",
+      },
+    ],
+    tools: [
+      {
+        id: "tool-1",
+        name: "Job scheduling board",
+        category: "Operations",
+        status: "active",
+        notes: "Crew days and estimate slots",
+        monthlyCost: 0,
+      },
+      {
+        id: "tool-2",
+        name: "QuickBooks Online",
+        category: "Finance",
+        status: "active",
+        notes: "Invoices and deposits",
+        monthlyCost: 55,
+      },
+      {
+        id: "tool-3",
+        name: "Google Workspace",
+        category: "Communication",
+        status: "active",
+        notes: "Email and shared folders",
+        monthlyCost: 18,
+      },
+      {
+        id: "tool-4",
+        name: "Field photo app",
+        category: "Field",
+        status: "evaluating",
+        notes: "Before/after job documentation",
+        monthlyCost: 12,
       },
     ],
     activities: [
@@ -301,8 +407,10 @@ Critical framing:
 - leads.contactName = the customer's contact person.
 - leads.message = what the customer wants (install, repair, quote, service call) in that industry's language.
 - proposals / agreements / invoices = paperwork the visitor's company sends TO those customers for jobs.
-- projects = active jobs/work orders for those customers.
+- projects = active jobs/work orders for those customers (include scope + optional dates).
 - events = estimates, installs, service calls, follow-ups on the calendar.
+- purchases = materials/supplies/ops spend tied to jobs or the shop.
+- tools = the visitor company's software/stack (scheduling, accounting, email, field apps).
 - activities = internal notes/emails about those customer jobs.
 
 Industry fidelity:
@@ -326,7 +434,11 @@ Default geography: Massachusetts North Shore unless intake says otherwise.
 Remember: the visitor runs ${intake.businessName || "this company"}. Populate THEIR pipeline with THEIR customers and jobs.`,
     });
 
-    return object;
+    return {
+      ...object,
+      purchases: object.purchases ?? [],
+      tools: object.tools ?? [],
+    };
   } catch {
     return fallbackSeed(intake);
   }

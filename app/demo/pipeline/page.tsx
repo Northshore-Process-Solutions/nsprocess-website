@@ -1,7 +1,8 @@
-import { redirect } from "next/navigation";
+import Link from "next/link";
 
 import { DemoShell } from "@/components/demo/demo-shell";
-import { requireReadyDemoSession } from "@/lib/demo/session";
+import { DemoPageHeader } from "@/components/demo/demo-ui";
+import { loadDemoSeed } from "@/lib/demo/data";
 import { leadStageLabel } from "@/lib/leads";
 
 export const metadata = {
@@ -10,22 +11,14 @@ export const metadata = {
 };
 
 export default async function DemoPipelinePage() {
-  const { session } = await requireReadyDemoSession();
-  if (!session?.seed) redirect("/demo");
-
-  const seed = session.seed;
+  const seed = await loadDemoSeed();
 
   return (
     <DemoShell businessName={seed.business.name}>
-      <header className="mb-5">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-          Pipeline
-        </h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Customer inquiries for {seed.business.name} — quotes, site visits, and
-          jobs waiting to move forward.
-        </p>
-      </header>
+      <DemoPageHeader
+        description={`Customer inquiries for ${seed.business.name} — quotes, site visits, and jobs waiting to move forward.`}
+        title="Pipeline"
+      />
 
       <div className="overflow-hidden rounded-md border border-slate-200 bg-white">
         <table className="min-w-full text-left text-sm">
@@ -39,21 +32,27 @@ export default async function DemoPipelinePage() {
           </thead>
           <tbody>
             {seed.leads.map((lead) => (
-              <tr className="border-t border-slate-100" key={lead.id}>
+              <tr
+                className="border-t border-slate-100 hover:bg-slate-50"
+                key={lead.id}
+              >
                 <td className="px-3 py-2.5">
-                  <p className="font-medium text-slate-900">
+                  <Link
+                    className="font-medium text-slate-900 hover:underline"
+                    href={`/demo/pipeline/${lead.id}`}
+                  >
                     {lead.businessName}
+                  </Link>
+                  <p className="text-xs text-slate-500 line-clamp-1">
+                    {lead.message}
                   </p>
-                  <p className="text-xs text-slate-500">{lead.message}</p>
                 </td>
                 <td className="px-3 py-2.5">
                   <p>{lead.contactName}</p>
                   <p className="text-xs text-slate-500">{lead.email}</p>
                 </td>
                 <td className="px-3 py-2.5">{leadStageLabel(lead.stage)}</td>
-                <td className="px-3 py-2.5">
-                  {lead.nextFollowUpAt ?? "—"}
-                </td>
+                <td className="px-3 py-2.5">{lead.nextFollowUpAt ?? "—"}</td>
               </tr>
             ))}
           </tbody>
