@@ -216,7 +216,9 @@ function fallbackSeed(intake: DemoIntake): DemoSeed {
         stage: "follow_up",
         source: "website_form",
         nextFollowUpAt: isoDay(0),
-        message: `New ${industry} quote request — wants pricing and schedule options.`,
+        message: isPublicSector
+          ? `Hi — we need on-site ${industry} support for our staff machines before the next fiscal quarter. Can someone come to ${customerA} next week and send a quote?`
+          : `Hi, my computer has been really slow and I think it might have viruses. Looking for a cleanup and what times you have available.`,
       },
       {
         id: "lead-2",
@@ -227,7 +229,9 @@ function fallbackSeed(intake: DemoIntake): DemoSeed {
         stage: "review_completed",
         source: "referral",
         nextFollowUpAt: isoDay(1),
-        message: `Site walk done. Ready for a written proposal on the ${industry} work.`,
+        message: isPublicSector
+          ? `Following up from our walkthrough — please send the written proposal for the ${industry} work we discussed, including timeline and deposit.`
+          : `You came by last week for the estimate. Could you send the written quote when you have a chance? Want to get this scheduled.`,
       },
       {
         id: "lead-3",
@@ -238,7 +242,9 @@ function fallbackSeed(intake: DemoIntake): DemoSeed {
         stage: "new_inquiry",
         source: "website_form",
         nextFollowUpAt: isoDay(0),
-        message: `Multi-unit ${industry} inquiry. Asking about timeline and deposit.`,
+        message: isPublicSector
+          ? `We manage several buildings and need ${industry} help across a few sites. What's your availability and typical turnaround for a multi-location quote?`
+          : `I have a few devices that need attention (laptop + desktop). Can you tell me pricing and how soon you could get to them?`,
       },
     ],
     proposals: [
@@ -421,7 +427,11 @@ Critical framing:
 - leads = THEIR customers/prospects. Never make the visitor's company a lead.
 - leads.businessName = customer/account label that matches the REAL customer type implied by intake.
 - leads.contactName = the customer's contact person.
-- leads.message = what the customer wants, in that industry's language and buying context.
+- leads.message = the raw website contact-form / inquiry text written IN THE CUSTOMER'S VOICE (first person). It must sound like something a person typed into a "Contact us" or "Request a quote" box — short, natural, a bit messy is fine. NEVER a third-person CRM summary.
+  Bad: "New Computer Repair quote request — wants pricing and schedule options."
+  Good: "My computer is acting very slow and I think it has viruses. Wanted to see about cleanup and availability."
+  Good (public sector): "We need quotes to refresh 12 staff laptops before FY end. Can you come on-site to Amesbury Town Hall next week?"
+- leads.source is often website_form for these inbound messages.
 - proposals / agreements / invoices = paperwork the visitor's company sends TO those customers for jobs.
 - projects = active jobs/work orders for those customers (include scope + optional dates).
 - events = estimates, installs, service calls, follow-ups on the calendar.
@@ -448,7 +458,8 @@ Rules:
 - At least one lead follow-up due today or earlier.
 - Include a clear path: inquiry → proposal → agreement/deposit invoice → active job/project.
 - Keep all names fictional but plausible for the stated customer type.
-- At least 3 of 5 leads (or all leads if fewer) must clearly match the primary customer type from intake.description.`,
+- At least 3 of 5 leads (or all leads if fewer) must clearly match the primary customer type from intake.description.
+- Every leads.message must be first-person customer voice (website form style), not an internal summary or status note.`,
       prompt: `Build a company-operator CRM demo seed for this intake:
 ${JSON.stringify(intake, null, 2)}
 
@@ -458,7 +469,12 @@ Default geography: use intake.location when present; otherwise Massachusetts Nor
 Primary customer type to invent for (derive from description/industry):
 "${intake.description}"
 
-Remember: the visitor runs ${intake.businessName || "this company"}. Populate THEIR pipeline with customers that match how THEY actually win work — not a generic small-business sample.`,
+Remember: the visitor runs ${intake.businessName || "this company"}. Populate THEIR pipeline with customers that match how THEY actually win work — not a generic small-business sample.
+
+leads.message examples of the tone required (adapt to this industry/customer type; do not copy verbatim):
+- "My laptop keeps freezing when I open Excel. Can someone look at it this week?"
+- "Hi — our office printers are jamming constantly. Looking for a service visit and maybe a maintenance plan."
+- "We're a town department needing 8 desktops quoted for a grant purchase. Who should I email the specs to?"`,
     });
 
     return {
