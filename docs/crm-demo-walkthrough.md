@@ -24,7 +24,7 @@ Suggested demo business:
 3. Confirm the form shows success.
 4. Switch to the portal and open `Pipeline`.
 5. Confirm `Northshore Demo Co` appears as a `New inquiry` with source `website_form`.
-6. Optionally open `Today` and show it sitting in follow-ups.
+6. Optionally open `Home` and show it sitting in follow-ups.
 
 What to say: Real work starts on the website. The CRM does not invent the lead — the form writes it into Pipeline automatically.
 

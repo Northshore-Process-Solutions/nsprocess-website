@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "/crm", label: "Today", key: "today" as const, match: (p: string) => p === "/crm" },
+  { href: "/crm", label: "Home", key: "home" as const, match: (p: string) => p === "/crm" },
   {
     href: "/crm/pipeline",
     label: "Pipeline",
@@ -59,7 +59,7 @@ const links = [
 
 /** @deprecated Prefer pathname-based AdminNav with no current prop. */
 export type AdminNavKey =
-  | "today"
+  | "home"
   | "crm"
   | "pipeline"
   | "billing"

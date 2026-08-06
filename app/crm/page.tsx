@@ -102,7 +102,7 @@ export default async function AdminTodayPage() {
     <main>
       <header className="mb-5">
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-          Today
+          Home
         </h1>
         <p className="mt-1 text-sm text-slate-600">
           Start here. Work the queues below in order when you are unsure what
@@ -146,7 +146,7 @@ export default async function AdminTodayPage() {
               ? `Due ${lead.next_follow_up_at}`
               : "No follow-up date",
           }))}
-          title="1. Pipeline follow-ups"
+          title="Pipeline"
         />
 
         <QueueCard
@@ -175,7 +175,7 @@ export default async function AdminTodayPage() {
               detail: `${invoice.invoice_number} · ${formatMoney(invoiceBalance(invoice))} due`,
             })),
           ]}
-          title="2. Propose / bill"
+          title="Billing"
         />
 
         <QueueCard
@@ -188,7 +188,7 @@ export default async function AdminTodayPage() {
             title: event.title,
             detail: new Date(event.starts_at).toLocaleString(),
           }))}
-          title="3. Calendar"
+          title="Calendar"
         />
 
         <QueueCard
@@ -203,7 +203,7 @@ export default async function AdminTodayPage() {
               ? project.next_action
               : (project.organizations?.name ?? "Open project"),
           }))}
-          title="4. Delivery"
+          title="Projects"
         />
       </div>
     </main>
