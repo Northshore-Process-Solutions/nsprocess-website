@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { AgreementEditor } from "@/components/admin/agreement-editor";
-import { BillingSubnav } from "@/components/admin/billing-subnav";
+import { SalesSubnav } from "@/components/admin/sales-subnav";
 import { DemoPreviewBanner } from "@/components/demo/demo-preview-banner";
 import { loadDemoCrmData } from "@/lib/demo/data";
 import { findDemoAgreement } from "@/lib/demo/map-to-crm";
@@ -25,7 +25,7 @@ export default async function DemoAgreementDetailPage({
     <main className="max-w-5xl">
       <DemoPreviewBanner />
       <header className="mb-5">
-        <BillingSubnav current="agreements" />
+        <SalesSubnav current="agreements" />
       </header>
       <AgreementEditor initialAgreement={initialAgreement} mode="edit" />
     </main>

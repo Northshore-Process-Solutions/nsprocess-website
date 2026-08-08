@@ -453,6 +453,9 @@ export function OrganizationDetail({
           actions={
             <>
               <Button asChild size="sm" variant="outline">
+                <Link href={href("/sales")}>Sales</Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
                 <Link
                   href={href(`/statements?organizationId=${organization.id}`)}
                 >
@@ -464,8 +467,8 @@ export function OrganizationDetail({
               </Button>
             </>
           }
-          description="Money paperwork for this account"
-          title="Billing"
+          description="Proposals and agreements close the job; invoices collect payment"
+          title="Sales & billing"
         >
           <div className="space-y-2">
             <BillingSnapshotRow
@@ -747,7 +750,7 @@ export function OrganizationDetail({
         invoices.length > 1) && (
         <HubCard
           description="All paperwork linked to this business"
-          title="Billing history"
+          title="Sales & billing history"
         >
           <div className="grid gap-4 lg:grid-cols-3">
             <DocList

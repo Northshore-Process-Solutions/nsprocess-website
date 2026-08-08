@@ -6,19 +6,19 @@ import { usePortal } from "@/components/portal/portal-provider";
 import { cn } from "@/lib/utils";
 
 const linkDefs = [
-  { path: "/billing", label: "Overview", key: "overview" as const },
-  { path: "/invoices", label: "Invoices", key: "invoices" as const },
-  { path: "/statements", label: "Statements", key: "statements" as const },
+  { path: "/sales", label: "Overview", key: "overview" as const },
+  { path: "/proposals", label: "Proposals", key: "proposals" as const },
+  { path: "/agreements", label: "Agreements", key: "agreements" as const },
 ];
 
-export type BillingSubnavKey = "overview" | "invoices" | "statements";
+export type SalesSubnavKey = "overview" | "proposals" | "agreements";
 
-export function BillingSubnav({ current }: { current: BillingSubnavKey }) {
+export function SalesSubnav({ current }: { current: SalesSubnavKey }) {
   const { href } = usePortal();
 
   return (
     <nav
-      aria-label="Billing sections"
+      aria-label="Sales sections"
       className="mt-3 flex flex-wrap gap-x-1 gap-y-0 border-b border-slate-200"
     >
       {linkDefs.map((link) => {

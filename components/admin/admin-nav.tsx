@@ -40,13 +40,20 @@ const linkDefs = [
       p.startsWith(`${base}/organizations`),
   },
   {
+    path: "/sales",
+    label: "Sales",
+    key: "sales" as const,
+    match: (p: string, base: string) =>
+      p.startsWith(`${base}/sales`) ||
+      p.startsWith(`${base}/proposals`) ||
+      p.startsWith(`${base}/agreements`),
+  },
+  {
     path: "/billing",
     label: "Billing",
     key: "billing" as const,
     match: (p: string, base: string) =>
       p.startsWith(`${base}/billing`) ||
-      p.startsWith(`${base}/proposals`) ||
-      p.startsWith(`${base}/agreements`) ||
       p.startsWith(`${base}/invoices`) ||
       p.startsWith(`${base}/statements`),
   },
@@ -69,6 +76,7 @@ export type AdminNavKey =
   | "home"
   | "crm"
   | "pipeline"
+  | "sales"
   | "billing"
   | "projects"
   | "stack"

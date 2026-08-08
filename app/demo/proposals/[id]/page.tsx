@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { BillingSubnav } from "@/components/admin/billing-subnav";
+import { SalesSubnav } from "@/components/admin/sales-subnav";
 import { ProposalEditor } from "@/components/admin/proposal-editor";
 import { DemoPreviewBanner } from "@/components/demo/demo-preview-banner";
 import { loadDemoCrmData } from "@/lib/demo/data";
@@ -25,7 +25,7 @@ export default async function DemoProposalDetailPage({
     <main className="max-w-5xl">
       <DemoPreviewBanner />
       <header className="mb-5">
-        <BillingSubnav current="proposals" />
+        <SalesSubnav current="proposals" />
       </header>
       <ProposalEditor initialProposal={initialProposal} mode="edit" />
     </main>

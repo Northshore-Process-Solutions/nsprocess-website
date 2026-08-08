@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 
-import { BillingSubnav } from "@/components/admin/billing-subnav";
+import { SalesSubnav } from "@/components/admin/sales-subnav";
 import { ProposalEditor } from "@/components/admin/proposal-editor";
 import type { ProposalWithItems } from "@/lib/proposals";
 import { createClient } from "@/lib/supabase/server";
@@ -87,7 +87,7 @@ export default async function ProposalPage({ params }: ProposalPageProps) {
   return (
     <main className="max-w-5xl">
       <header className="mb-5">
-        <BillingSubnav current="proposals" />
+        <SalesSubnav current="proposals" />
       </header>
 
       <ProposalEditor

@@ -1,49 +1,43 @@
 import Link from "next/link";
-import { Receipt, ScrollText } from "lucide-react";
+import { FileSignature, FileText } from "lucide-react";
 
-import { BillingSubnav } from "@/components/admin/billing-subnav";
-import { formatMoney } from "@/lib/billing";
+import { SalesSubnav } from "@/components/admin/sales-subnav";
 import { loadDemoCrmData } from "@/lib/demo/data";
 import { portalPath } from "@/lib/portal/paths";
 
 export const metadata = {
-  title: "Demo Billing",
+  title: "Demo Sales",
   robots: { index: false, follow: false },
 };
 
-export default async function DemoBillingPage() {
+export default async function DemoSalesPage() {
   const data = await loadDemoCrmData();
   const base = portalPath("demo");
 
-  const invoiceOpen = data.invoices.filter((row) =>
-    ["draft", "sent"].includes(row.status),
-  ).length;
-  const invoicePaid = data.invoices.filter((row) => row.status === "paid")
+  const proposalDrafts = data.proposals.filter((row) => row.status === "draft")
     .length;
-
-  const openBalance = data.invoices
-    .filter((row) => ["draft", "sent"].includes(row.status))
-    .reduce(
-      (sum, row) =>
-        sum +
-        Math.max(0, Number(row.total_amount ?? 0) - Number(row.amount_paid ?? 0)),
-      0,
-    );
+  const proposalSent = data.proposals.filter((row) => row.status === "sent")
+    .length;
+  const agreementDrafts = data.agreements.filter((row) => row.status === "draft")
+    .length;
+  const agreementSigned = data.agreements.filter(
+    (row) => row.status === "signed",
+  ).length;
 
   const cards = [
     {
-      href: `${base}/invoices`,
-      title: "Invoices",
-      description: "Deposit, progress, and final payment requests.",
-      icon: Receipt,
-      meta: `${invoiceOpen} open · ${invoicePaid} paid`,
+      href: `${base}/proposals`,
+      title: "Proposals",
+      description: "Draft quotes after consults — client can accept or decline.",
+      icon: FileText,
+      meta: `${proposalDrafts} drafts · ${proposalSent} sent`,
     },
     {
-      href: `${base}/statements`,
-      title: "Statements",
-      description: "Generate a printable account snapshot by business.",
-      icon: ScrollText,
-      meta: `Open balance ${formatMoney(openBalance)}`,
+      href: `${base}/agreements`,
+      title: "Agreements",
+      description: "Binding contract to sign after the quote is accepted.",
+      icon: FileSignature,
+      meta: `${agreementDrafts} drafts · ${agreementSigned} signed`,
     },
   ];
 
@@ -51,12 +45,12 @@ export default async function DemoBillingPage() {
     <main>
       <header className="mb-5">
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-          Billing
+          Sales
         </h1>
         <p className="mt-1 text-sm text-slate-600">
-          Invoices and statements — collect payment and share account balances.
+          Proposals and agreements — close the job before billing.
         </p>
-        <BillingSubnav current="overview" />
+        <SalesSubnav current="overview" />
       </header>
 
       <section className="grid gap-3 sm:grid-cols-2">
@@ -90,9 +84,9 @@ export default async function DemoBillingPage() {
       <section className="mt-5 rounded-md border border-slate-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-slate-900">Suggested flow</h2>
         <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm text-slate-600">
-          <li>After an agreement is signed, issue a deposit Invoice.</li>
-          <li>Mark invoices paid when funds clear.</li>
-          <li>Generate a Statement anytime a client asks for a balance view.</li>
+          <li>Send a Proposal after the consult.</li>
+          <li>Create an Agreement from the proposal and get it signed.</li>
+          <li>Then move to Billing for the deposit invoice and statements.</li>
         </ol>
       </section>
     </main>

@@ -35,9 +35,20 @@ const links = [
     match: (p: string) => p.startsWith("/demo/businesses"),
   },
   {
+    href: "/demo/sales",
+    label: "Sales",
+    match: (p: string) =>
+      p.startsWith("/demo/sales") ||
+      p.startsWith("/demo/proposals") ||
+      p.startsWith("/demo/agreements"),
+  },
+  {
     href: "/demo/billing",
     label: "Billing",
-    match: (p: string) => p.startsWith("/demo/billing"),
+    match: (p: string) =>
+      p.startsWith("/demo/billing") ||
+      p.startsWith("/demo/invoices") ||
+      p.startsWith("/demo/statements"),
   },
   {
     href: "/demo/purchases",

@@ -122,7 +122,7 @@ export function LeadDetailDialog({
                     </Button>
                   ) : (
                     <Button asChild type="button" variant="accent">
-                      <Link href={href("/billing")}>Go to Billing</Link>
+                      <Link href={href("/sales")}>Go to Sales</Link>
                     </Button>
                   )}
                 </div>

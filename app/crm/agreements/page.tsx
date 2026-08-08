@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { FileText, PenLine } from "lucide-react";
 
 import { AgreementsPanel } from "@/components/admin/agreements-panel";
-import { BillingSubnav } from "@/components/admin/billing-subnav";
+import { SalesSubnav } from "@/components/admin/sales-subnav";
 import {
   AGREEMENT_STATUSES,
   type AgreementStatus,
@@ -84,7 +84,7 @@ export default async function AgreementsPage({
           Turn an accepted proposal into the binding contract clients sign — then
           issue the deposit invoice.
         </p>
-        <BillingSubnav current="agreements" />
+        <SalesSubnav current="agreements" />
       </header>
 
       <section className="mb-6 grid gap-4 sm:grid-cols-3">

@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Receipt, ScrollText } from "lucide-react";
+import { FileSignature, FileText } from "lucide-react";
 
-import { BillingSubnav } from "@/components/admin/billing-subnav";
-import { formatMoney } from "@/lib/billing";
+import { SalesSubnav } from "@/components/admin/sales-subnav";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function BillingPage() {
+export default async function SalesPage() {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
 
@@ -15,45 +14,43 @@ export default async function BillingPage() {
   }
 
   const [
-    { count: invoiceOpen },
-    { count: invoicePaid },
-    { data: openInvoices },
+    { count: proposalDrafts },
+    { count: proposalSent },
+    { count: agreementDrafts },
+    { count: agreementSigned },
   ] = await Promise.all([
     supabase
-      .from("invoices")
+      .from("proposals")
       .select("*", { count: "exact", head: true })
-      .in("status", ["draft", "sent"]),
+      .eq("status", "draft"),
     supabase
-      .from("invoices")
+      .from("proposals")
       .select("*", { count: "exact", head: true })
-      .eq("status", "paid"),
+      .eq("status", "sent"),
     supabase
-      .from("invoices")
-      .select("total_amount, amount_paid, status")
-      .in("status", ["draft", "sent"]),
+      .from("agreements")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "draft"),
+    supabase
+      .from("agreements")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "signed"),
   ]);
-
-  const openBalance = (openInvoices ?? []).reduce((sum, row) => {
-    return (
-      sum +
-      Math.max(0, Number(row.total_amount ?? 0) - Number(row.amount_paid ?? 0))
-    );
-  }, 0);
 
   const cards = [
     {
-      href: "/crm/invoices",
-      title: "Invoices",
-      description: "Deposit, progress, and final payment requests.",
-      icon: Receipt,
-      meta: `${invoiceOpen ?? 0} open · ${invoicePaid ?? 0} paid`,
+      href: "/crm/proposals",
+      title: "Proposals",
+      description: "Draft quotes after consults — client can accept or decline.",
+      icon: FileText,
+      meta: `${proposalDrafts ?? 0} drafts · ${proposalSent ?? 0} sent`,
     },
     {
-      href: "/crm/statements",
-      title: "Statements",
-      description: "Generate a printable account snapshot by business.",
-      icon: ScrollText,
-      meta: `Open balance ${formatMoney(openBalance)}`,
+      href: "/crm/agreements",
+      title: "Agreements",
+      description: "Binding contract to sign after the quote is accepted.",
+      icon: FileSignature,
+      meta: `${agreementDrafts ?? 0} drafts · ${agreementSigned ?? 0} signed`,
     },
   ];
 
@@ -61,12 +58,12 @@ export default async function BillingPage() {
     <main>
       <header className="mb-5">
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-          Billing
+          Sales
         </h1>
         <p className="mt-1 text-sm text-slate-600">
-          Invoices and statements — collect payment and share account balances.
+          Proposals and agreements — close the job before billing.
         </p>
-        <BillingSubnav current="overview" />
+        <SalesSubnav current="overview" />
       </header>
 
       <section className="grid gap-3 sm:grid-cols-2">
@@ -100,9 +97,9 @@ export default async function BillingPage() {
       <section className="mt-5 rounded-md border border-slate-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-slate-900">Suggested flow</h2>
         <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm text-slate-600">
-          <li>After an agreement is signed, issue a deposit Invoice.</li>
-          <li>Mark invoices paid when funds clear.</li>
-          <li>Generate a Statement anytime a client asks for a balance view.</li>
+          <li>Send a Proposal after the consult — client accepts or declines.</li>
+          <li>Create an Agreement from the accepted proposal and get it signed.</li>
+          <li>Then move to Billing for the deposit invoice and statements.</li>
         </ol>
       </section>
     </main>

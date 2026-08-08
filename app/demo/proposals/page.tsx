@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FileText, Send } from "lucide-react";
 
-import { BillingSubnav } from "@/components/admin/billing-subnav";
+import { SalesSubnav } from "@/components/admin/sales-subnav";
 import { ProposalsPanel } from "@/components/admin/proposals-panel";
 import { loadDemoCrmData } from "@/lib/demo/data";
 import { portalPath } from "@/lib/portal/paths";
@@ -53,7 +53,7 @@ export default async function DemoProposalsPage({
           Draft scope and investment after a consult, then print a PDF for the
           client.
         </p>
-        <BillingSubnav current="proposals" />
+        <SalesSubnav current="proposals" />
       </header>
 
       <section className="mb-6 grid gap-4 sm:grid-cols-3">

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { FileText, Send } from "lucide-react";
 
-import { BillingSubnav } from "@/components/admin/billing-subnav";
+import { SalesSubnav } from "@/components/admin/sales-subnav";
 import { ProposalsPanel } from "@/components/admin/proposals-panel";
 import {
   formatProposalMoney,
@@ -83,7 +83,7 @@ export default async function ProposalsPage({
         <p className="mt-1 text-sm text-slate-600">
           Draft scope and investment after a consult, then print a PDF for the client.
         </p>
-        <BillingSubnav current="proposals" />
+        <SalesSubnav current="proposals" />
       </header>
 
       <section className="mb-6 grid gap-4 sm:grid-cols-3">
