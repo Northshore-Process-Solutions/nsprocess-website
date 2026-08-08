@@ -1,7 +1,6 @@
 import Image from "next/image";
 
 import {
-  issuerContactLine,
   issuerFooterLine,
   type DocumentIssuer,
 } from "@/lib/document-issuer";
@@ -15,7 +14,8 @@ export function DocumentPdfBrandHeader({
   subtitle?: string | null;
 }) {
   const line = subtitle !== undefined ? subtitle : issuer.tagline;
-  const contactLine = issuerContactLine(issuer);
+  const phone = issuer.phone?.trim() || null;
+  const email = issuer.email?.trim() || null;
 
   return (
     <header className="flex items-start justify-between gap-6 border-b-2 border-[#0B2545] pb-4">
@@ -26,16 +26,12 @@ export function DocumentPdfBrandHeader({
         {line ? (
           <p className="mt-1.5 text-[10pt] text-[#5C6B7D]">{line}</p>
         ) : null}
-        {issuer.serviceArea || contactLine ? (
-          <p className="mt-2 text-[10pt] leading-relaxed text-[#5C6B7D]">
-            {issuer.serviceArea ? (
-              <>
-                {issuer.serviceArea}
-                {contactLine ? <br /> : null}
-              </>
-            ) : null}
-            {contactLine || null}
-          </p>
+        {issuer.serviceArea || phone || email ? (
+          <div className="mt-2 space-y-0.5 text-[10pt] leading-relaxed text-[#5C6B7D]">
+            {issuer.serviceArea ? <p>{issuer.serviceArea}</p> : null}
+            {phone ? <p>{phone}</p> : null}
+            {email ? <p className="break-all">{email}</p> : null}
+          </div>
         ) : null}
       </div>
       {issuer.logoSrc ? (

@@ -69,19 +69,15 @@ export function ProposalShareView({
             {displayTitle}
           </p>
           {contactBits.length > 0 ? (
-            <p className="mt-1.5 break-words text-xs text-[#5C6B7D] sm:text-[10pt]">
-              {contactBits.join(" · ")}
-            </p>
+            <div className="mt-1.5 space-y-0.5 break-words text-xs text-[#5C6B7D] sm:text-[10pt]">
+              {contactBits.map((bit) => (
+                <p key={bit}>{bit}</p>
+              ))}
+            </div>
           ) : null}
         </div>
 
-        <dl className="grid grid-cols-3 gap-2 rounded-xl bg-[#F4F7FB] p-3 text-xs sm:grid-cols-1 sm:justify-items-end sm:bg-transparent sm:p-0 sm:text-right sm:text-[10pt]">
-          <div>
-            <dt className="text-[#5C6B7D]">Number</dt>
-            <dd className="mt-0.5 font-semibold break-all">
-              {proposal.proposal_number}
-            </dd>
-          </div>
+        <dl className="grid grid-cols-2 gap-2 rounded-xl bg-[#F4F7FB] p-3 text-xs sm:grid-cols-1 sm:justify-items-end sm:bg-transparent sm:p-0 sm:text-right sm:text-[10pt]">
           <div>
             <dt className="text-[#5C6B7D]">Issued</dt>
             <dd className="mt-0.5 font-semibold">
