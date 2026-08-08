@@ -79,38 +79,11 @@ export function resolveAppAiConfig(
 
 /** Brand + AI prompt preferences for live CRM assistants. */
 export async function getAppAiConfig(): Promise<AppAiConfig> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("app_settings")
-      .select(AI_SETTINGS_SELECT)
-      .eq("id", true)
-      .maybeSingle();
+  const fromUserClient = await loadAiConfigWithUserClient();
+  if (fromUserClient) return fromUserClient;
 
-    if (!error && data) {
-      const { brand, ai } = appAiFromRow(data as AiSettingsRow);
-      return resolveAppAiConfig(brand, ai);
-    }
-  } catch {
-    // Fall through.
-  }
-
-  try {
-    const { createServiceRoleClient } = await import("@/lib/supabase/admin");
-    const admin = createServiceRoleClient();
-    const { data, error } = await admin
-      .from("app_settings")
-      .select(AI_SETTINGS_SELECT)
-      .eq("id", true)
-      .maybeSingle();
-
-    if (!error && data) {
-      const { brand, ai } = appAiFromRow(data as AiSettingsRow);
-      return resolveAppAiConfig(brand, ai);
-    }
-  } catch {
-    // No service role or table yet.
-  }
+  const fromServiceRole = await loadAiConfigWithServiceRole();
+  if (fromServiceRole) return fromServiceRole;
 
   const brand = fallbackAppBrand();
   return resolveAppAiConfig(brand, {
@@ -120,6 +93,53 @@ export async function getAppAiConfig(): Promise<AppAiConfig> {
   });
 }
 
+async function loadAiConfigWithUserClient(): Promise<AppAiConfig | null> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("app_settings")
+      .select(AI_SETTINGS_SELECT)
+      .eq("id", true)
+      .maybeSingle();
+
+    if (error) {
+      console.error("getAppAiConfig user client failed", error.message);
+      return null;
+    }
+    if (!data) return null;
+
+    const { brand, ai } = appAiFromRow(data as AiSettingsRow);
+    return resolveAppAiConfig(brand, ai);
+  } catch (error) {
+    console.error("getAppAiConfig user client threw", error);
+    return null;
+  }
+}
+
+async function loadAiConfigWithServiceRole(): Promise<AppAiConfig | null> {
+  try {
+    const { createServiceRoleClient } = await import("@/lib/supabase/admin");
+    const admin = createServiceRoleClient();
+    const { data, error } = await admin
+      .from("app_settings")
+      .select(AI_SETTINGS_SELECT)
+      .eq("id", true)
+      .maybeSingle();
+
+    if (error) {
+      console.error("getAppAiConfig service role failed", error.message);
+      return null;
+    }
+    if (!data) return null;
+
+    const { brand, ai } = appAiFromRow(data as AiSettingsRow);
+    return resolveAppAiConfig(brand, ai);
+  } catch (error) {
+    console.error("getAppAiConfig service role threw", error);
+    return null;
+  }
+}
+
 /** Build extraSystemRules from saved custom instructions (+ optional extras). */
 export function buildAiExtraRules(
   customInstructions: string | null | undefined,
@@ -127,7 +147,7 @@ export function buildAiExtraRules(
 ) {
   const parts = [
     customInstructions?.trim()
-      ? `Operator preferences (follow when compatible with structure rules):\n${customInstructions.trim()}`
+      ? `OPERATOR INSTRUCTIONS (required — override any conflicting guidance below):\n${customInstructions.trim()}`
       : null,
     ...extras.map((item) => item?.trim() || null),
   ].filter(Boolean);

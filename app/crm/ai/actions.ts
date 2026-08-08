@@ -140,7 +140,8 @@ export async function optimizeLeadReply(input: {
   let operatorName: string;
   let industry: string;
   let nextStepHint: string;
-  let preferenceBlock = "";
+  let replyInstructions: string | null = null;
+  let demoExtraRule: string | null = null;
 
   if (auth.demoSeed) {
     industry =
@@ -150,34 +151,44 @@ export async function optimizeLeadReply(input: {
     operatorName = demoCompany?.name?.trim() || "the service company";
     nextStepHint =
       "Suggest one clear next step (call, visit, or process review) without pressure.";
-    preferenceBlock =
-      "\nDo not write as if you are North Shore Process Solutions unless that is the demo company.";
+    demoExtraRule =
+      "Do not write as if you are North Shore Process Solutions unless that is the demo company.";
   } else {
     const ai = await getAppAiConfig();
     operatorName = ai.operatorName;
     industry = ai.industry;
+    replyInstructions = ai.replyInstructions;
     nextStepHint =
       "Suggest one clear next step appropriate for this business without pressure.";
-    if (ai.replyInstructions) {
-      preferenceBlock = `\nOperator preferences (follow when compatible):\n${ai.replyInstructions}`;
-    }
   }
 
-  const system = `You write short outbound reply emails for ${operatorName}, a ${industry} business.
-
-Voice: calm, practical, friendly, plain English. No hype, no emojis, no markdown.
-Output: a complete plain-text email body only (greeting + 2–4 short paragraphs + simple sign-off).
-Keep it under 180 words.
-Reference the inquiry naturally when provided.
-${nextStepHint}
-Do not invent prices, schedules, or facts that were not provided.
-Do not include a subject line.${preferenceBlock}`;
+  const system = [
+    replyInstructions
+      ? `OPERATOR INSTRUCTIONS (required — these override any conflicting voice/tone guidance below):\n${replyInstructions}`
+      : null,
+    demoExtraRule,
+    `You write short outbound reply emails for ${operatorName}, a ${industry} business.`,
+    replyInstructions
+      ? "Default voice only when operator instructions do not specify otherwise: calm, practical, friendly, plain English. No emojis or markdown."
+      : "Voice: calm, practical, friendly, plain English. No hype, no emojis, no markdown.",
+    "Output: a complete plain-text email body only (greeting + 2–4 short paragraphs + simple sign-off).",
+    "Keep it under 180 words.",
+    "Reference the inquiry naturally when provided.",
+    nextStepHint,
+    "Do not invent prices, schedules, or facts that were not provided.",
+    "Do not include a subject line.",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 
   try {
     const { text } = await generateText({
       model: getDraftModel(),
       system,
       prompt: [
+        replyInstructions
+          ? `Follow these operator reply instructions:\n${replyInstructions}`
+          : null,
         `Lead / inquiry title: ${title}`,
         `Client business: ${businessName}`,
         `Contact: ${contactName}`,
@@ -188,7 +199,7 @@ Do not include a subject line.${preferenceBlock}`;
           ? `Current draft to improve (keep the writer's intent; tighten clarity and tone):\n${existingBody}`
           : `No draft yet. Write a fresh reply starting with "Hi ${firstName},"`,
         existingBody
-          ? "Optimize the draft now. Preserve any specific commitments the writer already made."
+          ? "Optimize the draft now. Preserve any specific commitments the writer already made. Operator instructions still take priority for tone."
           : "Write the reply email now.",
       ]
         .filter(Boolean)

@@ -90,10 +90,13 @@ export async function generateProposalDraft(input: {
     }))
     .filter((item) => item.description);
 
-  const system = `You draft proposal content for ${input.operatorName}, a ${input.industry} business.
-
-Voice: calm, practical, plain English. No hype, no emojis.
-Return two complementary parts — do not repeat the same detail in both:
+  const system = [
+    input.extraSystemRules?.trim() || null,
+    `You draft proposal content for ${input.operatorName}, a ${input.industry} business.`,
+    input.extraSystemRules?.trim()
+      ? "Default voice only when operator instructions do not specify otherwise: calm, practical, plain English. No hype, no emojis."
+      : "Voice: calm, practical, plain English. No hype, no emojis.",
+    `Return two complementary parts — do not repeat the same detail in both:
 
 1) scopeSummary — a SHORT high-level narrative (about 60–120 words), not a duplicate of the line items.
 2) items — 2–6 billable line items that carry the concrete deliverables/phases.
@@ -121,8 +124,10 @@ Line item rules:
 - unitPrice should be a reasonable round USD starting point for this industry when you can infer one; use 0 when notes give no pricing signal and you cannot infer a typical amount.
 - Line items should support the scope story without restating the intro paragraph.
 - Do not invent timelines, legal terms, or client-specific facts that were not provided.
-- Do not include a greeting or sign-off.
-${input.extraSystemRules ? `\n${input.extraSystemRules}` : ""}`;
+- Do not include a greeting or sign-off.`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 
   try {
     const { object } = await generateObject({
