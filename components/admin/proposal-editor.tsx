@@ -205,21 +205,18 @@ export function ProposalEditor({
     setError(null);
     setSaved(false);
 
+    const draftInput = {
+      businessName: values.clientBusinessName,
+      contactName: values.clientContactName,
+      title: values.title,
+      notes: values.notes,
+      existingScope: values.scopeSummary,
+      existingItems: values.items,
+    };
+
     const result = isDemo
-      ? await draftDemoProposalScope({
-          businessName: values.clientBusinessName,
-          contactName: values.clientContactName,
-          title: values.title,
-          notes: values.notes,
-          existingScope: values.scopeSummary,
-        })
-      : await draftProposalScope({
-          businessName: values.clientBusinessName,
-          contactName: values.clientContactName,
-          title: values.title,
-          notes: values.notes,
-          existingScope: values.scopeSummary,
-        });
+      ? await draftDemoProposalScope(draftInput)
+      : await draftProposalScope(draftInput);
 
     setDrafting(false);
 
@@ -228,7 +225,15 @@ export function ProposalEditor({
       return;
     }
 
-    updateField("scopeSummary", result.text);
+    setValues((current) => ({
+      ...current,
+      scopeSummary: result.text!,
+      items:
+        result.items && result.items.length > 0
+          ? result.items
+          : current.items,
+    }));
+    setSaved(false);
   }
 
   async function onMarkSent() {
@@ -639,7 +644,7 @@ export function ProposalEditor({
             <h2 className="text-sm font-semibold">Scope summary</h2>
             <p className="mt-1 text-xs text-muted-foreground">
               Tip: put consult notes in Internal notes below, then draft with
-              AI.
+              AI to fill scope and line items.
             </p>
           </div>
           <Button
@@ -653,9 +658,11 @@ export function ProposalEditor({
           </Button>
         </div>
         <textarea
-          className="min-h-28 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="min-h-44 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onChange={(event) => updateField("scopeSummary", event.target.value)}
-          placeholder="What we will do, outcomes, and boundaries."
+          placeholder={
+            "What we will do:\n1. ...\n\nExpected outcomes:\n- ...\n\nOut of scope:\n- ..."
+          }
           value={values.scopeSummary}
         />
       </section>
