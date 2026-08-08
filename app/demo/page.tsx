@@ -47,7 +47,9 @@ export default async function DemoHomePage({ searchParams }: DemoHomePageProps) 
       !["deposit_received", "won", "lost", "proposal_accepted"].includes(
         lead.stage,
       ) &&
-      (!lead.next_follow_up_at || lead.next_follow_up_at <= today),
+      (lead.stage === "new_inquiry" ||
+        !lead.next_follow_up_at ||
+        lead.next_follow_up_at <= today),
   );
 
   const readyToPropose = data.leads.filter(

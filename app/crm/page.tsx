@@ -31,6 +31,7 @@ export default async function AdminTodayPage() {
 
   const [
     { data: followUpLeads },
+    { data: newInquiryLeads },
     { data: consultLeads },
     { data: acceptedProposals },
     { data: proposalDrafts },
@@ -47,6 +48,14 @@ export default async function AdminTodayPage() {
       .not("stage", "in", "(deposit_received,won,lost,proposal_accepted)")
       .or(`next_follow_up_at.is.null,next_follow_up_at.lte.${today}`)
       .order("next_follow_up_at", { ascending: true, nullsFirst: true })
+      .limit(8),
+    // Always surface brand-new inquiries on Home, even when default
+    // follow-up is tomorrow (after the 2pm Eastern cutoff).
+    supabase
+      .from("leads")
+      .select("*")
+      .eq("stage", "new_inquiry")
+      .order("created_at", { ascending: false })
       .limit(8),
     supabase
       .from("leads")
@@ -117,6 +126,14 @@ export default async function AdminTodayPage() {
       .map((lead) => lead.id),
   );
 
+  const leadsDueById = new Map<string, LeadRow>();
+  for (const lead of (newInquiryLeads ?? []) as LeadRow[]) {
+    leadsDueById.set(lead.id, lead);
+  }
+  for (const lead of (followUpLeads ?? []) as LeadRow[]) {
+    if (!leadsDueById.has(lead.id)) leadsDueById.set(lead.id, lead);
+  }
+
   return (
     <PortalHome
       acceptedProposals={(acceptedProposals ?? []) as ProposalRow[]}
@@ -125,7 +142,7 @@ export default async function AdminTodayPage() {
       draftProposals={(proposalDrafts ?? []) as ProposalRow[]}
       events={upcomingEvents ?? []}
       invoices={(openInvoices ?? []) as InvoiceRow[]}
-      leadsDue={(followUpLeads ?? []) as LeadRow[]}
+      leadsDue={[...leadsDueById.values()]}
       mode="live"
       projects={(activeProjects ?? []) as ProjectWithOrganization[]}
       readyToPropose={(consultLeads ?? []) as LeadRow[]}

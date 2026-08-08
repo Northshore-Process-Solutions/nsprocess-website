@@ -1,4 +1,5 @@
 import { after, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 
 import { defaultNextFollowUpDate } from "@/lib/leads";
 import { escapeHtml, getSmtpConfig, sendAppEmail } from "@/lib/mail";
@@ -91,6 +92,9 @@ async function createWebsiteLead(input: {
   if (activityError) {
     console.error("Failed to log website form activity", activityError);
   }
+
+  revalidatePath("/crm");
+  revalidatePath("/crm/pipeline");
 
   return { ok: true, leadId: lead.id };
 }

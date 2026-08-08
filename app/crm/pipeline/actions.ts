@@ -645,6 +645,7 @@ export async function createLead(input: LeadInput): Promise<ActionResult> {
   }
 
   revalidatePath("/crm/pipeline");
+  revalidatePath("/crm");
   return { ok: true };
 }
 
@@ -675,6 +676,7 @@ export async function updateLead(
   }
 
   revalidatePath("/crm/pipeline");
+  revalidatePath("/crm");
   return { ok: true };
 }
 
@@ -706,6 +708,7 @@ export async function updateLeadStage(
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/crm/pipeline");
+  revalidatePath("/crm");
   return { ok: true };
 }
 
@@ -719,6 +722,7 @@ export async function deleteLead(leadId: string): Promise<ActionResult> {
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/crm/pipeline");
+  revalidatePath("/crm");
   return { ok: true };
 }
 
@@ -806,6 +810,7 @@ export async function replyToLead(
   }
 
   revalidatePath("/crm/pipeline");
+  revalidatePath("/crm");
   revalidatePath("/crm/projects");
   if (lead.organization_id) {
     revalidatePath(`/crm/organizations/${lead.organization_id}`);
