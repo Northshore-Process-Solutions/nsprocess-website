@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { Sparkles, Undo2 } from "lucide-react";
 
+import { optimizeLeadReply } from "@/app/crm/ai/actions";
 import { replyToLead } from "@/app/crm/pipeline/actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,8 +79,10 @@ function LeadReplyDialogInner({
 }) {
   const [subject, setSubject] = useState(() => defaultSubject(lead));
   const [body, setBody] = useState(() => defaultBody(lead));
+  const [bodyBeforeAi, setBodyBeforeAi] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [optimizing, setOptimizing] = useState(false);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -98,6 +102,39 @@ function LeadReplyDialogInner({
     }
 
     onSent();
+  }
+
+  async function onOptimize() {
+    setOptimizing(true);
+    setError(null);
+
+    const previous = body;
+    const result = await optimizeLeadReply({
+      businessName: lead.business_name,
+      contactName: lead.contact_name,
+      email: lead.email,
+      title: lead.title,
+      message: lead.message ?? undefined,
+      notes: lead.notes ?? undefined,
+      existingBody: body,
+    });
+
+    setOptimizing(false);
+
+    if (!result.ok || !result.text) {
+      setError(result.error ?? "Failed to optimize with AI.");
+      return;
+    }
+
+    setBodyBeforeAi(previous);
+    setBody(result.text);
+  }
+
+  function onUndoAi() {
+    if (bodyBeforeAi === null) return;
+    setBody(bodyBeforeAi);
+    setBodyBeforeAi(null);
+    setError(null);
   }
 
   return (
@@ -224,22 +261,58 @@ function LeadReplyDialogInner({
                 />
               </label>
 
-              <label className="flex min-h-0 flex-1 flex-col space-y-2 text-sm font-semibold">
-                Message
+              <div className="flex min-h-0 flex-1 flex-col space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <label
+                    className="text-sm font-semibold"
+                    htmlFor="lead-reply-body"
+                  >
+                    Message
+                  </label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {bodyBeforeAi !== null ? (
+                      <Button
+                        disabled={loading || optimizing}
+                        onClick={onUndoAi}
+                        size="sm"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <Undo2 aria-hidden className="size-3.5" />
+                        Undo AI
+                      </Button>
+                    ) : null}
+                    <Button
+                      disabled={loading || optimizing}
+                      onClick={onOptimize}
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      <Sparkles aria-hidden className="size-3.5" />
+                      {optimizing ? "Optimizing…" : "Optimize with AI"}
+                    </Button>
+                  </div>
+                </div>
                 <textarea
                   className="min-h-56 w-full flex-1 rounded-2xl border border-input bg-background px-4 py-3 text-base font-normal outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20 lg:min-h-72"
+                  id="lead-reply-body"
                   onChange={(event) => setBody(event.target.value)}
                   required
                   value={body}
                 />
-              </label>
+              </div>
             </div>
 
             <div className="mt-5 flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:justify-end">
               <Button onClick={onClose} type="button" variant="outline">
                 Cancel
               </Button>
-              <Button disabled={loading} type="submit" variant="accent">
+              <Button
+                disabled={loading || optimizing}
+                type="submit"
+                variant="accent"
+              >
                 {loading ? "Sending..." : "Send email"}
               </Button>
             </div>
