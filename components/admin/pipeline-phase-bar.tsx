@@ -26,7 +26,56 @@ export function PipelinePhaseBar({
 
   return (
     <section className="mb-5">
-      <div className="overflow-x-auto pb-1">
+      {/* Mobile: stacked cards — no forced horizontal scroll */}
+      <ol className="grid grid-cols-2 gap-2 md:hidden">
+        {PIPELINE_PHASES.map((phase) => {
+          const item = byId.get(phase.id);
+          if (!item) return null;
+          const isActive = activePhase === phase.id;
+          const emphasize = Boolean(item.emphasize) && !isActive;
+          const href =
+            isActive && phase.id !== "project" ? clearHref : item.href;
+
+          return (
+            <li
+              className={cn(phase.id === "project" && "col-span-2")}
+              key={phase.id}
+            >
+              <Link
+                aria-current={isActive ? "step" : undefined}
+                className={cn(
+                  "flex min-h-16 flex-col justify-center rounded-md px-3 py-2.5 transition",
+                  emphasize
+                    ? "bg-lime-100 text-lime-950"
+                    : "bg-slate-100 text-slate-900",
+                  isActive && "bg-slate-900 text-white",
+                )}
+                href={href}
+                title={phase.description}
+              >
+                <span
+                  className={cn(
+                    "text-[0.65rem] font-semibold uppercase tracking-wide",
+                    isActive
+                      ? "text-slate-300"
+                      : emphasize
+                        ? "text-lime-800"
+                        : "text-slate-500",
+                  )}
+                >
+                  {phase.label}
+                </span>
+                <span className="mt-0.5 text-xl font-semibold tabular-nums leading-none">
+                  {item.count}
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ol>
+
+      {/* Desktop: chevron phase bar */}
+      <div className="hidden overflow-x-auto pb-1 md:block">
         <ol className="flex min-w-[42rem] items-stretch gap-1">
           {PIPELINE_PHASES.map((phase, index) => {
             const item = byId.get(phase.id);
@@ -77,6 +126,7 @@ export function PipelinePhaseBar({
           })}
         </ol>
       </div>
+
       {activePhase && activePhase !== "project" ? (
         <div className="mt-3 flex flex-col gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 sm:flex-row sm:items-center sm:justify-between">
           <p>{phaseFilterCopy(activePhase)}</p>

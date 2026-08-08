@@ -442,7 +442,7 @@ export function InvoiceEditor({
               (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0);
             return (
               <div
-                className="grid gap-3 rounded-xl border border-border bg-background p-3 sm:grid-cols-[1fr_5rem_7rem_6rem_auto]"
+                className="grid grid-cols-2 gap-3 rounded-xl border border-border bg-background p-3 sm:grid-cols-[1fr_5rem_7rem_6rem_auto] [&>:first-child]:col-span-2 sm:[&>:first-child]:col-span-1"
                 key={`item-${index}`}
               >
                 <label className="space-y-1 text-xs font-semibold">

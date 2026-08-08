@@ -144,7 +144,7 @@ export function ProjectTasksPanel({ projectId, tasks }: ProjectTasksPanelProps) 
                     task.is_done ? "Mark task incomplete" : "Mark task complete"
                   }
                   className={cn(
-                    "mt-0.5 grid size-6 shrink-0 place-items-center rounded-md border transition",
+                    "mt-0.5 grid size-11 shrink-0 place-items-center rounded-md border transition",
                     task.is_done
                       ? "border-emerald-300 bg-emerald-50 text-emerald-700"
                       : "border-border bg-card text-transparent hover:border-accent",

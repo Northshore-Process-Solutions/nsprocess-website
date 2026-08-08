@@ -259,7 +259,8 @@ export function CalendarPanel({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+      {/* Month grid — desktop / tablet only */}
+      <div className="hidden overflow-hidden rounded-2xl border border-border bg-card shadow-soft md:block">
         <div className="grid grid-cols-7 border-b border-border bg-muted/70">
           {WEEKDAYS.map((day) => (
             <div
@@ -334,12 +335,16 @@ export function CalendarPanel({
         </div>
       </div>
 
-      <section className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-        <h3 className="text-lg font-semibold tracking-tight">This month</h3>
+      <section className="rounded-2xl border border-border bg-card p-4 shadow-soft sm:p-5">
+        <h3 className="text-lg font-semibold tracking-tight md:hidden">
+          {formatMonthLabel(yearMonth)}
+        </h3>
+        <h3 className="hidden text-lg font-semibold tracking-tight md:block">
+          This month
+        </h3>
         {events.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">
-            No events scheduled. Click a day or use Schedule to book a consult
-            or onsite.
+            No events scheduled. Use Schedule to book a consult or onsite.
           </p>
         ) : (
           <ul className="mt-4 space-y-3">
@@ -350,11 +355,11 @@ export function CalendarPanel({
                   width={288}
                 >
                   <button
-                    className="flex w-full items-start justify-between gap-3 rounded-2xl border border-border px-4 py-3 text-left transition hover:bg-secondary/40"
+                    className="flex w-full items-start justify-between gap-3 rounded-2xl border border-border px-4 py-3.5 text-left transition hover:bg-secondary/40"
                     onClick={() => openEdit(event)}
                     type="button"
                   >
-                    <div>
+                    <div className="min-w-0">
                       <p className="font-semibold">{event.title}</p>
                       <p className="mt-1 text-sm text-muted-foreground">
                         {calendarEventTypeLabel(event.event_type)} ·{" "}
@@ -369,7 +374,7 @@ export function CalendarPanel({
                     </div>
                     <span
                       className={cn(
-                        "rounded-full px-2.5 py-1 text-xs font-semibold",
+                        "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold",
                         typeStyles[event.event_type] ?? typeStyles.other,
                       )}
                     >

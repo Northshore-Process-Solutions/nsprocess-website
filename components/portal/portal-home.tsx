@@ -71,7 +71,7 @@ export function PortalHome({
         </p>
       </header>
 
-      <section className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <section className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-5">
         <StatCard
           href={dash.href("/pipeline")}
           label="Follow-ups due"
@@ -208,10 +208,10 @@ function QueueCard({
           {items.map((item) => (
             <li key={item.key}>
               <Link
-                className="block px-3 py-2.5 transition hover:bg-slate-50"
+                className="block min-w-0 px-3 py-3 transition hover:bg-slate-50"
                 href={item.href}
               >
-                <p className="text-sm font-semibold text-slate-900">
+                <p className="truncate text-sm font-semibold text-slate-900">
                   {item.title}
                 </p>
                 <p className="mt-0.5 text-xs text-slate-600">{item.nextAction}</p>

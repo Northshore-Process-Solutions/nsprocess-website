@@ -98,28 +98,41 @@ export function AdminNav({ current }: { current?: AdminNavKey } = {}) {
     : linkDefs;
 
   return (
-    <nav aria-label="Admin sections" className="flex gap-0 overflow-x-auto">
-      {links.map((link) => {
-        const linkHref = href(link.path);
-        const active = current
-          ? current === link.key
-          : link.match(pathname, basePath);
+    <div className="relative -mx-4 sm:mx-0">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-gradient-to-r from-white to-transparent sm:hidden"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l from-white to-transparent sm:hidden"
+      />
+      <nav
+        aria-label="Admin sections"
+        className="flex gap-0 overflow-x-auto overscroll-x-contain px-4 [-ms-overflow-style:none] [scrollbar-width:none] sm:px-0 [&::-webkit-scrollbar]:hidden"
+      >
+        {links.map((link) => {
+          const linkHref = href(link.path);
+          const active = current
+            ? current === link.key
+            : link.match(pathname, basePath);
 
-        return (
-          <Link
-            className={cn(
-              "shrink-0 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",
-              active
-                ? "border-slate-900 text-slate-900"
-                : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800",
-            )}
-            href={linkHref}
-            key={link.path || "home"}
-          >
-            {link.label}
-          </Link>
-        );
-      })}
-    </nav>
+          return (
+            <Link
+              className={cn(
+                "shrink-0 snap-start border-b-2 px-3 py-3 text-sm font-medium transition-colors",
+                active
+                  ? "border-slate-900 text-slate-900"
+                  : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800",
+              )}
+              href={linkHref}
+              key={link.path || "home"}
+            >
+              {link.label}
+            </Link>
+          );
+        })}
+      </nav>
+    </div>
   );
 }

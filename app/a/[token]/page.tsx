@@ -74,7 +74,7 @@ export default async function PublicAgreementPage({
   const issuer = await getLiveDocumentIssuer();
 
   return (
-    <main className="min-h-screen bg-[#F4F7FB] px-4 py-8 sm:px-6 sm:py-10">
+    <main className="min-h-screen bg-[#F4F7FB] px-4 py-6 pb-28 sm:px-6 sm:py-10 sm:pb-10">
       <div className="mx-auto mb-6 max-w-[8.5in] text-center sm:text-left">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
           {brand.companyName}

@@ -97,18 +97,18 @@ function LeadFormDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-primary/40 p-4 sm:items-center">
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-primary/40 p-0 sm:items-center sm:p-4">
       <div
         aria-modal="true"
-        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-border bg-card p-6 shadow-card sm:p-8"
+        className="flex max-h-[100dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-card sm:max-h-[90vh] sm:rounded-3xl"
         role="dialog"
       >
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">
+        <div className="flex items-start justify-between gap-4 border-b border-border px-4 py-4 sm:px-6 sm:pt-6">
+          <div className="min-w-0">
+            <h2 className="text-xl font-bold tracking-tight sm:text-2xl">
               {mode === "edit" ? "Edit lead" : "Add lead"}
             </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground sm:mt-2">
               Track Free Process Review inquiries through your pipeline.
             </p>
           </div>
@@ -117,7 +117,11 @@ function LeadFormDialog({
           </Button>
         </div>
 
-        <form className="space-y-5" onSubmit={onSubmit}>
+        <form
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
+          onSubmit={onSubmit}
+        >
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
           {error ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-900">
               {error}
@@ -257,7 +261,7 @@ function LeadFormDialog({
             </label>
           ) : null}
 
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+          <div className="hidden flex-col-reverse gap-3 sm:flex sm:flex-row sm:justify-between">
             {mode === "edit" && initialRow && onReply ? (
               <Button
                 onClick={() => onReply(initialRow)}
@@ -283,10 +287,9 @@ function LeadFormDialog({
               </Button>
             </div>
           </div>
-        </form>
 
         {mode === "edit" && initialRow ? (
-          <div className="mt-8 border-t border-border pt-6">
+          <div className="border-t border-border pt-6">
             <ActivityPanel
               activities={activities}
               compact
@@ -295,6 +298,21 @@ function LeadFormDialog({
             />
           </div>
         ) : null}
+          </div>
+
+          <div className="sticky bottom-0 flex flex-col-reverse gap-3 border-t border-border bg-card px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:hidden">
+            <Button disabled={loading} type="submit" variant="accent">
+              {loading
+                ? "Saving..."
+                : mode === "edit"
+                  ? "Save changes"
+                  : "Add lead"}
+            </Button>
+            <Button onClick={onClose} type="button" variant="outline">
+              Cancel
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );

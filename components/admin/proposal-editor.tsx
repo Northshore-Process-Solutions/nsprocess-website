@@ -334,9 +334,9 @@ export function ProposalEditor({
   }
 
   return (
-    <form className="space-y-5" onSubmit={onSave}>
+    <form className="space-y-5 pb-20 sm:pb-0" onSubmit={onSave}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+        <div className="min-w-0">
           <Link
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900"
             href={href("/proposals")}
@@ -357,10 +357,10 @@ export function ProposalEditor({
             </p>
           )}
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
           {initialProposal ? (
             <>
-              <Button asChild type="button" variant="outline">
+              <Button asChild className="shrink-0" type="button" variant="outline">
                 <Link
                   href={href(`/proposals/${initialProposal.id}/pdf`)}
                   target="_blank"
@@ -371,7 +371,7 @@ export function ProposalEditor({
               </Button>
               {!isDemo ? (
                 <>
-                  <Button asChild type="button" variant="outline">
+                  <Button asChild className="shrink-0" type="button" variant="outline">
                     <Link
                       href={href(
                         `/agreements/new?proposalId=${initialProposal.id}`,
@@ -382,6 +382,7 @@ export function ProposalEditor({
                     </Link>
                   </Button>
                   <Button
+                    className="shrink-0"
                     disabled={sending || values.status === "sent"}
                     onClick={onMarkSent}
                     type="button"
@@ -394,6 +395,7 @@ export function ProposalEditor({
                         : "Mark sent"}
                   </Button>
                   <Button
+                    className="shrink-0"
                     disabled={sharing}
                     onClick={onCopyShareLink}
                     type="button"
@@ -407,6 +409,7 @@ export function ProposalEditor({
                     {sharing ? "Preparing…" : copied ? "Copied" : "Copy link"}
                   </Button>
                   <Button
+                    className="shrink-0"
                     disabled={emailing || !values.clientEmail.trim()}
                     onClick={onEmailShareLink}
                     title={
@@ -425,12 +428,25 @@ export function ProposalEditor({
             </>
           ) : null}
           {!isDemo ? (
-            <Button disabled={loading} type="submit" variant="accent">
+            <Button
+              className="hidden shrink-0 sm:inline-flex"
+              disabled={loading}
+              type="submit"
+              variant="accent"
+            >
               {loading ? "Saving…" : mode === "create" ? "Create draft" : "Save"}
             </Button>
           ) : null}
         </div>
       </div>
+
+      {!isDemo ? (
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:hidden">
+          <Button className="w-full" disabled={loading} type="submit" variant="accent">
+            {loading ? "Saving…" : mode === "create" ? "Create draft" : "Save"}
+          </Button>
+        </div>
+      ) : null}
 
       {error ? (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-900">
@@ -682,7 +698,7 @@ export function ProposalEditor({
               (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0);
             return (
               <div
-                className="grid gap-3 rounded-xl border border-border bg-background p-3 sm:grid-cols-[1fr_5rem_7rem_6rem_auto]"
+                className="grid grid-cols-2 gap-3 rounded-xl border border-border bg-background p-3 sm:grid-cols-[1fr_5rem_7rem_6rem_auto] [&>:first-child]:col-span-2 sm:[&>:first-child]:col-span-1"
                 key={`item-${index}`}
               >
                 <label className="space-y-1 text-xs font-semibold">

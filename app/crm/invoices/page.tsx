@@ -124,13 +124,13 @@ export default async function InvoicesPage({
 
       <nav
         aria-label="Invoice status filters"
-        className="mb-3 flex flex-wrap gap-2"
+        className="mb-3 -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden"
       >
         <a
           className={
             statusFilter === "all"
-              ? "rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-              : "rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+              ? "shrink-0 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground"
+              : "shrink-0 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:bg-secondary hover:text-foreground"
           }
           href={
             typeFilter === "all"
@@ -151,8 +151,8 @@ export default async function InvoicesPage({
             <a
               className={
                 active
-                  ? "rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
-                  : "rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+                  ? "shrink-0 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground"
+                  : "shrink-0 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:bg-secondary hover:text-foreground"
               }
               href={`/crm/invoices?status=${status.value}${typeQuery}`}
               key={status.value}
@@ -165,13 +165,13 @@ export default async function InvoicesPage({
 
       <nav
         aria-label="Invoice type filters"
-        className="mb-5 flex flex-wrap gap-2"
+        className="mb-5 -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden"
       >
         <a
           className={
             typeFilter === "all"
-              ? "rounded-full bg-secondary px-4 py-2 text-sm font-semibold text-foreground"
-              : "rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+              ? "shrink-0 rounded-full bg-secondary px-4 py-2.5 text-sm font-semibold text-foreground"
+              : "shrink-0 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:bg-secondary hover:text-foreground"
           }
           href={
             statusFilter === "all"
@@ -189,8 +189,8 @@ export default async function InvoicesPage({
             <a
               className={
                 active
-                  ? "rounded-full bg-secondary px-4 py-2 text-sm font-semibold text-foreground"
-                  : "rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+                  ? "shrink-0 rounded-full bg-secondary px-4 py-2.5 text-sm font-semibold text-foreground"
+                  : "shrink-0 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:bg-secondary hover:text-foreground"
               }
               href={`/crm/invoices?type=${type.value}${statusQuery}`}
               key={type.value}
