@@ -305,11 +305,13 @@ export function ActivityPanel({
                     <Icon aria-hidden className="size-4" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-foreground">
-                      {activityKindLabel(activity)}
+                    <span className="block truncate text-sm font-semibold text-foreground">
+                      {activity.subject?.trim() || activityKindLabel(activity)}
                     </span>
-                    <span className="mt-0.5 block text-xs text-muted-foreground">
-                      {formatActivityWhen(activity.occurred_at)}
+                    <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                      {activity.subject?.trim()
+                        ? `${activityKindLabel(activity)} · ${formatActivityWhen(activity.occurred_at)}`
+                        : formatActivityWhen(activity.occurred_at)}
                     </span>
                   </span>
                   <ChevronRight
