@@ -1,3 +1,6 @@
+import fs from "fs";
+import path from "path";
+
 import PDFDocument from "pdfkit";
 
 import {
@@ -20,6 +23,15 @@ function formatDateOnly(value: string | null | undefined) {
 
 function sanitizeFilenamePart(value: string) {
   return value.replace(/[^\w.-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+}
+
+function resolvePublicLogoPath(logoSrc: string | null | undefined) {
+  if (!logoSrc || logoSrc.startsWith("http://") || logoSrc.startsWith("https://")) {
+    return null;
+  }
+  const relative = logoSrc.replace(/^\//, "");
+  const fullPath = path.join(process.cwd(), "public", relative);
+  return fs.existsSync(fullPath) ? fullPath : null;
 }
 
 export function proposalPdfFilename(proposal: {
@@ -82,19 +94,39 @@ export function buildProposalPdfBuffer(
       proposal.client_business_name,
     );
 
-    // Header
+    // Header (company text left, logo top-right — matches print PDF)
+    const headerTop = doc.y;
+    const logoPath = resolvePublicLogoPath(issuer.logoSrc);
+    const logoMaxWidth = 72;
+    const logoMaxHeight = 48;
+    const textWidth = logoPath ? pageWidth - logoMaxWidth - 16 : pageWidth;
+
+    if (logoPath) {
+      doc.image(logoPath, right - logoMaxWidth, headerTop, {
+        fit: [logoMaxWidth, logoMaxHeight],
+      });
+    }
+
     doc
       .fillColor("#0B2545")
       .font("Helvetica-Bold")
       .fontSize(16)
-      .text(issuer.name, left, doc.y, { width: pageWidth });
+      .text(issuer.name, left, headerTop, { width: textWidth });
     if (issuer.tagline) {
+      doc
+        .moveDown(0.25)
+        .fillColor("#5C6B7D")
+        .font("Helvetica")
+        .fontSize(9)
+        .text(issuer.tagline, left, doc.y, { width: textWidth });
+    }
+    if (issuer.serviceArea) {
       doc
         .moveDown(0.2)
         .fillColor("#5C6B7D")
         .font("Helvetica")
         .fontSize(9)
-        .text(issuer.tagline, { width: pageWidth });
+        .text(issuer.serviceArea, left, doc.y, { width: textWidth });
     }
     const contactLine = [issuer.phone, issuer.email].filter(Boolean).join(" · ");
     if (contactLine) {
@@ -102,13 +134,17 @@ export function buildProposalPdfBuffer(
         .moveDown(0.15)
         .fillColor("#5C6B7D")
         .fontSize(9)
-        .text(contactLine, { width: pageWidth });
+        .text(contactLine, left, doc.y, { width: textWidth });
     }
 
+    const headerBottom = Math.max(
+      doc.y,
+      logoPath ? headerTop + logoMaxHeight : doc.y,
+    );
+    doc.y = headerBottom + 10;
     doc
-      .moveDown(0.8)
-      .strokeColor("#DCE7F2")
-      .lineWidth(1)
+      .strokeColor("#0B2545")
+      .lineWidth(1.5)
       .moveTo(left, doc.y)
       .lineTo(right, doc.y)
       .stroke();
