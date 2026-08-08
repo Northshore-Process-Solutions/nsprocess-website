@@ -6,16 +6,26 @@ import { createClient } from "@/lib/supabase/server";
 
 export type BrandSettingsInput = {
   companyName: string;
-  portalName: string;
   tagline?: string;
   phone?: string;
   email?: string;
   serviceArea?: string;
 };
 
-export type AiSettingsInput = {
+export type PortalSettingsInput = {
+  portalName: string;
+};
+
+export type AiIndustrySettingsInput = {
   industry?: string;
-  customInstructions?: string;
+};
+
+export type AiProposalSettingsInput = {
+  proposalInstructions?: string;
+};
+
+export type AiReplySettingsInput = {
+  replyInstructions?: string;
 };
 
 export type ActionResult = {
@@ -35,7 +45,6 @@ export async function saveBrandSettings(
   input: BrandSettingsInput,
 ): Promise<ActionResult> {
   const companyName = input.companyName.trim();
-  const portalName = input.portalName.trim() || companyName;
 
   if (!companyName) {
     return { ok: false, error: "Company name is required." };
@@ -52,9 +61,14 @@ export async function saveBrandSettings(
 
   const { data: existing } = await supabase
     .from("app_settings")
-    .select("logo_path")
+    .select("portal_name, logo_path")
     .eq("id", true)
     .maybeSingle();
+
+  const portalName =
+    existing?.portal_name?.trim() ||
+    process.env.PORTAL_NAME?.trim() ||
+    companyName;
 
   const payload = {
     id: true,
@@ -72,6 +86,65 @@ export async function saveBrandSettings(
   const { error } = await supabase.from("app_settings").upsert(payload, {
     onConflict: "id",
   });
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/crm", "layout");
+  revalidatePath("/crm/settings");
+  revalidatePath("/crm/login");
+  return { ok: true };
+}
+
+export async function savePortalSettings(
+  input: PortalSettingsInput,
+): Promise<ActionResult> {
+  const portalName = input.portalName.trim();
+  if (!portalName) {
+    return { ok: false, error: "Portal label is required." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "You must be signed in." };
+  }
+
+  const { data: existing } = await supabase
+    .from("app_settings")
+    .select(
+      "company_name, tagline, phone, email, service_area, logo_path, ai_industry, ai_proposal_instructions, ai_reply_instructions",
+    )
+    .eq("id", true)
+    .maybeSingle();
+
+  const companyName =
+    existing?.company_name?.trim() ||
+    process.env.COMPANY_NAME?.trim() ||
+    "Your Company";
+
+  const { error } = await supabase.from("app_settings").upsert(
+    {
+      id: true,
+      company_name: companyName,
+      portal_name: portalName,
+      tagline: existing?.tagline ?? null,
+      phone: existing?.phone ?? null,
+      email: existing?.email ?? null,
+      service_area: existing?.service_area ?? null,
+      logo_path: existing?.logo_path ?? null,
+      ai_industry: existing?.ai_industry ?? null,
+      ai_proposal_instructions: existing?.ai_proposal_instructions ?? null,
+      ai_reply_instructions: existing?.ai_reply_instructions ?? null,
+      updated_at: new Date().toISOString(),
+      updated_by: user.id,
+    },
+    { onConflict: "id" },
+  );
 
   if (error) {
     return { ok: false, error: error.message };
@@ -233,11 +306,10 @@ export async function clearBrandLogo(): Promise<ActionResult> {
   return { ok: true };
 }
 
-export async function saveAiSettings(
-  input: AiSettingsInput,
+export async function saveAiIndustrySettings(
+  input: AiIndustrySettingsInput,
 ): Promise<ActionResult> {
   const industry = clean(input.industry);
-  const customInstructions = clean(input.customInstructions);
 
   if (industry && industry.length > MAX_AI_INDUSTRY) {
     return {
@@ -245,13 +317,47 @@ export async function saveAiSettings(
       error: `Industry description must be ${MAX_AI_INDUSTRY} characters or fewer.`,
     };
   }
-  if (customInstructions && customInstructions.length > MAX_AI_INSTRUCTIONS) {
+
+  return patchAiFields({ ai_industry: industry });
+}
+
+export async function saveAiProposalSettings(
+  input: AiProposalSettingsInput,
+): Promise<ActionResult> {
+  const proposalInstructions = clean(input.proposalInstructions);
+
+  if (proposalInstructions && proposalInstructions.length > MAX_AI_INSTRUCTIONS) {
     return {
       ok: false,
-      error: `Custom instructions must be ${MAX_AI_INSTRUCTIONS} characters or fewer.`,
+      error: `Proposal instructions must be ${MAX_AI_INSTRUCTIONS} characters or fewer.`,
     };
   }
 
+  return patchAiFields({
+    ai_proposal_instructions: proposalInstructions,
+  });
+}
+
+export async function saveAiReplySettings(
+  input: AiReplySettingsInput,
+): Promise<ActionResult> {
+  const replyInstructions = clean(input.replyInstructions);
+
+  if (replyInstructions && replyInstructions.length > MAX_AI_INSTRUCTIONS) {
+    return {
+      ok: false,
+      error: `Reply instructions must be ${MAX_AI_INSTRUCTIONS} characters or fewer.`,
+    };
+  }
+
+  return patchAiFields({
+    ai_reply_instructions: replyInstructions,
+  });
+}
+
+async function patchAiFields(
+  fields: Record<string, string | null>,
+): Promise<ActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -264,7 +370,7 @@ export async function saveAiSettings(
   const { data: existing } = await supabase
     .from("app_settings")
     .select(
-      "company_name, portal_name, tagline, phone, email, service_area, logo_path",
+      "company_name, portal_name, tagline, phone, email, service_area, logo_path, ai_industry, ai_proposal_instructions, ai_reply_instructions",
     )
     .eq("id", true)
     .maybeSingle();
@@ -288,8 +394,10 @@ export async function saveAiSettings(
       email: existing?.email ?? null,
       service_area: existing?.service_area ?? null,
       logo_path: existing?.logo_path ?? null,
-      ai_industry: industry,
-      ai_custom_instructions: customInstructions,
+      ai_industry: existing?.ai_industry ?? null,
+      ai_proposal_instructions: existing?.ai_proposal_instructions ?? null,
+      ai_reply_instructions: existing?.ai_reply_instructions ?? null,
+      ...fields,
       updated_at: new Date().toISOString(),
       updated_by: user.id,
     },

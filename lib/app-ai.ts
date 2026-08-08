@@ -8,24 +8,27 @@ import { createClient } from "@/lib/supabase/server";
 
 export type AppAiSettings = {
   industry: string | null;
-  customInstructions: string | null;
+  proposalInstructions: string | null;
+  replyInstructions: string | null;
 };
 
 export type AppAiConfig = {
   brand: AppBrand;
   /** Resolved industry string always ready for prompts. */
   industry: string;
-  customInstructions: string | null;
+  proposalInstructions: string | null;
+  replyInstructions: string | null;
   operatorName: string;
 };
 
 type AiSettingsRow = AppSettingsRow & {
   ai_industry: string | null;
-  ai_custom_instructions: string | null;
+  ai_proposal_instructions: string | null;
+  ai_reply_instructions: string | null;
 };
 
 const AI_SETTINGS_SELECT =
-  "company_name, portal_name, tagline, phone, email, service_area, logo_path, ai_industry, ai_custom_instructions";
+  "company_name, portal_name, tagline, phone, email, service_area, logo_path, ai_industry, ai_proposal_instructions, ai_reply_instructions";
 
 function isCrmOnly() {
   return process.env.CRM_ONLY === "1" || process.env.CRM_ONLY === "true";
@@ -55,7 +58,8 @@ export function appAiFromRow(row: AiSettingsRow): {
     brand: appBrandFromRow(row),
     ai: {
       industry: row.ai_industry?.trim() || null,
-      customInstructions: row.ai_custom_instructions?.trim() || null,
+      proposalInstructions: row.ai_proposal_instructions?.trim() || null,
+      replyInstructions: row.ai_reply_instructions?.trim() || null,
     },
   };
 }
@@ -68,7 +72,8 @@ export function resolveAppAiConfig(
     brand,
     operatorName: brand.companyName,
     industry: ai.industry?.trim() || defaultAiIndustry(brand),
-    customInstructions: ai.customInstructions?.trim() || null,
+    proposalInstructions: ai.proposalInstructions?.trim() || null,
+    replyInstructions: ai.replyInstructions?.trim() || null,
   };
 }
 
@@ -110,7 +115,8 @@ export async function getAppAiConfig(): Promise<AppAiConfig> {
   const brand = fallbackAppBrand();
   return resolveAppAiConfig(brand, {
     industry: null,
-    customInstructions: null,
+    proposalInstructions: null,
+    replyInstructions: null,
   });
 }
 

@@ -25,7 +25,6 @@ export function BrandSettingsForm({ brand }: { brand: AppBrand }) {
     startTransition(async () => {
       const result = await saveBrandSettings({
         companyName: String(formData.get("companyName") ?? ""),
-        portalName: String(formData.get("portalName") ?? ""),
         tagline: String(formData.get("tagline") ?? ""),
         phone: String(formData.get("phone") ?? ""),
         email: String(formData.get("email") ?? ""),
@@ -35,7 +34,7 @@ export function BrandSettingsForm({ brand }: { brand: AppBrand }) {
         setError(result.error ?? "Could not save settings.");
         return;
       }
-      setMessage("Brand settings saved.");
+      setMessage("Company settings saved.");
       router.refresh();
     });
   }
@@ -75,7 +74,8 @@ export function BrandSettingsForm({ brand }: { brand: AppBrand }) {
       <Card className="p-6 sm:p-8">
         <h2 className="text-lg font-semibold tracking-tight">Company</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Shown in the CRM header, login screen, proposals, and share links.
+          Name, contact details, and service area shown on documents and share
+          pages.
         </p>
 
         <form action={onSave} className="mt-6 space-y-4">
@@ -86,15 +86,6 @@ export function BrandSettingsForm({ brand }: { brand: AppBrand }) {
               defaultValue={brand.companyName}
               name="companyName"
               required
-            />
-          </label>
-          <label className="block space-y-1.5 text-sm">
-            <span className="font-medium">Portal label</span>
-            <input
-              className="w-full rounded-md border border-input bg-background px-3 py-2"
-              defaultValue={brand.portalName}
-              name="portalName"
-              placeholder="e.g. NHS CRM"
             />
           </label>
           <label className="block space-y-1.5 text-sm">
@@ -145,7 +136,7 @@ export function BrandSettingsForm({ brand }: { brand: AppBrand }) {
           ) : null}
 
           <Button disabled={pending} type="submit">
-            {pending ? "Saving…" : "Save brand settings"}
+            {pending ? "Saving…" : "Save company info"}
           </Button>
         </form>
       </Card>

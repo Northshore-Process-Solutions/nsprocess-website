@@ -88,7 +88,7 @@ export async function draftProposalScope(input: {
     const ai = await getAppAiConfig();
     operatorName = ai.operatorName;
     industry = ai.industry;
-    extraSystemRules = buildAiExtraRules(ai.customInstructions);
+    extraSystemRules = buildAiExtraRules(ai.proposalInstructions);
     emptyNotesFallback = `No consult notes were provided. Draft a general ${industry} engagement scope and matching line items suitable for a typical client of ${operatorName}, kept intentionally non-specific.`;
   }
 
@@ -158,8 +158,8 @@ export async function optimizeLeadReply(input: {
     industry = ai.industry;
     nextStepHint =
       "Suggest one clear next step appropriate for this business without pressure.";
-    if (ai.customInstructions) {
-      preferenceBlock = `\nOperator preferences (follow when compatible):\n${ai.customInstructions}`;
+    if (ai.replyInstructions) {
+      preferenceBlock = `\nOperator preferences (follow when compatible):\n${ai.replyInstructions}`;
     }
   }
 
