@@ -286,40 +286,47 @@ export function buildProposalPdfBuffer(
     }
 
     doc.moveDown(0.6);
-    ensureSpace(48);
-    doc
-      .fillColor("#5C6B7D")
-      .font("Helvetica")
-      .fontSize(10)
-      .text("Total investment:", left, doc.y, {
-        width: pageWidth * 0.65,
-        align: "right",
-        continued: true,
-      })
-      .fillColor("#0B2545")
-      .font("Helvetica-Bold")
-      .fontSize(12)
-      .text(`  ${formatProposalMoney(totals.total)}`);
+    ensureSpace(56);
 
-    if (totals.depositAmount !== null) {
+    const amountColWidth = 90;
+    const labelColWidth = pageWidth - amountColWidth - 8;
+    const amountX = left + labelColWidth + 8;
+
+    function drawTotalsRow(label: string, amount: string, amountBold = false) {
+      ensureSpace(22);
+      const y = doc.y;
       doc
-        .moveDown(0.25)
         .fillColor("#5C6B7D")
         .font("Helvetica")
         .fontSize(10)
-        .text(
-          `Deposit due on acceptance (${depositPercent}%):`,
-          left,
-          doc.y,
-          {
-            width: pageWidth * 0.65,
-            align: "right",
-            continued: true,
-          },
-        )
+        .text(label, left, y, {
+          width: labelColWidth,
+          align: "right",
+          lineBreak: false,
+        });
+      doc
         .fillColor("#0B2545")
-        .font("Helvetica-Bold")
-        .text(`  ${formatProposalMoney(totals.depositAmount)}`);
+        .font(amountBold ? "Helvetica-Bold" : "Helvetica")
+        .fontSize(amountBold ? 12 : 10)
+        .text(amount, amountX, y, {
+          width: amountColWidth,
+          align: "right",
+          lineBreak: false,
+        });
+      doc.y = y + (amountBold ? 18 : 16);
+    }
+
+    drawTotalsRow(
+      "Total investment:",
+      formatProposalMoney(totals.total),
+      true,
+    );
+
+    if (totals.depositAmount !== null) {
+      drawTotalsRow(
+        `Deposit due on acceptance (${depositPercent}%):`,
+        formatProposalMoney(totals.depositAmount),
+      );
     }
 
     // Terms
