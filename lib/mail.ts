@@ -65,7 +65,7 @@ export async function sendAppEmail(input: {
   }
 
   try {
-    await transporter.sendMail({
+    const info = await transporter.sendMail({
       from: `"North Shore Process Solutions" <${config.user}>`,
       to: input.to,
       replyTo: input.replyTo ?? config.user,
@@ -83,7 +83,12 @@ export async function sendAppEmail(input: {
           }
         : undefined,
     });
-    return { ok: true as const };
+    return {
+      ok: true as const,
+      messageId: info.messageId,
+      accepted: info.accepted,
+      rejected: info.rejected,
+    };
   } catch (error) {
     console.error("Failed to send app email", error);
     return {
@@ -91,4 +96,14 @@ export async function sendAppEmail(input: {
       error: error instanceof Error ? error.message : "Failed to send email.",
     };
   }
+}
+
+/** Deduped operator inboxes: CONTACT_TO plus the public site email. */
+export function getOperatorNotifyAddresses(extra?: string | null) {
+  const addresses = [
+    process.env.CONTACT_TO?.trim(),
+    extra?.trim(),
+  ].filter((value): value is string => Boolean(value));
+
+  return [...new Set(addresses.map((value) => value.toLowerCase()))];
 }

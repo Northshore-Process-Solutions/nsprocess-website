@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { defaultNextFollowUpDate } from "@/lib/leads";
-import { escapeHtml, getSmtpConfig, sendAppEmail } from "@/lib/mail";
+import {
+  escapeHtml,
+  getOperatorNotifyAddresses,
+  getSmtpConfig,
+  sendAppEmail,
+} from "@/lib/mail";
 import { normalizeUsPhone } from "@/lib/phone";
 import { contact } from "@/lib/site-data";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
@@ -135,12 +140,19 @@ export async function POST(request: Request) {
 
   const { CONTACT_TO } = process.env;
   const smtp = getSmtpConfig();
+  const notifyAddresses = getOperatorNotifyAddresses(contact.email);
 
-  if (!smtp || !CONTACT_TO) {
+  if (!smtp || notifyAddresses.length === 0) {
     console.error(
       "Contact form lead saved, but email is not configured (SMTP / CONTACT_TO).",
     );
     return redirectToContact(request, "error");
+  }
+
+  if (!CONTACT_TO?.trim()) {
+    console.warn(
+      `CONTACT_TO is unset; notifying public inbox only (${contact.email}).`,
+    );
   }
 
   const fullName = `${firstName} ${lastName}`;
@@ -153,7 +165,7 @@ export async function POST(request: Request) {
   };
 
   const notify = await sendAppEmail({
-    to: CONTACT_TO,
+    to: notifyAddresses.join(", "),
     replyTo: email,
     subject: `Free Process Review request from ${business}`,
     text: [
@@ -183,6 +195,13 @@ export async function POST(request: Request) {
     );
     return redirectToContact(request, "error");
   }
+
+  console.info("Contact form notification emailed", {
+    to: notifyAddresses,
+    messageId: notify.messageId,
+    accepted: notify.accepted,
+    rejected: notify.rejected,
+  });
 
   const autoReply = await sendAppEmail({
     to: email,
