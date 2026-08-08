@@ -78,7 +78,9 @@ export function buildHomeDashboard(input: {
     if (proposal.lead_id) coveredLeadIds.add(proposal.lead_id);
     pipeline.push({
       key: `draft-${proposal.id}`,
-      href: href(`/proposals/${proposal.id}`),
+      href: proposal.lead_id
+        ? href(`/pipeline?leadId=${proposal.lead_id}`)
+        : href(`/proposals/${proposal.id}`),
       title: proposal.client_business_name,
       nextAction: "Next: Finish proposal draft",
       badge: { label: "Draft", tone: "gray" },
@@ -92,7 +94,7 @@ export function buildHomeDashboard(input: {
     coveredLeadIds.add(lead.id);
     pipeline.push({
       key: `propose-${lead.id}`,
-      href: href(`/proposals/new?leadId=${lead.id}`),
+      href: href(`/pipeline?leadId=${lead.id}`),
       title: lead.business_name,
       nextAction: "Next: Create proposal",
       badge: { label: "Ready to propose", tone: "blue" },
@@ -104,7 +106,9 @@ export function buildHomeDashboard(input: {
     if (proposal.lead_id) coveredLeadIds.add(proposal.lead_id);
     pipeline.push({
       key: `sent-${proposal.id}`,
-      href: href(`/proposals/${proposal.id}`),
+      href: proposal.lead_id
+        ? href(`/pipeline?leadId=${proposal.lead_id}`)
+        : href(`/proposals/${proposal.id}`),
       title: proposal.client_business_name,
       nextAction: followUpAction(proposal.valid_until, today),
       badge: { label: "Proposal sent", tone: "blue" },

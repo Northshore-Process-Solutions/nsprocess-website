@@ -7,7 +7,7 @@ const draftSchema = z.object({
   scopeSummary: z
     .string()
     .describe(
-      "Structured plain-text scope: short intro, then numbered and/or bulleted lists for deliverables, outcomes, and boundaries. Use real newlines. No markdown headings.",
+      "Short high-level scope: 1–2 intro sentences, brief outcomes bullets, brief boundaries bullets. Do NOT list every billable deliverable — those belong in items. Plain text with real newlines; no markdown headings.",
     ),
   items: z
     .array(
@@ -29,7 +29,9 @@ const draftSchema = z.object({
     )
     .min(2)
     .max(6)
-    .describe("2–6 concrete line items that match the scope summary."),
+    .describe(
+      "2–6 concrete billable line items. These carry the detailed deliverables; do not repeat them verbatim in scopeSummary.",
+    ),
 });
 
 export type DraftProposalLineItem = {
@@ -91,30 +93,33 @@ export async function generateProposalDraft(input: {
   const system = `You draft proposal content for ${input.operatorName}, a ${input.industry} business.
 
 Voice: calm, practical, plain English. No hype, no emojis.
-Return:
-1) scopeSummary — structured plain text (not one dense paragraph), in language that fits ${input.industry}.
-2) items — 2–6 billable line items that break the scope into concrete deliverables/phases the client will recognize.
+Return two complementary parts — do not repeat the same detail in both:
 
-scopeSummary formatting (required):
+1) scopeSummary — a SHORT high-level narrative (about 60–120 words), not a duplicate of the line items.
+2) items — 2–6 billable line items that carry the concrete deliverables/phases.
+
+Division of labor (required):
+- scopeSummary = why / overall engagement / outcomes / boundaries.
+- items = what is billed (specific deliverables).
+- Never copy line-item wording into the scope as a numbered "What we will do" checklist.
+- Never paste the full scope paragraph into a line item.
+
+scopeSummary formatting:
 - Start with 1–2 short sentences on the overall engagement.
-- Then use clear sections with short labels ending in a colon, for example:
-  What we will do:
-  1. ...
-  2. ...
+- Then short sections with labels ending in a colon, for example:
   Expected outcomes:
   - ...
   - ...
   Out of scope / boundaries:
   - ...
-- Prefer numbered lists for sequenced work steps and bullets (-) for outcomes or boundaries.
-- Use real newline characters between lines and sections. Keep the whole scope scannable (roughly 120–220 words).
-- Do NOT use markdown headings (#), bold (**), or code fences. Plain text only.
+- Prefer 2–4 outcome bullets and 2–3 boundary bullets. Keep it scannable.
+- Use real newline characters. No markdown headings (#), bold (**), or code fences.
 
 Line item rules:
 - Descriptions must be specific and client-facing (not internal jargon).
 - Quantity is usually 1 unless notes imply otherwise.
 - unitPrice should be a reasonable round USD starting point for this industry when you can infer one; use 0 when notes give no pricing signal and you cannot infer a typical amount.
-- Line items must align with the scope summary (no orphan lines).
+- Line items should support the scope story without restating the intro paragraph.
 - Do not invent timelines, legal terms, or client-specific facts that were not provided.
 - Do not include a greeting or sign-off.
 ${input.extraSystemRules ? `\n${input.extraSystemRules}` : ""}`;
@@ -138,7 +143,7 @@ ${input.extraSystemRules ? `\n${input.extraSystemRules}` : ""}`;
         !notes && !existingScope && existingItems.length === 0
           ? input.emptyNotesFallback
           : null,
-        "Draft the scope summary and matching line items now.",
+        "Draft a concise high-level scope summary plus distinct billable line items. Do not repeat deliverables in both places.",
       ]
         .filter(Boolean)
         .join("\n\n"),

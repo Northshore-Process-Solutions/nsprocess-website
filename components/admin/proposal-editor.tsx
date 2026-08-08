@@ -643,8 +643,8 @@ export function ProposalEditor({
           <div>
             <h2 className="text-sm font-semibold">Scope summary</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Tip: put consult notes in Internal notes below, then draft with
-              AI to fill scope and line items.
+              Tip: put consult notes in Internal notes, then draft with AI.
+              Scope stays high-level; line items hold the billable detail.
             </p>
           </div>
           <Button
