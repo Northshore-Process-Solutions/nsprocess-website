@@ -7,6 +7,7 @@ import {
   type DraftProposalLineItem,
 } from "@/lib/ai/draft-proposal";
 import { getDraftModel } from "@/lib/ai/openai";
+import { buildAiExtraRules, getAppAiConfig } from "@/lib/app-ai";
 import { requireReadyDemoSession } from "@/lib/demo/session";
 import { createClient } from "@/lib/supabase/server";
 
@@ -67,31 +68,41 @@ export async function draftProposalScope(input: {
   if (auth.error) return { ok: false, error: auth.error };
 
   const demoCompany = auth.demoSeed?.business;
-  const industry =
-    demoCompany?.category?.trim() ||
-    demoCompany?.notes?.trim() ||
-    "local service business";
-  const operatorName = auth.demoSeed
-    ? demoCompany?.name?.trim() || "the service company"
-    : "North Shore Process Solutions";
+  let operatorName: string;
+  let industry: string;
+  let extraSystemRules: string | undefined;
+  let emptyNotesFallback: string;
+
+  if (auth.demoSeed) {
+    industry =
+      demoCompany?.category?.trim() ||
+      demoCompany?.notes?.trim() ||
+      "local service business";
+    operatorName = demoCompany?.name?.trim() || "the service company";
+    extraSystemRules = buildAiExtraRules(
+      null,
+      "Do not write as if you are North Shore Process Solutions unless that is the demo company.",
+    );
+    emptyNotesFallback = `No consult notes were provided. Draft a general ${industry} job/engagement scope and matching line items suitable for this client type, kept intentionally non-specific.`;
+  } else {
+    const ai = await getAppAiConfig();
+    operatorName = ai.operatorName;
+    industry = ai.industry;
+    extraSystemRules = buildAiExtraRules(ai.customInstructions);
+    emptyNotesFallback = `No consult notes were provided. Draft a general ${industry} engagement scope and matching line items suitable for a typical client of ${operatorName}, kept intentionally non-specific.`;
+  }
 
   const result = await generateProposalDraft({
     operatorName,
-    industry: auth.demoSeed
-      ? industry
-      : "local business-efficiency consultancy on the Massachusetts North Shore",
+    industry,
     businessName: input.businessName,
     contactName: input.contactName,
     title: input.title,
     notes: input.notes,
     existingScope: input.existingScope,
     existingItems: input.existingItems,
-    extraSystemRules: auth.demoSeed
-      ? "Do not write as if you are North Shore Process Solutions unless that is the demo company."
-      : undefined,
-    emptyNotesFallback: auth.demoSeed
-      ? `No consult notes were provided. Draft a general ${industry} job/engagement scope and matching line items suitable for this client type, kept intentionally non-specific.`
-      : "No consult notes were provided. Draft a general process-improvement engagement scope and matching line items suitable for a small local service business, kept intentionally non-specific.",
+    extraSystemRules,
+    emptyNotesFallback,
   });
 
   if (!result.ok) {
@@ -126,32 +137,41 @@ export async function optimizeLeadReply(input: {
   const existingBody = clean(input.existingBody);
 
   const demoCompany = auth.demoSeed?.business;
-  const industry =
-    demoCompany?.category?.trim() ||
-    demoCompany?.notes?.trim() ||
-    "local service business";
-  const operatorName = demoCompany?.name?.trim() || "North Shore Process Solutions";
+  let operatorName: string;
+  let industry: string;
+  let nextStepHint: string;
+  let preferenceBlock = "";
 
-  const system = auth.demoSeed
-    ? `You write short outbound reply emails for ${operatorName}, a ${industry} business.
+  if (auth.demoSeed) {
+    industry =
+      demoCompany?.category?.trim() ||
+      demoCompany?.notes?.trim() ||
+      "local service business";
+    operatorName = demoCompany?.name?.trim() || "the service company";
+    nextStepHint =
+      "Suggest one clear next step (call, visit, or process review) without pressure.";
+    preferenceBlock =
+      "\nDo not write as if you are North Shore Process Solutions unless that is the demo company.";
+  } else {
+    const ai = await getAppAiConfig();
+    operatorName = ai.operatorName;
+    industry = ai.industry;
+    nextStepHint =
+      "Suggest one clear next step appropriate for this business without pressure.";
+    if (ai.customInstructions) {
+      preferenceBlock = `\nOperator preferences (follow when compatible):\n${ai.customInstructions}`;
+    }
+  }
+
+  const system = `You write short outbound reply emails for ${operatorName}, a ${industry} business.
 
 Voice: calm, practical, friendly, plain English. No hype, no emojis, no markdown.
 Output: a complete plain-text email body only (greeting + 2–4 short paragraphs + simple sign-off).
 Keep it under 180 words.
 Reference the inquiry naturally when provided.
-Suggest one clear next step (call, visit, or process review) without pressure.
+${nextStepHint}
 Do not invent prices, schedules, or facts that were not provided.
-Do not include a subject line.
-Do not write as if you are North Shore Process Solutions unless that is the demo company.`
-    : `You write short outbound reply emails for North Shore Process Solutions, a local business-efficiency consultancy on the Massachusetts North Shore.
-
-Voice: calm, practical, friendly, plain English. No hype, no emojis, no markdown.
-Output: a complete plain-text email body only (greeting + 2–4 short paragraphs + simple sign-off).
-Keep it under 180 words.
-Reference the inquiry naturally when provided.
-Suggest one clear next step for a Free Process Review conversation without pressure.
-Do not invent prices, schedules, or facts that were not provided.
-Do not include a subject line.`;
+Do not include a subject line.${preferenceBlock}`;
 
   try {
     const { text } = await generateText({

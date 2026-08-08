@@ -13,10 +13,18 @@ export type BrandSettingsInput = {
   serviceArea?: string;
 };
 
+export type AiSettingsInput = {
+  industry?: string;
+  customInstructions?: string;
+};
+
 export type ActionResult = {
   ok: boolean;
   error?: string;
 };
+
+const MAX_AI_INDUSTRY = 500;
+const MAX_AI_INSTRUCTIONS = 4000;
 
 function clean(value?: string | null) {
   const trimmed = value?.trim() ?? "";
@@ -221,6 +229,77 @@ export async function clearBrandLogo(): Promise<ActionResult> {
   }
 
   revalidatePath("/crm", "layout");
+  revalidatePath("/crm/settings");
+  return { ok: true };
+}
+
+export async function saveAiSettings(
+  input: AiSettingsInput,
+): Promise<ActionResult> {
+  const industry = clean(input.industry);
+  const customInstructions = clean(input.customInstructions);
+
+  if (industry && industry.length > MAX_AI_INDUSTRY) {
+    return {
+      ok: false,
+      error: `Industry description must be ${MAX_AI_INDUSTRY} characters or fewer.`,
+    };
+  }
+  if (customInstructions && customInstructions.length > MAX_AI_INSTRUCTIONS) {
+    return {
+      ok: false,
+      error: `Custom instructions must be ${MAX_AI_INSTRUCTIONS} characters or fewer.`,
+    };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "You must be signed in." };
+  }
+
+  const { data: existing } = await supabase
+    .from("app_settings")
+    .select(
+      "company_name, portal_name, tagline, phone, email, service_area, logo_path",
+    )
+    .eq("id", true)
+    .maybeSingle();
+
+  const companyName =
+    existing?.company_name?.trim() ||
+    process.env.COMPANY_NAME?.trim() ||
+    "Your Company";
+  const portalName =
+    existing?.portal_name?.trim() ||
+    process.env.PORTAL_NAME?.trim() ||
+    "CRM";
+
+  const { error } = await supabase.from("app_settings").upsert(
+    {
+      id: true,
+      company_name: companyName,
+      portal_name: portalName,
+      tagline: existing?.tagline ?? null,
+      phone: existing?.phone ?? null,
+      email: existing?.email ?? null,
+      service_area: existing?.service_area ?? null,
+      logo_path: existing?.logo_path ?? null,
+      ai_industry: industry,
+      ai_custom_instructions: customInstructions,
+      updated_at: new Date().toISOString(),
+      updated_by: user.id,
+    },
+    { onConflict: "id" },
+  );
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
   revalidatePath("/crm/settings");
   return { ok: true };
 }
