@@ -31,12 +31,7 @@ export function PortalSettingsForm({ portalName }: { portalName: string }) {
 
   return (
     <Card className="p-6 sm:p-8">
-      <h3 className="text-base font-semibold tracking-tight">Portal</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Label shown in the CRM header and login screen.
-      </p>
-
-      <form action={onSave} className="mt-6 space-y-4">
+      <form action={onSave} className="space-y-4">
         <label className="block space-y-1.5 text-sm">
           <span className="font-medium">Portal label</span>
           <input
@@ -60,7 +55,7 @@ export function PortalSettingsForm({ portalName }: { portalName: string }) {
         ) : null}
 
         <Button disabled={pending} type="submit">
-          {pending ? "Saving…" : "Save portal settings"}
+          {pending ? "Saving…" : "Save"}
         </Button>
       </form>
     </Card>

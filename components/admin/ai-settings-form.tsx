@@ -10,35 +10,8 @@ import {
 } from "@/app/crm/settings/actions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import type { AppAiSettings } from "@/lib/app-ai";
 
-export function AiSettingsForm({
-  companyName,
-  settings,
-  industryPlaceholder,
-}: {
-  companyName: string;
-  settings: AppAiSettings;
-  industryPlaceholder: string;
-}) {
-  return (
-    <div className="flex flex-col gap-6">
-      <p className="text-sm text-muted-foreground">
-        AI uses your company name from Company settings ({companyName}). Each
-        feature below has its own instructions so proposal drafts and email
-        replies stay independent.
-      </p>
-      <AiIndustryCard
-        industry={settings.industry}
-        industryPlaceholder={industryPlaceholder}
-      />
-      <AiProposalCard instructions={settings.proposalInstructions} />
-      <AiReplyCard instructions={settings.replyInstructions} />
-    </div>
-  );
-}
-
-function AiIndustryCard({
+export function AiIndustrySettingsForm({
   industry,
   industryPlaceholder,
 }: {
@@ -68,19 +41,11 @@ function AiIndustryCard({
 
   return (
     <Card className="p-6 sm:p-8">
-      <h2 className="text-base font-semibold tracking-tight">
-        Shared AI context
-      </h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Used by proposal generation and email replies so both sound like your
-        business.
-      </p>
-
-      <form action={onSave} className="mt-6 space-y-4">
+      <form action={onSave} className="space-y-4">
         <label className="block space-y-1.5 text-sm">
           <span className="font-medium">What you sell / industry</span>
           <textarea
-            className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2"
+            className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2"
             defaultValue={industry ?? ""}
             maxLength={500}
             name="industry"
@@ -94,14 +59,18 @@ function AiIndustryCard({
 
         <SaveFeedback error={error} message={message} />
         <Button disabled={pending} type="submit">
-          {pending ? "Saving…" : "Save shared context"}
+          {pending ? "Saving…" : "Save"}
         </Button>
       </form>
     </Card>
   );
 }
 
-function AiProposalCard({ instructions }: { instructions: string | null }) {
+export function AiProposalSettingsForm({
+  instructions,
+}: {
+  instructions: string | null;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -127,19 +96,11 @@ function AiProposalCard({ instructions }: { instructions: string | null }) {
 
   return (
     <Card className="p-6 sm:p-8">
-      <h2 className="text-base font-semibold tracking-tight">
-        Proposal generation
-      </h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Applied only when drafting proposal scope and line items. Structure
-        rules stay locked.
-      </p>
-
-      <form action={onSave} className="mt-6 space-y-4">
+      <form action={onSave} className="space-y-4">
         <label className="block space-y-1.5 text-sm">
           <span className="font-medium">Proposal instructions</span>
           <textarea
-            className="min-h-32 w-full rounded-md border border-input bg-background px-3 py-2"
+            className="min-h-40 w-full rounded-md border border-input bg-background px-3 py-2"
             defaultValue={instructions ?? ""}
             maxLength={4000}
             name="proposalInstructions"
@@ -147,18 +108,25 @@ function AiProposalCard({ instructions }: { instructions: string | null }) {
               "Optional. e.g. Prefer phase-based line items. Mention a 40% deposit. Leave unit prices blank when unsure. Keep scope high-level."
             }
           />
+          <span className="block text-xs text-muted-foreground">
+            Structure rules stay locked so drafts remain reliable.
+          </span>
         </label>
 
         <SaveFeedback error={error} message={message} />
         <Button disabled={pending} type="submit">
-          {pending ? "Saving…" : "Save proposal AI"}
+          {pending ? "Saving…" : "Save"}
         </Button>
       </form>
     </Card>
   );
 }
 
-function AiReplyCard({ instructions }: { instructions: string | null }) {
+export function AiReplySettingsForm({
+  instructions,
+}: {
+  instructions: string | null;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -182,28 +150,23 @@ function AiReplyCard({ instructions }: { instructions: string | null }) {
 
   return (
     <Card className="p-6 sm:p-8">
-      <h2 className="text-base font-semibold tracking-tight">Email replies</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Applied only when optimizing outbound lead reply emails.
-      </p>
-
-      <form action={onSave} className="mt-6 space-y-4">
+      <form action={onSave} className="space-y-4">
         <label className="block space-y-1.5 text-sm">
           <span className="font-medium">Reply instructions</span>
           <textarea
-            className="min-h-32 w-full rounded-md border border-input bg-background px-3 py-2"
+            className="min-h-40 w-full rounded-md border border-input bg-background px-3 py-2"
             defaultValue={instructions ?? ""}
             maxLength={4000}
             name="replyInstructions"
             placeholder={
-              "Optional. e.g. Warm but direct tone. Always offer a phone call. Sign off as the company first name only. Never mention pricing."
+              "Optional. e.g. Warm but direct tone. Always offer a phone call. Sign off with first name only. Never mention pricing."
             }
           />
         </label>
 
         <SaveFeedback error={error} message={message} />
         <Button disabled={pending} type="submit">
-          {pending ? "Saving…" : "Save reply AI"}
+          {pending ? "Saving…" : "Save"}
         </Button>
       </form>
     </Card>
