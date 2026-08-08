@@ -241,6 +241,7 @@ North Shore Process Solutions`;
         project_id: projectId,
         activity_type: "email",
         email_direction: "sent",
+        email_address: to,
         subject,
         body: text,
         occurred_at: now,

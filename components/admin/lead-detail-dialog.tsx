@@ -19,6 +19,8 @@ type LeadDetailDialogProps = {
   activities?: ActivityRow[];
   deleting?: boolean;
   acceptedProposalId?: string | null;
+  /** Existing proposal for this lead (opens instead of creating a new one). */
+  proposalId?: string | null;
   onClose: () => void;
   onEdit?: (lead: LeadRow) => void;
   onReply?: (lead: LeadRow) => void;
@@ -48,6 +50,7 @@ export function LeadDetailDialog({
   activities = [],
   deleting = false,
   acceptedProposalId = null,
+  proposalId = null,
   onClose,
   onEdit,
   onReply,
@@ -55,6 +58,8 @@ export function LeadDetailDialog({
 }: LeadDetailDialogProps) {
   const { href, isDemo } = usePortal();
   if (!open || !lead) return null;
+
+  const existingProposalId = proposalId ?? acceptedProposalId;
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-primary/40 p-3 sm:items-center sm:p-6">
@@ -172,7 +177,14 @@ export function LeadDetailDialog({
                 Schedule
               </Link>
             </Button>
-            {!isDemo ? (
+            {existingProposalId ? (
+              <Button asChild type="button" variant="outline">
+                <Link href={href(`/proposals/${existingProposalId}`)}>
+                  <FileText aria-hidden className="size-4" />
+                  Open proposal
+                </Link>
+              </Button>
+            ) : !isDemo ? (
               <Button asChild type="button" variant="outline">
                 <Link href={href(`/proposals/new?leadId=${lead.id}`)}>
                   <FileText aria-hidden className="size-4" />

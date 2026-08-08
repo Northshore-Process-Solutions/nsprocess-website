@@ -85,7 +85,7 @@ export default async function ProposalPage({ params }: ProposalPageProps) {
   }
 
   return (
-    <main className="max-w-5xl">
+    <main>
       <header className="mb-5">
         <SalesSubnav current="proposals" />
       </header>

@@ -174,6 +174,7 @@ North Shore Process Solutions`;
       organization_id: agreement.organization_id,
       activity_type: "email",
       email_direction: "sent",
+      email_address: to,
       subject,
       body: text,
       occurred_at: now,

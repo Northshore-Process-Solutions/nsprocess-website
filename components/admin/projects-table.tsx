@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { CalendarDays, Eye } from "lucide-react";
+import { CalendarDays, Eye, Trash2 } from "lucide-react";
 
+import { deleteProject } from "@/app/crm/projects/actions";
 import { ActionHoverTooltip } from "@/components/admin/action-hover-tooltip";
 import {
   MobileDataCard,
@@ -39,6 +41,7 @@ const priorityStyles: Record<string, string> = {
 
 type ProjectsTableProps = {
   rows: ProjectWithOrganization[];
+  readOnly?: boolean;
 };
 
 function PreviewField({
@@ -152,15 +155,72 @@ function ProjectCalendarAction({ row }: { row: ProjectWithOrganization }) {
   );
 }
 
-export function ProjectsTable({ rows }: ProjectsTableProps) {
+function ProjectDeleteAction({
+  row,
+  deletingId,
+  onDelete,
+}: {
+  row: ProjectWithOrganization;
+  deletingId: string | null;
+  onDelete: (row: ProjectWithOrganization) => void;
+}) {
+  return (
+    <ActionHoverTooltip
+      content={
+        <p className="text-sm text-muted-foreground">
+          Permanently delete this project and its tasks.
+        </p>
+      }
+      width={220}
+    >
+      <Button
+        aria-label={`Delete ${row.name}`}
+        disabled={deletingId === row.id}
+        onClick={() => onDelete(row)}
+        size="icon"
+        type="button"
+        variant="outline"
+      >
+        <Trash2 aria-hidden className="size-4" />
+      </Button>
+    </ActionHoverTooltip>
+  );
+}
+
+export function ProjectsTable({
+  rows,
+  readOnly = false,
+}: ProjectsTableProps) {
+  const router = useRouter();
   const [statusFilter, setStatusFilter] = useState<"all" | ProjectStatus>(
     "all",
   );
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     if (statusFilter === "all") return rows;
     return rows.filter((row) => row.status === statusFilter);
   }, [rows, statusFilter]);
+
+  async function handleDelete(row: ProjectWithOrganization) {
+    const confirmed = window.confirm(
+      `Delete project “${row.name}”? Tasks for this project will also be removed. This cannot be undone.`,
+    );
+    if (!confirmed) return;
+
+    setDeletingId(row.id);
+    setError(null);
+    const result = await deleteProject(row.id);
+    setDeletingId(null);
+
+    if (!result.ok) {
+      setError(result.error ?? "Failed to delete project.");
+      return;
+    }
+
+    router.refresh();
+  }
 
   if (rows.length === 0) {
     return (
@@ -176,6 +236,11 @@ export function ProjectsTable({ rows }: ProjectsTableProps) {
 
   return (
     <div className="space-y-4">
+      {error ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-900">
+          {error}
+        </div>
+      ) : null}
       <div className="flex flex-wrap gap-2">
         <button
           className={cn(
@@ -224,6 +289,13 @@ export function ProjectsTable({ rows }: ProjectsTableProps) {
                   <>
                     <ProjectCalendarAction row={row} />
                     <ProjectViewAction row={row} />
+                    {!readOnly ? (
+                      <ProjectDeleteAction
+                        deletingId={deletingId}
+                        onDelete={handleDelete}
+                        row={row}
+                      />
+                    ) : null}
                   </>
                 }
                 badge={
@@ -388,6 +460,13 @@ export function ProjectsTable({ rows }: ProjectsTableProps) {
                             <div className="flex gap-2">
                               <ProjectCalendarAction row={row} />
                               <ProjectViewAction row={row} />
+                              {!readOnly ? (
+                                <ProjectDeleteAction
+                                  deletingId={deletingId}
+                                  onDelete={handleDelete}
+                                  row={row}
+                                />
+                              ) : null}
                             </div>
                           </td>
                         </tr>

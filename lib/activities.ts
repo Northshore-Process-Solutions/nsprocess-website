@@ -8,6 +8,8 @@ export type ActivityRow = {
   project_id: string | null;
   activity_type: ActivityType;
   email_direction: EmailDirection | null;
+  /** Counterpart address: To when sent, From when received. */
+  email_address: string | null;
   subject: string | null;
   body: string | null;
   occurred_at: string;
@@ -37,10 +39,15 @@ export function emptyActivityFormValues() {
   return {
     activityType: "note" as ActivityType,
     emailDirection: "sent" as EmailDirection,
+    emailAddress: "",
     subject: "",
     body: "",
     occurredAt: new Date().toISOString().slice(0, 16),
   };
+}
+
+export function emailAddressLabel(direction: EmailDirection | null | undefined) {
+  return (direction ?? "sent") === "received" ? "From" : "To";
 }
 
 export function latestEmailActivity(

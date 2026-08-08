@@ -15,6 +15,7 @@ export type ActivityInput = {
   projectId?: string | null;
   activityType: ActivityType;
   emailDirection?: EmailDirection | null;
+  emailAddress?: string | null;
   subject?: string;
   body?: string;
   occurredAt?: string;
@@ -82,6 +83,10 @@ function parseInput(input: ActivityInput): ActivityInput | ActionResult {
     projectId,
     activityType: input.activityType,
     emailDirection,
+    emailAddress:
+      input.activityType === "email"
+        ? (clean(input.emailAddress) ?? undefined)
+        : undefined,
     subject: clean(input.subject) ?? undefined,
     body: clean(input.body) ?? undefined,
     occurredAt: occurredAt ?? undefined,
@@ -123,6 +128,8 @@ export async function createActivity(
     project_id: parsed.projectId ?? null,
     activity_type: parsed.activityType,
     email_direction: parsed.emailDirection ?? null,
+    email_address:
+      parsed.activityType === "email" ? (parsed.emailAddress ?? null) : null,
     subject: parsed.subject ?? null,
     body: parsed.body ?? null,
     occurred_at: occurredAt,
@@ -158,6 +165,8 @@ export async function updateActivity(
       project_id: parsed.projectId ?? null,
       activity_type: parsed.activityType,
       email_direction: parsed.emailDirection ?? null,
+      email_address:
+        parsed.activityType === "email" ? (parsed.emailAddress ?? null) : null,
       subject: parsed.subject ?? null,
       body: parsed.body ?? null,
       occurred_at: occurredAt,

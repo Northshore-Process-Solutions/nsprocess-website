@@ -19,6 +19,7 @@ export function LeadsPanel({
   activitiesByLeadId = {},
   eventsByLeadId = {},
   acceptedProposalByLeadId = {},
+  proposalByLeadId = {},
   readOnly = false,
   initialLeadId = null,
 }: {
@@ -26,6 +27,8 @@ export function LeadsPanel({
   activitiesByLeadId?: Record<string, ActivityRow[]>;
   eventsByLeadId?: Record<string, CalendarEventRow[]>;
   acceptedProposalByLeadId?: Record<string, string>;
+  /** Latest proposal id for each lead (any status). */
+  proposalByLeadId?: Record<string, string>;
   readOnly?: boolean;
   /** Open this lead’s detail sheet on load (e.g. home deep link). */
   initialLeadId?: string | null;
@@ -145,6 +148,9 @@ export function LeadsPanel({
         onEdit={readOnly ? undefined : openEdit}
         onReply={readOnly ? undefined : openReply}
         open={detailOpen}
+        proposalId={
+          selectedRow ? (proposalByLeadId[selectedRow.id] ?? null) : null
+        }
       />
 
       {!readOnly ? (

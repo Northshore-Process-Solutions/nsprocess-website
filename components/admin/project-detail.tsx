@@ -8,11 +8,13 @@ import {
   Mail,
   Pencil,
   Plus,
+  Trash2,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import {
+  deleteProject,
   updateProject,
   type ProjectInput,
 } from "@/app/crm/projects/actions";
@@ -290,6 +292,7 @@ export function ProjectDetail({
   const [eventMode, setEventMode] = useState<"create" | "edit">("create");
   const [selectedEvent, setSelectedEvent] =
     useState<CalendarEventWithRelations | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     setName(project.name);
@@ -400,6 +403,26 @@ export function ProjectDetail({
     setEventDialogOpen(true);
   }
 
+  async function handleDelete() {
+    const confirmed = window.confirm(
+      `Delete project “${name}”? Tasks for this project will also be removed. This cannot be undone.`,
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    setError(null);
+    const result = await deleteProject(project.id);
+    setDeleting(false);
+
+    if (!result.ok) {
+      setError(result.error ?? "Failed to delete project.");
+      return;
+    }
+
+    router.push(href("/projects"));
+    router.refresh();
+  }
+
   const editTitle =
     editSection === "identity"
       ? "Edit project"
@@ -463,17 +486,31 @@ export function ProjectDetail({
             ) : null}
           </div>
         </div>
-        {!readOnly && lead ? (
-          <Button
-            disabled={!lead}
-            onClick={() => setReplyOpen(true)}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            <Mail aria-hidden className="size-4" />
-            Email
-          </Button>
+        {!readOnly ? (
+          <div className="flex flex-wrap gap-2">
+            {lead ? (
+              <Button
+                disabled={!lead}
+                onClick={() => setReplyOpen(true)}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                <Mail aria-hidden className="size-4" />
+                Email
+              </Button>
+            ) : null}
+            <Button
+              disabled={deleting || loading}
+              onClick={() => void handleDelete()}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              <Trash2 aria-hidden className="size-4" />
+              {deleting ? "Deleting…" : "Delete"}
+            </Button>
+          </div>
         ) : null}
       </div>
 

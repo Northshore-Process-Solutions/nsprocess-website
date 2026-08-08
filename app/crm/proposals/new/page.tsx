@@ -39,7 +39,7 @@ export default async function NewProposalPage({
   }
 
   return (
-    <main className="max-w-5xl">
+    <main>
       <header className="mb-5">
         <SalesSubnav current="proposals" />
       </header>

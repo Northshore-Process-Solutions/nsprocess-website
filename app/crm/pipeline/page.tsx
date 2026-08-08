@@ -85,10 +85,9 @@ export default async function PipelinePage({
     openLeadIds.length > 0
       ? supabase
           .from("proposals")
-          .select("id, lead_id")
-          .eq("status", "accepted")
+          .select("id, lead_id, status, issued_at, client_responded_at")
           .in("lead_id", openLeadIds)
-          .order("client_responded_at", { ascending: false, nullsFirst: false })
+          .order("issued_at", { ascending: false })
       : Promise.resolve({ data: [], error: null }),
     openLeadIds.length > 0
       ? supabase
@@ -124,7 +123,7 @@ export default async function PipelinePage({
   }
   if (acceptedResult.error) {
     throw new Error(
-      `Failed to load accepted proposals: ${acceptedResult.error.message}`,
+      `Failed to load proposals: ${acceptedResult.error.message}`,
     );
   }
   if (agreementsResult.error) {
@@ -187,13 +186,29 @@ export default async function PipelinePage({
   const leadIds = leads.map((lead) => lead.id);
   const activities = (activitiesResult.data ?? []) as ActivityRow[];
   const calendarEvents = (eventsResult.data ?? []) as CalendarEventRow[];
-  const acceptedProposalByLeadId = (
-    acceptedResult.data ?? []
-  ).reduce<Record<string, string>>((acc, proposal) => {
-    if (!proposal.lead_id || acc[proposal.lead_id]) return acc;
-    acc[proposal.lead_id] = proposal.id;
-    return acc;
-  }, {});
+  const proposalsForLeads = acceptedResult.data ?? [];
+
+  const proposalByLeadId = proposalsForLeads.reduce<Record<string, string>>(
+    (acc, proposal) => {
+      if (!proposal.lead_id || acc[proposal.lead_id]) return acc;
+      acc[proposal.lead_id] = proposal.id;
+      return acc;
+    },
+    {},
+  );
+
+  const acceptedProposalByLeadId = [...proposalsForLeads]
+    .filter((proposal) => proposal.status === "accepted")
+    .sort((a, b) => {
+      const aAt = a.client_responded_at ?? a.issued_at ?? "";
+      const bAt = b.client_responded_at ?? b.issued_at ?? "";
+      return bAt.localeCompare(aAt);
+    })
+    .reduce<Record<string, string>>((acc, proposal) => {
+      if (!proposal.lead_id || acc[proposal.lead_id]) return acc;
+      acc[proposal.lead_id] = proposal.id;
+      return acc;
+    }, {});
 
   const activitiesByLeadId = activities.reduce<Record<string, ActivityRow[]>>(
     (acc, activity) => {
@@ -280,6 +295,7 @@ export default async function PipelinePage({
         activitiesByLeadId={visibleActivitiesByLeadId}
         eventsByLeadId={visibleEventsByLeadId}
         initialLeadId={initialLeadId}
+        proposalByLeadId={proposalByLeadId}
         rows={leads}
       />
     </main>

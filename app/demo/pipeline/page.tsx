@@ -104,6 +104,17 @@ export default async function DemoPipelinePage({
       return acc;
     }, {});
 
+  const proposalByLeadId = [...data.proposals]
+    .filter((proposal) => Boolean(proposal.lead_id))
+    .sort((a, b) =>
+      String(b.issued_at ?? "").localeCompare(String(a.issued_at ?? "")),
+    )
+    .reduce<Record<string, string>>((acc, proposal) => {
+      if (!proposal.lead_id || acc[proposal.lead_id]) return acc;
+      acc[proposal.lead_id] = proposal.id;
+      return acc;
+    }, {});
+
   const activePhase: PipelinePhaseId | null =
     phaseFilter ??
     (stageFilter === "proposal_accepted" ? "accepted" : null);
@@ -160,6 +171,7 @@ export default async function DemoPipelinePage({
         activitiesByLeadId={data.activitiesByLeadId}
         eventsByLeadId={data.eventsByLeadId}
         initialLeadId={initialLeadId}
+        proposalByLeadId={proposalByLeadId}
         readOnly
         rows={leads}
       />

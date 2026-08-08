@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import {
   ACTIVITY_TYPES,
   activityTypeLabel,
+  emailAddressLabel,
   emptyActivityFormValues,
   formatActivityWhen,
   type ActivityRow,
@@ -88,6 +89,8 @@ export function ActivityPanel({
       activityType: values.activityType,
       emailDirection:
         values.activityType === "email" ? values.emailDirection : null,
+      emailAddress:
+        values.activityType === "email" ? values.emailAddress : null,
       subject: values.subject,
       body: values.body,
       occurredAt: values.occurredAt,
@@ -239,6 +242,20 @@ export function ActivityPanel({
                 />
               </label>
             ) : null}
+            {values.activityType === "email" ? (
+              <label className="space-y-2 text-sm font-semibold sm:col-span-2">
+                {emailAddressLabel(values.emailDirection)}
+                <input
+                  className="min-h-11 w-full rounded-2xl border border-input bg-card px-4 py-3 text-base font-normal outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
+                  onChange={(event) =>
+                    updateField("emailAddress", event.target.value)
+                  }
+                  placeholder="name@example.com"
+                  type="email"
+                  value={values.emailAddress}
+                />
+              </label>
+            ) : null}
           </div>
           <label className="block space-y-2 text-sm font-semibold">
             Subject
@@ -321,6 +338,20 @@ export function ActivityPanel({
                 <h3 className="mt-1 text-lg font-semibold tracking-tight">
                   {selected.subject || activityKindLabel(selected)}
                 </h3>
+                {selected.activity_type === "email" &&
+                selected.email_address ? (
+                  <p className="mt-1 text-sm text-foreground">
+                    <span className="text-muted-foreground">
+                      {emailAddressLabel(selected.email_direction)}:
+                    </span>{" "}
+                    <a
+                      className="font-medium text-accent underline-offset-2 hover:underline"
+                      href={`mailto:${selected.email_address}`}
+                    >
+                      {selected.email_address}
+                    </a>
+                  </p>
+                ) : null}
                 <p className="mt-1 text-sm text-muted-foreground">
                   {new Date(selected.occurred_at).toLocaleString()}
                 </p>

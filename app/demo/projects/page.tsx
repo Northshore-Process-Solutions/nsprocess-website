@@ -59,7 +59,7 @@ export default async function DemoProjectsPage() {
         </div>
       </section>
 
-      <ProjectsTable rows={projects} />
+      <ProjectsTable readOnly rows={projects} />
     </main>
   );
 }

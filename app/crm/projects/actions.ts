@@ -280,3 +280,30 @@ export async function deleteProjectTask(
   revalidateProject(projectId);
   return { ok: true };
 }
+
+export async function deleteProject(id: string): Promise<ActionResult> {
+  if (!id) return { ok: false, error: "Missing project id." };
+
+  const auth = await requireUser();
+  if (auth.error) return { ok: false, error: auth.error };
+
+  const { data: existing } = await auth.supabase
+    .from("projects")
+    .select("id, organization_id, lead_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!existing) return { ok: false, error: "Project not found." };
+
+  const { error } = await auth.supabase.from("projects").delete().eq("id", id);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/crm/projects");
+  revalidatePath("/crm");
+  revalidatePath("/crm/pipeline");
+  if (existing.organization_id) {
+    revalidatePath(`/crm/organizations/${existing.organization_id}`);
+  }
+
+  return { ok: true };
+}

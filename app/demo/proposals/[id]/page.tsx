@@ -22,7 +22,7 @@ export default async function DemoProposalDetailPage({
   if (!initialProposal) notFound();
 
   return (
-    <main className="max-w-5xl">
+    <main>
       <DemoPreviewBanner />
       <header className="mb-5">
         <SalesSubnav current="proposals" />

@@ -82,6 +82,7 @@ async function createWebsiteLead(input: {
     lead_id: lead.id,
     activity_type: "email",
     email_direction: "received",
+    email_address: input.email,
     subject: "Free Process Review request (website form)",
     body: activityBody,
     occurred_at: now,

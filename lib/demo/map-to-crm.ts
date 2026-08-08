@@ -475,6 +475,7 @@ export function mapDemoSeedToCrm(raw: DemoSeed) {
     project_id: null,
     activity_type: activity.kind === "email" ? "email" : "note",
     email_direction: activity.kind === "email" ? "sent" : null,
+    email_address: activity.kind === "email" ? seed.business.email : null,
     subject: activity.summary,
     body: null,
     occurred_at: activity.occurredAt,

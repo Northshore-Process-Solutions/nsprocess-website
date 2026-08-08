@@ -777,6 +777,7 @@ export async function replyToLead(
     project_id: projectId,
     activity_type: "email",
     email_direction: "sent",
+    email_address: to,
     subject,
     body,
     occurred_at: new Date().toISOString(),

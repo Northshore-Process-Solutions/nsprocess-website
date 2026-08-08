@@ -350,6 +350,7 @@ async function sendCalendarInviteEmail(
       project_id: input.projectId ?? null,
       activity_type: "email",
       email_direction: "sent",
+      email_address: recipient.email,
       subject,
       body: text,
       occurred_at: new Date().toISOString(),
