@@ -4,10 +4,7 @@ import { defaultNextFollowUpDate } from "@/lib/leads";
 import { escapeHtml, getSmtpConfig, sendAppEmail } from "@/lib/mail";
 import { normalizeUsPhone } from "@/lib/phone";
 import { contact } from "@/lib/site-data";
-import {
-  createPublicSupabaseClient,
-  createServiceRoleClient,
-} from "@/lib/supabase/admin";
+import { createServiceRoleClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
@@ -29,13 +26,26 @@ async function createWebsiteLead(input: {
   email: string;
   phone: string;
   message: string;
-}) {
-  const supabase = createPublicSupabaseClient();
+}): Promise<{ ok: true; leadId: string } | { ok: false; error: string }> {
+  // Server route — use service role. Anon RLS allows INSERT but not SELECT/
+  // RETURNING, so public-client inserts with `.select()` fail (seen in prod).
+  let admin;
+  try {
+    admin = createServiceRoleClient();
+  } catch (setupError) {
+    const message =
+      setupError instanceof Error
+        ? setupError.message
+        : "Missing service role key";
+    console.error("Failed to create website lead client", setupError);
+    return { ok: false, error: message };
+  }
+
   const phone = input.phone ? normalizeUsPhone(input.phone) : null;
   const contactName = `${input.firstName} ${input.lastName}`.trim();
   const now = new Date().toISOString();
 
-  const { data: lead, error } = await supabase
+  const { data: lead, error } = await admin
     .from("leads")
     .insert({
       business_name: input.business,
@@ -53,7 +63,10 @@ async function createWebsiteLead(input: {
 
   if (error || !lead) {
     console.error("Failed to create website lead", error);
-    return;
+    return {
+      ok: false,
+      error: error?.message ?? "Lead insert failed",
+    };
   }
 
   const activityBody = [
@@ -66,23 +79,20 @@ async function createWebsiteLead(input: {
     input.message,
   ].join("\n");
 
-  try {
-    const admin = createServiceRoleClient();
-    const { error: activityError } = await admin.from("activities").insert({
-      lead_id: lead.id,
-      activity_type: "email",
-      email_direction: "received",
-      subject: "Free Process Review request (website form)",
-      body: activityBody,
-      occurred_at: now,
-    });
+  const { error: activityError } = await admin.from("activities").insert({
+    lead_id: lead.id,
+    activity_type: "email",
+    email_direction: "received",
+    subject: "Free Process Review request (website form)",
+    body: activityBody,
+    occurred_at: now,
+  });
 
-    if (activityError) {
-      console.error("Failed to log website form activity", activityError);
-    }
-  } catch (activitySetupError) {
-    console.error("Failed to log website form activity", activitySetupError);
+  if (activityError) {
+    console.error("Failed to log website form activity", activityError);
   }
+
+  return { ok: true, leadId: lead.id };
 }
 
 export async function POST(request: Request) {
@@ -109,10 +119,27 @@ export async function POST(request: Request) {
 
   const normalizedPhone = phone ? normalizeUsPhone(phone) : null;
 
+  // Persist the CRM lead first so Pipeline is not blocked by SMTP issues.
+  const leadResult = await createWebsiteLead({
+    firstName,
+    lastName,
+    business,
+    email,
+    phone: normalizedPhone ?? "",
+    message,
+  });
+
+  if (!leadResult.ok) {
+    return redirectToContact(request, "error");
+  }
+
   const { CONTACT_TO } = process.env;
   const smtp = getSmtpConfig();
 
   if (!smtp || !CONTACT_TO) {
+    console.error(
+      "Contact form lead saved, but email is not configured (SMTP / CONTACT_TO).",
+    );
     return redirectToContact(request, "error");
   }
 
@@ -150,6 +177,10 @@ export async function POST(request: Request) {
   });
 
   if (!notify.ok) {
+    console.error(
+      "Contact form lead saved, but notification email failed",
+      notify.error,
+    );
     return redirectToContact(request, "error");
   }
 
@@ -187,15 +218,6 @@ export async function POST(request: Request) {
   if (!autoReply.ok) {
     console.error("Failed to send contact form auto-reply", autoReply.error);
   }
-
-  await createWebsiteLead({
-    firstName,
-    lastName,
-    business,
-    email,
-    phone: normalizedPhone ?? "",
-    message,
-  });
 
   return redirectToContact(request, "sent");
 }
