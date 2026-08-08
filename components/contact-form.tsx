@@ -60,7 +60,6 @@ export function ContactForm({
           First name
           <input
             className="min-h-11 w-full rounded-2xl border border-input bg-background px-4 py-3 text-base font-normal outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
-            disabled={pending}
             name="firstName"
             placeholder="Jane"
             required
@@ -71,7 +70,6 @@ export function ContactForm({
           Last name
           <input
             className="min-h-11 w-full rounded-2xl border border-input bg-background px-4 py-3 text-base font-normal outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
-            disabled={pending}
             name="lastName"
             placeholder="Smith"
             required
@@ -83,7 +81,6 @@ export function ContactForm({
         Business name
         <input
           className="min-h-11 w-full rounded-2xl border border-input bg-background px-4 py-3 text-base font-normal outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
-          disabled={pending}
           name="business"
           placeholder="Your business"
           required
@@ -95,7 +92,6 @@ export function ContactForm({
           Email
           <input
             className="min-h-11 w-full rounded-2xl border border-input bg-background px-4 py-3 text-base font-normal outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
-            disabled={pending}
             name="email"
             placeholder="you@example.com"
             required
@@ -106,7 +102,6 @@ export function ContactForm({
           Phone
           <input
             className="min-h-11 w-full rounded-2xl border border-input bg-background px-4 py-3 text-base font-normal outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
-            disabled={pending}
             name="phone"
             placeholder="(978) 555-0123"
             type="tel"
@@ -117,7 +112,6 @@ export function ContactForm({
         What is taking too much time right now?
         <textarea
           className="min-h-36 w-full rounded-2xl border border-input bg-background px-4 py-3 text-base font-normal outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
-          disabled={pending}
           name="message"
           placeholder="Tell us about paperwork, spreadsheets, scheduling, follow-up, reporting, or anything else that feels repetitive."
           required

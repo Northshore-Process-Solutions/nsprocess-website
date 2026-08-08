@@ -180,6 +180,13 @@ export async function POST(request: Request) {
   const message = getField(formData, "message");
 
   if (!firstName || !lastName || !business || !email || !message) {
+    console.warn("Contact form missing required fields", {
+      firstName: Boolean(firstName),
+      lastName: Boolean(lastName),
+      business: Boolean(business),
+      email: Boolean(email),
+      message: Boolean(message),
+    });
     return redirectToContact(request, "error");
   }
 
