@@ -5,10 +5,15 @@ import { revalidatePath } from "next/cache";
 import { escapeHtml, sendAppEmail } from "@/lib/mail";
 import { nextLeadStageForProposalStatus, type LeadStage } from "@/lib/leads";
 import {
+  buildProposalPdfBuffer,
+  proposalPdfFilename,
+} from "@/lib/proposal-pdf";
+import {
   createProposalShareToken,
   getAppOrigin,
   proposalShareUrl,
 } from "@/lib/proposal-share";
+import type { ProposalWithItems } from "@/lib/proposals";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -87,7 +92,33 @@ export async function sendProposalShareEmail(
   const { data: proposal, error } = await auth.supabase
     .from("proposals")
     .select(
-      "id, status, proposal_number, title, client_business_name, client_contact_name, client_email, lead_id, organization_id",
+      `
+      id,
+      status,
+      proposal_number,
+      title,
+      client_business_name,
+      client_contact_name,
+      client_email,
+      client_phone,
+      issued_at,
+      valid_until,
+      scope_summary,
+      terms,
+      deposit_percent,
+      lead_id,
+      organization_id,
+      proposal_items (
+        id,
+        proposal_id,
+        description,
+        quantity,
+        unit_price,
+        line_total,
+        sort_order,
+        created_at
+      )
+    `,
     )
     .eq("id", id)
     .maybeSingle();
@@ -103,6 +134,20 @@ export async function sendProposalShareEmail(
     };
   }
 
+  let pdfBuffer: Buffer;
+  try {
+    pdfBuffer = await buildProposalPdfBuffer(proposal as ProposalWithItems);
+  } catch (pdfError) {
+    console.error("Failed to build proposal PDF attachment", pdfError);
+    return {
+      ok: false,
+      error: "Could not generate the proposal PDF attachment.",
+      shareUrl: link.shareUrl,
+    };
+  }
+
+  const pdfName = proposalPdfFilename(proposal);
+
   const greeting = proposal.client_contact_name?.trim()
     ? `Hi ${proposal.client_contact_name.trim()},`
     : "Hello,";
@@ -114,7 +159,7 @@ Please review the proposal for ${proposal.client_business_name}:
 
 ${link.shareUrl}
 
-You can accept or decline below. A short comment is optional.
+A PDF copy is attached for your records. You can accept or decline on the link above. A short comment is optional.
 
 Thank you,
 North Shore Process Solutions`;
@@ -123,11 +168,23 @@ North Shore Process Solutions`;
     <p>${escapeHtml(greeting)}</p>
     <p>Please review the proposal for <strong>${escapeHtml(proposal.client_business_name)}</strong>.</p>
     <p><a href="${escapeHtml(link.shareUrl)}">View proposal and respond</a></p>
-    <p>You can accept or decline below. A short comment is optional.</p>
+    <p>A PDF copy is attached for your records. You can accept or decline on the link above. A short comment is optional.</p>
     <p>Thank you,<br />North Shore Process Solutions</p>
   `;
 
-  const sent = await sendAppEmail({ to, subject, text, html });
+  const sent = await sendAppEmail({
+    to,
+    subject,
+    text,
+    html,
+    attachments: [
+      {
+        filename: pdfName,
+        content: pdfBuffer,
+        contentType: "application/pdf",
+      },
+    ],
+  });
   if (!sent.ok) {
     return { ok: false, error: sent.error, shareUrl: link.shareUrl };
   }

@@ -21,6 +21,7 @@ const demoNoStoreHeaders = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  serverExternalPackages: ["pdfkit"],
   async headers() {
     return [
       {
