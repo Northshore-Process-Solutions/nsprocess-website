@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 import {
   issuerFooterLine,
   type DocumentIssuer,
@@ -35,12 +33,14 @@ export function DocumentPdfBrandHeader({
         ) : null}
       </div>
       {issuer.logoSrc ? (
-        <Image
+        // Brand logos may be remote (Supabase storage).
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
           alt={issuer.logoAlt ?? issuer.name}
-          className="h-12 w-auto shrink-0"
+          className="h-12 w-auto shrink-0 object-contain"
           height={48}
           src={issuer.logoSrc}
-          width={48}
+          width={120}
         />
       ) : null}
     </header>

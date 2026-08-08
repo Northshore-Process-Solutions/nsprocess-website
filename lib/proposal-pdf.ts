@@ -26,12 +26,30 @@ function sanitizeFilenamePart(value: string) {
 }
 
 function resolvePublicLogoPath(logoSrc: string | null | undefined) {
-  if (!logoSrc || logoSrc.startsWith("http://") || logoSrc.startsWith("https://")) {
+  if (!logoSrc) return null;
+  if (logoSrc.startsWith("http://") || logoSrc.startsWith("https://")) {
     return null;
   }
   const relative = logoSrc.replace(/^\//, "");
   const fullPath = path.join(process.cwd(), "public", relative);
   return fs.existsSync(fullPath) ? fullPath : null;
+}
+
+async function resolveLogoImage(
+  logoSrc: string | null | undefined,
+): Promise<string | Buffer | null> {
+  const local = resolvePublicLogoPath(logoSrc);
+  if (local) return local;
+  if (!logoSrc?.startsWith("http://") && !logoSrc?.startsWith("https://")) {
+    return null;
+  }
+  try {
+    const response = await fetch(logoSrc);
+    if (!response.ok) return null;
+    return Buffer.from(await response.arrayBuffer());
+  } catch {
+    return null;
+  }
 }
 
 export function proposalPdfFilename(proposal: {
@@ -46,10 +64,12 @@ export function proposalPdfFilename(proposal: {
 }
 
 /** Build a printable proposal PDF for email attachment. */
-export function buildProposalPdfBuffer(
+export async function buildProposalPdfBuffer(
   proposal: ProposalWithItems,
   issuer: DocumentIssuer = nspsDocumentIssuer,
 ): Promise<Buffer> {
+  const logoImage = await resolveLogoImage(issuer.logoSrc);
+
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: "LETTER",
@@ -96,13 +116,12 @@ export function buildProposalPdfBuffer(
 
     // Header (company text left, logo top-right — matches print PDF)
     const headerTop = doc.y;
-    const logoPath = resolvePublicLogoPath(issuer.logoSrc);
     const logoMaxWidth = 72;
     const logoMaxHeight = 48;
-    const textWidth = logoPath ? pageWidth - logoMaxWidth - 16 : pageWidth;
+    const textWidth = logoImage ? pageWidth - logoMaxWidth - 16 : pageWidth;
 
-    if (logoPath) {
-      doc.image(logoPath, right - logoMaxWidth, headerTop, {
+    if (logoImage) {
+      doc.image(logoImage, right - logoMaxWidth, headerTop, {
         fit: [logoMaxWidth, logoMaxHeight],
       });
     }
@@ -139,7 +158,7 @@ export function buildProposalPdfBuffer(
 
     const headerBottom = Math.max(
       doc.y,
-      logoPath ? headerTop + logoMaxHeight : doc.y,
+      logoImage ? headerTop + logoMaxHeight : doc.y,
     );
     doc.y = headerBottom + 10;
     doc

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { escapeHtml, sendAppEmail } from "@/lib/mail";
+import { getAppBrand, getLiveDocumentIssuer } from "@/lib/app-brand";
 import { nextLeadStageForProposalStatus, type LeadStage } from "@/lib/leads";
 import {
   buildProposalPdfBuffer,
@@ -136,7 +137,11 @@ export async function sendProposalShareEmail(
 
   let pdfBuffer: Buffer;
   try {
-    pdfBuffer = await buildProposalPdfBuffer(proposal as ProposalWithItems);
+    const issuer = await getLiveDocumentIssuer();
+    pdfBuffer = await buildProposalPdfBuffer(
+      proposal as ProposalWithItems,
+      issuer,
+    );
   } catch (pdfError) {
     console.error("Failed to build proposal PDF attachment", pdfError);
     return {
@@ -152,7 +157,10 @@ export async function sendProposalShareEmail(
     ? `Hi ${proposal.client_contact_name.trim()},`
     : "Hello,";
 
-  const subject = `Proposal ${proposal.proposal_number} from North Shore Process Solutions`;
+  const brand = await getAppBrand();
+  const company = brand.companyName;
+
+  const subject = `Proposal ${proposal.proposal_number} from ${company}`;
   const text = `${greeting}
 
 Please review the proposal for ${proposal.client_business_name}:
@@ -162,14 +170,14 @@ ${link.shareUrl}
 A PDF copy is attached for your records. You can accept or decline on the link above. A short comment is optional.
 
 Thank you,
-North Shore Process Solutions`;
+${company}`;
 
   const html = `
     <p>${escapeHtml(greeting)}</p>
     <p>Please review the proposal for <strong>${escapeHtml(proposal.client_business_name)}</strong>.</p>
     <p><a href="${escapeHtml(link.shareUrl)}">View proposal and respond</a></p>
     <p>A PDF copy is attached for your records. You can accept or decline on the link above. A short comment is optional.</p>
-    <p>Thank you,<br />North Shore Process Solutions</p>
+    <p>Thank you,<br />${escapeHtml(company)}</p>
   `;
 
   const sent = await sendAppEmail({

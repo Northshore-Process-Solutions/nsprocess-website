@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AgreementPdfDocument } from "@/components/admin/agreement-pdf-document";
 import { AgreementClientSignForm } from "@/components/share/agreement-client-sign-form";
 import type { AgreementWithItems } from "@/lib/agreements";
+import { getAppBrand, getLiveDocumentIssuer } from "@/lib/app-brand";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 
 type PublicAgreementPageProps = {
@@ -69,12 +70,14 @@ export default async function PublicAgreementPage({
   // if token exists (emailing marks sent). Hide pure drafts that somehow have tokens?
   // Emailing sets status to sent. If only Copy link without send, draft is ok to sign.
   const alreadySigned = Boolean(agreement.signed_at) || agreement.status === "signed";
+  const brand = await getAppBrand();
+  const issuer = await getLiveDocumentIssuer();
 
   return (
     <main className="min-h-screen bg-[#F4F7FB] px-4 py-8 sm:px-6 sm:py-10">
       <div className="mx-auto mb-6 max-w-[8.5in] text-center sm:text-left">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-          North Shore Process Solutions
+          {brand.companyName}
         </p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
           Agreement {agreement.agreement_number}
@@ -85,7 +88,7 @@ export default async function PublicAgreementPage({
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-soft">
-        <AgreementPdfDocument agreement={agreement} />
+        <AgreementPdfDocument agreement={agreement} issuer={issuer} />
       </div>
 
       <AgreementClientSignForm

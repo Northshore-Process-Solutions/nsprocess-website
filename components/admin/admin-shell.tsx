@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -76,30 +75,46 @@ export function AdminShell({
     return <>{children}</>;
   }
 
+  const brand = portal.brand;
+  const portalName = brand?.portalName ?? (isDemo ? "Demo Portal" : "CRM");
+  const logoSrc = brand?.logoUrl ?? null;
+
   return (
     <div className="admin-shell min-h-screen bg-[#f1f3f5] text-foreground">
       <header className="border-b border-slate-200 bg-white">
         <div className="flex h-12 w-full items-center justify-between gap-4 px-4 sm:px-6">
           <Link
-            aria-label="NSPS Portal home"
+            aria-label={`${portalName} home`}
             className="inline-flex min-w-0 items-center gap-2.5 text-slate-900"
             href={homeHref}
           >
-            <Image
-              alt=""
-              className="h-8 w-auto object-contain"
-              height={32}
-              priority
-              src="/transparentLogo.png"
-              width={44}
-            />
+            {logoSrc ? (
+              // Brand logos may be remote Supabase URLs.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                alt=""
+                className="h-8 w-auto max-w-[7rem] object-contain"
+                height={32}
+                src={logoSrc}
+                width={44}
+              />
+            ) : (
+              <span className="flex h-8 w-8 items-center justify-center rounded bg-slate-900 text-xs font-bold text-white">
+                {(brand?.companyName ?? portalName).slice(0, 1).toUpperCase()}
+              </span>
+            )}
             <span className="hidden min-w-0 sm:block">
               <span className="block text-sm font-semibold tracking-tight">
-                NSPS Portal
+                {portalName}
               </span>
               {isDemo || subtitle ? (
                 <span className="block truncate text-[11px] font-medium text-slate-500">
                   {subtitle ?? "Demo"}
+                </span>
+              ) : brand?.companyName &&
+                brand.companyName !== portalName ? (
+                <span className="block truncate text-[11px] font-medium text-slate-500">
+                  {brand.companyName}
                 </span>
               ) : null}
             </span>

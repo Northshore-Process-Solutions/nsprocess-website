@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { ProposalPdfDocument } from "@/components/admin/proposal-pdf-document";
 import { ProposalPrintButton } from "@/components/admin/proposal-print-button";
 import { Button } from "@/components/ui/button";
+import { getLiveDocumentIssuer } from "@/lib/app-brand";
 import type { ProposalWithItems } from "@/lib/proposals";
 import { createClient } from "@/lib/supabase/server";
 
@@ -55,6 +56,7 @@ export default async function ProposalPdfPage({
   }
 
   const proposal = data as ProposalWithItems;
+  const issuer = await getLiveDocumentIssuer();
 
   return (
     <main className="min-h-screen bg-[#F7FAFC] px-4 py-6 print:bg-white print:p-0">
@@ -68,7 +70,7 @@ export default async function ProposalPdfPage({
         <ProposalPrintButton />
       </div>
 
-      <ProposalPdfDocument proposal={proposal} />
+      <ProposalPdfDocument issuer={issuer} proposal={proposal} />
 
       <p className="mx-auto mt-4 max-w-[8.5in] text-center text-sm text-muted-foreground print:hidden">
         Use <strong>Print / Save as PDF</strong>, choose “Save as PDF” as the

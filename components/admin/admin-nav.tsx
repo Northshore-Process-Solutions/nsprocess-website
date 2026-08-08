@@ -69,6 +69,12 @@ const linkDefs = [
     key: "stack" as const,
     match: (p: string, base: string) => p.startsWith(`${base}/tools`),
   },
+  {
+    path: "/settings",
+    label: "Settings",
+    key: "settings" as const,
+    match: (p: string, base: string) => p.startsWith(`${base}/settings`),
+  },
 ];
 
 /** @deprecated Prefer pathname-based AdminNav with no current prop. */
@@ -81,15 +87,19 @@ export type AdminNavKey =
   | "projects"
   | "stack"
   | "calendar"
-  | "purchases";
+  | "purchases"
+  | "settings";
 
 export function AdminNav({ current }: { current?: AdminNavKey } = {}) {
   const pathname = usePathname() ?? "/crm";
-  const { href, basePath } = usePortal();
+  const { href, basePath, isDemo } = usePortal();
+  const links = isDemo
+    ? linkDefs.filter((link) => link.key !== "settings")
+    : linkDefs;
 
   return (
     <nav aria-label="Admin sections" className="flex gap-0 overflow-x-auto">
-      {linkDefs.map((link) => {
+      {links.map((link) => {
         const linkHref = href(link.path);
         const active = current
           ? current === link.key

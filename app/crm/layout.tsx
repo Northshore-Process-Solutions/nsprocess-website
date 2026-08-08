@@ -3,22 +3,28 @@ import type React from "react";
 
 import { AdminShell } from "@/components/admin/admin-shell";
 import { PortalProvider } from "@/components/portal/portal-provider";
+import { getAppBrand } from "@/lib/app-brand";
 
-export const metadata: Metadata = {
-  title: "NSPS Portal",
-  robots: {
-    index: false,
-    follow: false,
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const brand = await getAppBrand();
+  return {
+    title: brand.portalName,
+    robots: {
+      index: false,
+      follow: false,
+    },
+  };
+}
 
-export default function CrmLayout({
+export default async function CrmLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const brand = await getAppBrand();
+
   return (
-    <PortalProvider mode="live">
+    <PortalProvider brand={brand} mode="live">
       <AdminShell>{children}</AdminShell>
     </PortalProvider>
   );

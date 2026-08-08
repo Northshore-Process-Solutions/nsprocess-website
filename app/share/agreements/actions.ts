@@ -7,6 +7,7 @@ import {
   createAgreementShareToken,
 } from "@/lib/agreement-share";
 import { escapeHtml, sendAppEmail } from "@/lib/mail";
+import { getAppBrand } from "@/lib/app-brand";
 import { getAppOrigin } from "@/lib/proposal-share";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -126,6 +127,9 @@ export async function sendAgreementShareEmail(
     ? `Hi ${agreement.client_contact_name.trim()},`
     : "Hello,";
 
+  const brand = await getAppBrand();
+  const company = brand.companyName;
+
   const subject = `Agreement ${agreement.agreement_number} — please review and sign`;
   const text = `${greeting}
 
@@ -136,14 +140,14 @@ ${link.shareUrl}
 By signing, you confirm the scope and investment in the agreement. A deposit invoice will follow.
 
 Thank you,
-North Shore Process Solutions`;
+${company}`;
 
   const html = `
     <p>${escapeHtml(greeting)}</p>
     <p>Please review and sign the agreement for <strong>${escapeHtml(agreement.client_business_name)}</strong>.</p>
     <p><a href="${escapeHtml(link.shareUrl)}">View agreement and sign</a></p>
     <p>By signing, you confirm the scope and investment in the agreement. A deposit invoice will follow.</p>
-    <p>Thank you,<br />North Shore Process Solutions</p>
+    <p>Thank you,<br />${escapeHtml(company)}</p>
   `;
 
   const sent = await sendAppEmail({ to, subject, text, html });

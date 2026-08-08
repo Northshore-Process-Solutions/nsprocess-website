@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { InvoicePdfDocument } from "@/components/admin/invoice-pdf-document";
 import { ProposalPrintButton } from "@/components/admin/proposal-print-button";
 import { Button } from "@/components/ui/button";
+import { getLiveDocumentIssuer } from "@/lib/app-brand";
 import type { InvoiceWithItems } from "@/lib/invoices";
 import { createClient } from "@/lib/supabase/server";
 
@@ -68,7 +69,7 @@ export default async function InvoicePdfPage({
         <ProposalPrintButton />
       </div>
 
-      <InvoicePdfDocument invoice={invoice} />
+      <InvoicePdfDocument invoice={invoice} issuer={await getLiveDocumentIssuer()} />
 
       <p className="mx-auto mt-4 max-w-[8.5in] text-center text-sm text-muted-foreground print:hidden">
         Use <strong>Print / Save as PDF</strong>, choose “Save as PDF” as the

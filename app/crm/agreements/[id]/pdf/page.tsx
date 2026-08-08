@@ -6,6 +6,7 @@ import { AgreementPdfDocument } from "@/components/admin/agreement-pdf-document"
 import { ProposalPrintButton } from "@/components/admin/proposal-print-button";
 import { Button } from "@/components/ui/button";
 import type { AgreementWithItems } from "@/lib/agreements";
+import { getLiveDocumentIssuer } from "@/lib/app-brand";
 import { createClient } from "@/lib/supabase/server";
 
 type AgreementPdfPageProps = {
@@ -68,7 +69,7 @@ export default async function AgreementPdfPage({
         <ProposalPrintButton />
       </div>
 
-      <AgreementPdfDocument agreement={agreement} />
+      <AgreementPdfDocument agreement={agreement} issuer={await getLiveDocumentIssuer()} />
 
       <p className="mx-auto mt-4 max-w-[8.5in] text-center text-sm text-muted-foreground print:hidden">
         Use <strong>Print / Save as PDF</strong>, choose “Save as PDF” as the

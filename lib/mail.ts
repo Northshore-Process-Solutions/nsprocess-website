@@ -45,6 +45,7 @@ export async function sendAppEmail(input: {
   text: string;
   html?: string;
   replyTo?: string;
+  fromName?: string;
   attachments?: Array<{
     filename: string;
     content: string | Buffer;
@@ -64,9 +65,19 @@ export async function sendAppEmail(input: {
     return { ok: false as const, error: "Email is not configured." };
   }
 
+  let fromName = input.fromName?.trim();
+  if (!fromName) {
+    try {
+      const { getAppBrand } = await import("@/lib/app-brand");
+      fromName = (await getAppBrand()).companyName;
+    } catch {
+      fromName = "North Shore Process Solutions";
+    }
+  }
+
   try {
     const info = await transporter.sendMail({
-      from: `"North Shore Process Solutions" <${config.user}>`,
+      from: `"${fromName}" <${config.user}>`,
       to: input.to,
       replyTo: input.replyTo ?? config.user,
       subject: input.subject,

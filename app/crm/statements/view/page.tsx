@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { ProposalPrintButton } from "@/components/admin/proposal-print-button";
 import { StatementPdfDocument } from "@/components/admin/statement-pdf-document";
 import { Button } from "@/components/ui/button";
+import { getLiveDocumentIssuer } from "@/lib/app-brand";
 import { invoiceBalance, type InvoiceWithItems } from "@/lib/invoices";
 import { isDateOnly } from "@/lib/billing";
 import { createClient } from "@/lib/supabase/server";
@@ -134,6 +135,7 @@ export default async function StatementViewPage({
       <StatementPdfDocument
         from={from}
         invoices={(periodInvoices ?? []) as InvoiceWithItems[]}
+        issuer={await getLiveDocumentIssuer()}
         organizationName={organization.name}
         priorOpenBalance={Math.round(priorOpenBalance * 100) / 100}
         to={to}
