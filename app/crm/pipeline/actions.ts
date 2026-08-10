@@ -730,6 +730,19 @@ export async function deleteLead(leadId: string): Promise<ActionResult> {
   return { ok: true };
 }
 
+export async function rescanLeadSpam(leadId: string): Promise<ActionResult> {
+  if (!leadId) return { ok: false, error: "Missing lead id." };
+
+  const { error: authError } = await requireUser();
+  if (authError) return { ok: false, error: authError };
+
+  await scanLeadForSpam(leadId, { force: true });
+
+  revalidatePath("/crm/pipeline");
+  revalidatePath("/crm");
+  return { ok: true };
+}
+
 export async function replyToLead(
   leadId: string,
   input: { subject: string; body: string; projectId?: string | null },

@@ -215,8 +215,9 @@ export function AiSpamSettingsForm({
             }
           />
           <span className="block text-xs text-muted-foreground">
-            Applied when new inquiries arrive. Flags appear on the pipeline
-            when AI thinks a lead is spam or advertising.
+            Applied when new inquiries arrive. Use Re-check on a lead after
+            changing these rules. Flags appear on the pipeline when AI thinks a
+            lead should be flagged.
           </span>
         </label>
 

@@ -87,6 +87,11 @@ export async function getAppAiConfig(): Promise<AppAiConfig> {
   const fromUserClient = await loadAiConfigWithUserClient();
   if (fromUserClient) return fromUserClient;
 
+  return getAppAiConfigForBackground();
+}
+
+/** Load AI settings with service role — for background jobs without a user session. */
+export async function getAppAiConfigForBackground(): Promise<AppAiConfig> {
   const fromServiceRole = await loadAiConfigWithServiceRole();
   if (fromServiceRole) return fromServiceRole;
 

@@ -1,11 +1,14 @@
 import { revalidatePath } from "next/cache";
 
 import { classifyLeadSpam } from "@/lib/ai/classify-lead-spam";
-import { getAppAiConfig } from "@/lib/app-ai";
+import { getAppAiConfigForBackground } from "@/lib/app-ai";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 
 /** Run AI spam classification and persist results on the lead row. */
-export async function scanLeadForSpam(leadId: string) {
+export async function scanLeadForSpam(
+  leadId: string,
+  options?: { force?: boolean },
+) {
   if (!leadId?.trim()) return;
   if (!process.env.OPENAI_API_KEY?.trim()) {
     console.warn("scanLeadForSpam skipped: missing OPENAI_API_KEY");
@@ -33,11 +36,11 @@ export async function scanLeadForSpam(leadId: string) {
     return;
   }
 
-  if (lead.spam_scanned_at) {
+  if (lead.spam_scanned_at && !options?.force) {
     return;
   }
 
-  const ai = await getAppAiConfig();
+  const ai = await getAppAiConfigForBackground();
   const result = await classifyLeadSpam(
     {
       businessName: lead.business_name,

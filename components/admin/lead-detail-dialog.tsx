@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, FileText, Mail, Pencil, Trash2 } from "lucide-react";
+import { CalendarDays, FileText, Flag, Mail, Pencil, Trash2 } from "lucide-react";
 
 import { ActivityPanel } from "@/components/admin/activity-panel";
 import { SpamFlagBadge } from "@/components/admin/spam-flag-badge";
@@ -26,6 +26,8 @@ type LeadDetailDialogProps = {
   onEdit?: (lead: LeadRow) => void;
   onReply?: (lead: LeadRow) => void;
   onDelete?: (lead: LeadRow) => void;
+  onRescanSpam?: (lead: LeadRow) => void;
+  rescanningSpam?: boolean;
 };
 
 function DetailItem({
@@ -56,6 +58,8 @@ export function LeadDetailDialog({
   onEdit,
   onReply,
   onDelete,
+  onRescanSpam,
+  rescanningSpam = false,
 }: LeadDetailDialogProps) {
   const { href, isDemo } = usePortal();
   if (!open || !lead) return null;
@@ -99,6 +103,32 @@ export function LeadDetailDialog({
               {lead.spam_reason ? (
                 <p className="mt-2 text-orange-900/90">{lead.spam_reason}</p>
               ) : null}
+            </div>
+          ) : null}
+
+          {onRescanSpam ? (
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/30 px-4 py-3 text-sm">
+              <div>
+                <p className="font-medium">Spam check</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {lead.spam_scanned_at
+                    ? `Last checked ${new Date(lead.spam_scanned_at).toLocaleString()}`
+                    : "Not checked yet"}
+                  {!lead.spam_flag && lead.spam_scanned_at
+                    ? " · No flag"
+                    : null}
+                </p>
+              </div>
+              <Button
+                disabled={rescanningSpam}
+                onClick={() => onRescanSpam(lead)}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                <Flag aria-hidden className="size-3.5" />
+                {rescanningSpam ? "Checking…" : "Re-check"}
+              </Button>
             </div>
           ) : null}
 

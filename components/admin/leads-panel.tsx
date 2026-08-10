@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { deleteLead } from "@/app/crm/pipeline/actions";
+import { deleteLead, rescanLeadSpam } from "@/app/crm/pipeline/actions";
 import { LeadDetailDialog } from "@/components/admin/lead-detail-dialog";
 import { LeadForm } from "@/components/admin/lead-form";
 import { LeadReplyDialog } from "@/components/admin/lead-reply-dialog";
@@ -41,6 +41,7 @@ export function LeadsPanel({
   const [selectedRow, setSelectedRow] = useState<LeadRow | null>(null);
   const [replyLead, setReplyLead] = useState<LeadRow | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [rescanningSpamId, setRescanningSpamId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [openedInitialId, setOpenedInitialId] = useState<string | null>(null);
 
@@ -105,6 +106,21 @@ export function LeadsPanel({
     router.refresh();
   }
 
+  async function handleRescanSpam(row: LeadRow) {
+    setRescanningSpamId(row.id);
+    setError(null);
+
+    const result = await rescanLeadSpam(row.id);
+    setRescanningSpamId(null);
+
+    if (!result.ok) {
+      setError(result.error ?? "Failed to re-check spam.");
+      return;
+    }
+
+    router.refresh();
+  }
+
   return (
     <div className="space-y-4">
       {!readOnly ? (
@@ -147,10 +163,14 @@ export function LeadsPanel({
         onDelete={readOnly ? undefined : handleDelete}
         onEdit={readOnly ? undefined : openEdit}
         onReply={readOnly ? undefined : openReply}
+        onRescanSpam={readOnly ? undefined : handleRescanSpam}
         open={detailOpen}
         proposalId={
           selectedRow ? (proposalByLeadId[selectedRow.id] ?? null) : null
         }
+        rescanningSpam={Boolean(
+          selectedRow && rescanningSpamId === selectedRow.id,
+        )}
       />
 
       {!readOnly ? (
