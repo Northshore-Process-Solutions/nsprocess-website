@@ -256,6 +256,9 @@ export function mapDemoSeedToCrm(raw: DemoSeed) {
     notes: null,
     next_follow_up_at: lead.nextFollowUpAt,
     lost_reason: null,
+    spam_flag: false,
+    spam_reason: null,
+    spam_scanned_at: null,
     created_at: stamp(),
     updated_at: stamp(),
   }));

@@ -9,6 +9,7 @@ import {
   MobileDataField,
   ResponsiveDataList,
 } from "@/components/admin/responsive-data-list";
+import { SpamFlagBadge } from "@/components/admin/spam-flag-badge";
 import { usePortal } from "@/components/portal/portal-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -154,6 +155,11 @@ function LeadViewAction({
             <p className="mt-1 text-base font-bold tracking-tight">
               {lead.business_name}
             </p>
+            {lead.spam_flag ? (
+              <div className="mt-2">
+                <SpamFlagBadge compact reason={lead.spam_reason} />
+              </div>
+            ) : null}
             <p className="mt-0.5 text-sm text-muted-foreground">
               {lead.contact_name}
             </p>
@@ -320,15 +326,21 @@ export function LeadsTable({
             </>
           }
           badge={
-            <span
-              className={cn(
-                "inline-flex rounded-full border px-3 py-1 text-xs font-semibold",
-                stageStyles[row.stage],
-              )}
-            >
-              {leadStageLabel(row.stage)}
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              {row.spam_flag ? (
+                <SpamFlagBadge compact reason={row.spam_reason} />
+              ) : null}
+              <span
+                className={cn(
+                  "inline-flex rounded-full border px-3 py-1 text-xs font-semibold",
+                  stageStyles[row.stage],
+                )}
+              >
+                {leadStageLabel(row.stage)}
+              </span>
+            </div>
           }
+          className={row.spam_flag ? "border-orange-200 bg-orange-50/40" : undefined}
           key={row.id}
           meta={
             <>
@@ -381,11 +393,19 @@ export function LeadsTable({
               <tbody>
                 {rows.map((row) => (
                   <tr
-                    className="border-t border-border align-top transition hover:bg-secondary/40"
+                    className={cn(
+                      "border-t border-border align-top transition hover:bg-secondary/40",
+                      row.spam_flag && "bg-orange-50/50",
+                    )}
                     key={row.id}
                   >
                     <td className="px-4 py-4">
-                      <div className="font-semibold">{row.business_name}</div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="font-semibold">{row.business_name}</div>
+                        {row.spam_flag ? (
+                          <SpamFlagBadge compact reason={row.spam_reason} />
+                        ) : null}
+                      </div>
                     </td>
                     <td className="px-4 py-4">
                       <div className="font-medium">{row.contact_name}</div>

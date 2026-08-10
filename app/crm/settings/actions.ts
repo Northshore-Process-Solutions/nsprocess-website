@@ -28,6 +28,10 @@ export type AiReplySettingsInput = {
   replyInstructions?: string;
 };
 
+export type AiSpamSettingsInput = {
+  spamInstructions?: string;
+};
+
 export type ActionResult = {
   ok: boolean;
   error?: string;
@@ -117,7 +121,7 @@ export async function savePortalSettings(
   const { data: existing } = await supabase
     .from("app_settings")
     .select(
-      "company_name, tagline, phone, email, service_area, logo_path, ai_industry, ai_proposal_instructions, ai_reply_instructions",
+      "company_name, tagline, phone, email, service_area, logo_path, ai_industry, ai_proposal_instructions, ai_reply_instructions, ai_spam_instructions",
     )
     .eq("id", true)
     .maybeSingle();
@@ -140,6 +144,7 @@ export async function savePortalSettings(
       ai_industry: existing?.ai_industry ?? null,
       ai_proposal_instructions: existing?.ai_proposal_instructions ?? null,
       ai_reply_instructions: existing?.ai_reply_instructions ?? null,
+      ai_spam_instructions: existing?.ai_spam_instructions ?? null,
       updated_at: new Date().toISOString(),
       updated_by: user.id,
     },
@@ -355,6 +360,23 @@ export async function saveAiReplySettings(
   });
 }
 
+export async function saveAiSpamSettings(
+  input: AiSpamSettingsInput,
+): Promise<ActionResult> {
+  const spamInstructions = clean(input.spamInstructions);
+
+  if (spamInstructions && spamInstructions.length > MAX_AI_INSTRUCTIONS) {
+    return {
+      ok: false,
+      error: `Spam detection instructions must be ${MAX_AI_INSTRUCTIONS} characters or fewer.`,
+    };
+  }
+
+  return patchAiFields({
+    ai_spam_instructions: spamInstructions,
+  });
+}
+
 async function patchAiFields(
   fields: Record<string, string | null>,
 ): Promise<ActionResult> {
@@ -370,7 +392,7 @@ async function patchAiFields(
   const { data: existing } = await supabase
     .from("app_settings")
     .select(
-      "company_name, portal_name, tagline, phone, email, service_area, logo_path, ai_industry, ai_proposal_instructions, ai_reply_instructions",
+      "company_name, portal_name, tagline, phone, email, service_area, logo_path, ai_industry, ai_proposal_instructions, ai_reply_instructions, ai_spam_instructions",
     )
     .eq("id", true)
     .maybeSingle();
@@ -397,6 +419,7 @@ async function patchAiFields(
       ai_industry: existing?.ai_industry ?? null,
       ai_proposal_instructions: existing?.ai_proposal_instructions ?? null,
       ai_reply_instructions: existing?.ai_reply_instructions ?? null,
+      ai_spam_instructions: existing?.ai_spam_instructions ?? null,
       ...fields,
       updated_at: new Date().toISOString(),
       updated_by: user.id,

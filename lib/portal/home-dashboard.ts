@@ -28,6 +28,8 @@ export type HomeQueueItem = {
   nextAction: string;
   badge: { label: string; tone: StatusTone };
   dueLabel?: string | null;
+  spamFlag?: boolean;
+  spamReason?: string | null;
 };
 
 export type AgreementLite = {
@@ -99,6 +101,8 @@ export function buildHomeDashboard(input: {
       nextAction: "Next: Create proposal",
       badge: { label: "Ready to propose", tone: "blue" },
       dueLabel: formatDueLabel(lead.next_follow_up_at, today),
+      spamFlag: lead.spam_flag,
+      spamReason: lead.spam_reason,
     });
   }
 
@@ -127,6 +131,8 @@ export function buildHomeDashboard(input: {
       nextAction: pipelineLeadNextAction(lead),
       badge: pipelineLeadBadge(lead),
       dueLabel: formatDueLabel(lead.next_follow_up_at, today),
+      spamFlag: lead.spam_flag,
+      spamReason: lead.spam_reason,
     });
   }
 

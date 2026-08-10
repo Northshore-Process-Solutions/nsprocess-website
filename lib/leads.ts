@@ -30,6 +30,9 @@ export type LeadRow = {
   notes: string | null;
   next_follow_up_at: string | null;
   lost_reason: string | null;
+  spam_flag: boolean;
+  spam_reason: string | null;
+  spam_scanned_at: string | null;
   created_at: string;
   updated_at: string;
 };

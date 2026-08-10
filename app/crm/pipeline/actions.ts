@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 
 import {
@@ -10,6 +11,7 @@ import {
   type LeadSource,
   type LeadStage,
 } from "@/lib/leads";
+import { scanLeadForSpam } from "@/lib/leads/spam-scan";
 import { sendAppEmail } from "@/lib/mail";
 import { normalizeUsPhone } from "@/lib/phone";
 import { defaultProjectName } from "@/lib/projects";
@@ -643,6 +645,8 @@ export async function createLead(input: LeadInput): Promise<ActionResult> {
   if (isCustomerStage(parsed.stage)) {
     return convertWonLeadToCrm(data.id, parsed.stage);
   }
+
+  after(() => scanLeadForSpam(data.id));
 
   revalidatePath("/crm/pipeline");
   revalidatePath("/crm");

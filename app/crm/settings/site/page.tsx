@@ -15,7 +15,7 @@ export default async function CrmSiteSettingsPage() {
   const { data: aiRow } = await supabase
     .from("app_settings")
     .select(
-      "ai_industry, ai_proposal_instructions, ai_reply_instructions",
+      "ai_industry, ai_proposal_instructions, ai_reply_instructions, ai_spam_instructions",
     )
     .eq("id", true)
     .maybeSingle();
@@ -58,6 +58,13 @@ export default async function CrmSiteSettingsPage() {
               title: "Email replies",
               description: "Instructions for outbound lead reply drafts.",
               meta: preview(aiRow?.ai_reply_instructions, "Using defaults"),
+            },
+            {
+              href: "/crm/settings/site/ai/spam",
+              title: "Spam detection",
+              description:
+                "Extra rules for flagging spam or ad inquiries on the pipeline.",
+              meta: preview(aiRow?.ai_spam_instructions, "Using defaults"),
             },
           ],
         },

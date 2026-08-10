@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { SpamFlagBadge } from "@/components/admin/spam-flag-badge";
 import { formatMoney } from "@/lib/billing";
 import {
   buildHomeDashboard,
@@ -216,6 +217,9 @@ function QueueCard({
                 </p>
                 <p className="mt-0.5 text-xs text-slate-600">{item.nextAction}</p>
                 <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                  {item.spamFlag ? (
+                    <SpamFlagBadge compact reason={item.spamReason} />
+                  ) : null}
                   <StatusBadge label={item.badge.label} tone={item.badge.tone} />
                   {item.dueLabel ? (
                     <span className="text-[11px] font-medium text-slate-500">

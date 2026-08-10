@@ -10,6 +10,7 @@ export type AppAiSettings = {
   industry: string | null;
   proposalInstructions: string | null;
   replyInstructions: string | null;
+  spamInstructions: string | null;
 };
 
 export type AppAiConfig = {
@@ -18,6 +19,7 @@ export type AppAiConfig = {
   industry: string;
   proposalInstructions: string | null;
   replyInstructions: string | null;
+  spamInstructions: string | null;
   operatorName: string;
 };
 
@@ -25,10 +27,11 @@ type AiSettingsRow = AppSettingsRow & {
   ai_industry: string | null;
   ai_proposal_instructions: string | null;
   ai_reply_instructions: string | null;
+  ai_spam_instructions: string | null;
 };
 
 const AI_SETTINGS_SELECT =
-  "company_name, portal_name, tagline, phone, email, service_area, logo_path, ai_industry, ai_proposal_instructions, ai_reply_instructions";
+  "company_name, portal_name, tagline, phone, email, service_area, logo_path, ai_industry, ai_proposal_instructions, ai_reply_instructions, ai_spam_instructions";
 
 function isCrmOnly() {
   return process.env.CRM_ONLY === "1" || process.env.CRM_ONLY === "true";
@@ -60,6 +63,7 @@ export function appAiFromRow(row: AiSettingsRow): {
       industry: row.ai_industry?.trim() || null,
       proposalInstructions: row.ai_proposal_instructions?.trim() || null,
       replyInstructions: row.ai_reply_instructions?.trim() || null,
+      spamInstructions: row.ai_spam_instructions?.trim() || null,
     },
   };
 }
@@ -74,6 +78,7 @@ export function resolveAppAiConfig(
     industry: ai.industry?.trim() || defaultAiIndustry(brand),
     proposalInstructions: ai.proposalInstructions?.trim() || null,
     replyInstructions: ai.replyInstructions?.trim() || null,
+    spamInstructions: ai.spamInstructions?.trim() || null,
   };
 }
 
@@ -90,6 +95,7 @@ export async function getAppAiConfig(): Promise<AppAiConfig> {
     industry: null,
     proposalInstructions: null,
     replyInstructions: null,
+    spamInstructions: null,
   });
 }
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CalendarDays, FileText, Mail, Pencil, Trash2 } from "lucide-react";
 
 import { ActivityPanel } from "@/components/admin/activity-panel";
+import { SpamFlagBadge } from "@/components/admin/spam-flag-badge";
 import { usePortal } from "@/components/portal/portal-provider";
 import { Button } from "@/components/ui/button";
 import type { ActivityRow } from "@/lib/activities";
@@ -86,6 +87,21 @@ export function LeadDetailDialog({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+          {lead.spam_flag ? (
+            <div
+              className="mb-5 rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-950"
+              role="status"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <SpamFlagBadge reason={lead.spam_reason} />
+                <p className="font-semibold">Possible spam or advertising</p>
+              </div>
+              {lead.spam_reason ? (
+                <p className="mt-2 text-orange-900/90">{lead.spam_reason}</p>
+              ) : null}
+            </div>
+          ) : null}
+
           <dl className="grid gap-4 sm:grid-cols-2">
             <DetailItem label="Contact" value={lead.contact_name} />
             <DetailItem

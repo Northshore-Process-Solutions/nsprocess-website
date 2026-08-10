@@ -2,6 +2,7 @@ import { after, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 
 import { defaultNextFollowUpDate } from "@/lib/leads";
+import { scanLeadForSpam } from "@/lib/leads/spam-scan";
 import { escapeHtml, getSmtpConfig, sendAppEmail } from "@/lib/mail";
 import { normalizeUsPhone } from "@/lib/phone";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
@@ -212,16 +213,19 @@ export async function POST(request: Request) {
   }
 
   // SMTP is slow — finish the response after the lead is saved, then email.
-  after(() =>
-    sendContactNotification({
-      firstName,
-      lastName,
-      business,
-      email,
-      phone: phone || "Not provided",
-      message,
-    }),
-  );
+  after(async () => {
+    await Promise.all([
+      sendContactNotification({
+        firstName,
+        lastName,
+        business,
+        email,
+        phone: phone || "Not provided",
+        message,
+      }),
+      scanLeadForSpam(leadResult.leadId),
+    ]);
+  });
 
   return redirectToContact(request, "sent");
 }
