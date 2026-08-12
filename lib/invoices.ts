@@ -30,6 +30,9 @@ export type InvoiceRow = {
   amount_paid: number | string;
   sent_at: string | null;
   paid_at: string | null;
+  share_token: string | null;
+  stripe_checkout_session_id: string | null;
+  stripe_payment_intent_id: string | null;
   created_at: string;
   updated_at: string;
 };

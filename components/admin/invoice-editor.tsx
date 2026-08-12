@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, FileDown, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, FileDown, Link2, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -12,9 +12,11 @@ import {
   updateInvoice,
   type InvoiceInput,
 } from "@/app/crm/invoices/actions";
+import { ensureInvoicePayLink } from "@/app/share/invoices/actions";
 import { Button } from "@/components/ui/button";
 import { usePortal } from "@/components/portal/portal-provider";
 import { computeTotals, formatMoney, type LineItemInput } from "@/lib/billing";
+import { invoiceSharePath } from "@/lib/invoice-share";
 import {
   emptyInvoiceFormValues,
   INVOICE_STATUSES,
@@ -59,6 +61,10 @@ export function InvoiceEditor({
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [payLinkPreview, setPayLinkPreview] = useState<string | null>(null);
+  const [shareNotice, setShareNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -226,6 +232,52 @@ export function InvoiceEditor({
     router.refresh();
   }
 
+  async function onCopyPayLink() {
+    if (!initialInvoice || isDemo) return;
+    setSharing(true);
+    setError(null);
+    setShareNotice(null);
+
+    const saveResult = await updateInvoice(initialInvoice.id, toPayload());
+    if (!saveResult.ok) {
+      setSharing(false);
+      setError(saveResult.error ?? "Failed to save before creating pay link.");
+      return;
+    }
+
+    const result = await ensureInvoicePayLink(initialInvoice.id);
+    setSharing(false);
+
+    if (!result.ok || !result.token) {
+      setError(result.error ?? "Could not create pay link.");
+      return;
+    }
+
+    if (values.status === "draft") {
+      updateField("status", "sent");
+    }
+
+    const url = `${window.location.origin}${invoiceSharePath(result.token)}`;
+    setPayLinkPreview(url);
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setShareNotice("Pay link copied. Send it to the client.");
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setShareNotice("Copy this pay link and send it to the client:");
+    }
+    router.refresh();
+  }
+
+  const canOfferPayLink =
+    Boolean(initialInvoice) &&
+    !isDemo &&
+    values.status !== "paid" &&
+    values.status !== "void" &&
+    balanceDue > 0;
+
   return (
     <form className="space-y-5" onSubmit={onSave}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -288,6 +340,21 @@ export function InvoiceEditor({
                         ? "Already paid"
                         : "Mark paid"}
                   </Button>
+                  {canOfferPayLink ? (
+                    <Button
+                      disabled={sharing}
+                      onClick={onCopyPayLink}
+                      type="button"
+                      variant="outline"
+                    >
+                      <Link2 aria-hidden className="size-4" />
+                      {sharing
+                        ? "Preparing…"
+                        : copied
+                          ? "Copied"
+                          : "Copy pay link"}
+                    </Button>
+                  ) : null}
                 </>
               ) : null}
             </>
@@ -303,6 +370,16 @@ export function InvoiceEditor({
       {error ? (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-900">
           {error}
+        </div>
+      ) : null}
+      {shareNotice ? (
+        <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm font-medium text-sky-950">
+          {shareNotice}
+          {payLinkPreview ? (
+            <p className="mt-2 break-all font-normal text-sky-900/90">
+              {payLinkPreview}
+            </p>
+          ) : null}
         </div>
       ) : null}
       {saved ? (

@@ -10,8 +10,14 @@ function isCrmOnly() {
 function isAllowedOnCrmOnly(pathname: string) {
   if (pathname === "/crm" || pathname.startsWith("/crm/")) return true;
   if (pathname === "/admin" || pathname.startsWith("/admin/")) return true;
-  // Client proposal / agreement share links
-  if (pathname.startsWith("/p/") || pathname.startsWith("/a/")) return true;
+  // Client proposal / agreement / invoice pay share links
+  if (
+    pathname.startsWith("/p/") ||
+    pathname.startsWith("/a/") ||
+    pathname.startsWith("/i/")
+  ) {
+    return true;
+  }
   if (pathname.startsWith("/api/")) return true;
   if (pathname.startsWith("/_next/")) return true;
   if (pathname === "/favicon.ico") return true;

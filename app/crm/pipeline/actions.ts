@@ -419,6 +419,8 @@ async function attachLeadHistoryToProject(
 export async function convertWonLeadToCrm(
   leadId: string,
   targetStage: LeadStage = "won",
+  /** When provided (e.g. Stripe webhook), skip cookie auth and use this client. */
+  client?: Awaited<ReturnType<typeof createClient>>,
 ): Promise<ActionResult> {
   if (!leadId) return { ok: false, error: "Missing lead id." };
 
@@ -426,8 +428,12 @@ export async function convertWonLeadToCrm(
     ? targetStage
     : "won";
 
-  const { supabase, error: authError } = await requireUser();
-  if (authError) return { ok: false, error: authError };
+  let supabase = client;
+  if (!supabase) {
+    const auth = await requireUser();
+    if (auth.error) return { ok: false, error: auth.error };
+    supabase = auth.supabase;
+  }
 
   const { data: lead, error: leadError } = await supabase
     .from("leads")

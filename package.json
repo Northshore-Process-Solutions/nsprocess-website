@@ -24,6 +24,7 @@
     "pdfkit": "^0.19.1",
     "react": "latest",
     "react-dom": "latest",
+    "stripe": "^22.5.0",
     "tailwind-merge": "latest",
     "zod": "^4.4.3"
   },
