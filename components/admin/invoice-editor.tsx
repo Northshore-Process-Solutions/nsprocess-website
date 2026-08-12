@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, FileDown, Link2, Plus, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   createInvoice,
@@ -67,6 +67,12 @@ export function InvoiceEditor({
   const [shareNotice, setShareNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const token = initialInvoice?.share_token?.trim();
+    if (!token) return;
+    setPayLinkPreview(`${window.location.origin}${invoiceSharePath(token)}`);
+  }, [initialInvoice?.share_token]);
 
   const totals = useMemo(() => {
     const parsedItems = values.items.map((item) => ({
@@ -345,7 +351,7 @@ export function InvoiceEditor({
                       disabled={sharing}
                       onClick={onCopyPayLink}
                       type="button"
-                      variant="outline"
+                      variant="accent"
                     >
                       <Link2 aria-hidden className="size-4" />
                       {sharing
@@ -386,6 +392,48 @@ export function InvoiceEditor({
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-900">
           Saved.
         </div>
+      ) : null}
+
+      {mode === "edit" && initialInvoice && !isDemo ? (
+        <section className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 shadow-soft">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <h2 className="text-base font-semibold text-slate-900">
+                Online payment
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                {values.status === "paid" || balanceDue <= 0
+                  ? "This invoice is paid — no pay link needed."
+                  : values.status === "void"
+                    ? "Void invoices cannot be paid online."
+                    : `Send clients a link to pay ${formatMoney(balanceDue)} by card.`}
+              </p>
+              {payLinkPreview && canOfferPayLink ? (
+                <p className="mt-3 break-all rounded-xl border border-emerald-200 bg-white px-3 py-2 text-xs text-slate-700">
+                  {payLinkPreview}
+                </p>
+              ) : null}
+            </div>
+            {canOfferPayLink ? (
+              <Button
+                className="shrink-0"
+                disabled={sharing}
+                onClick={onCopyPayLink}
+                type="button"
+                variant="accent"
+              >
+                <Link2 aria-hidden className="size-4" />
+                {sharing
+                  ? "Preparing…"
+                  : copied
+                    ? "Copied"
+                    : payLinkPreview
+                      ? "Copy pay link again"
+                      : "Copy pay link"}
+              </Button>
+            ) : null}
+          </div>
+        </section>
       ) : null}
 
       <section className="grid gap-4 rounded-2xl border border-border bg-card p-5 shadow-soft lg:grid-cols-2">
