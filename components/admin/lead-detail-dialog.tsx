@@ -1,20 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, FileText, Flag, Mail, Pencil, Trash2 } from "lucide-react";
+import {
+  CalendarDays,
+  FileText,
+  Flag,
+  Link2,
+  Mail,
+  Pencil,
+  Trash2,
+  Unlink,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 
 import { ActivityPanel } from "@/components/admin/activity-panel";
 import { SpamFlagBadge } from "@/components/admin/spam-flag-badge";
 import { usePortal } from "@/components/portal/portal-provider";
 import { Button } from "@/components/ui/button";
 import type { ActivityRow } from "@/lib/activities";
+import { parseLeadInsight } from "@/lib/ai/generate-lead-insight";
 import {
   leadSourceLabel,
   leadStageLabel,
   type LeadInsight,
   type LeadRow,
 } from "@/lib/leads";
-import { parseLeadInsight } from "@/lib/ai/generate-lead-insight";
+
+export type LeadOrganizationOption = {
+  id: string;
+  name: string;
+  email: string | null;
+};
 
 type LeadDetailDialogProps = {
   open: boolean;
@@ -24,14 +40,19 @@ type LeadDetailDialogProps = {
   acceptedProposalId?: string | null;
   /** Existing proposal for this lead (opens instead of creating a new one). */
   proposalId?: string | null;
+  organizations?: LeadOrganizationOption[];
   onClose: () => void;
   onEdit?: (lead: LeadRow) => void;
   onReply?: (lead: LeadRow) => void;
   onDelete?: (lead: LeadRow) => void;
   onRescanSpam?: (lead: LeadRow) => void;
   onClearSpam?: (lead: LeadRow) => void;
+  onLinkOrganization?: (lead: LeadRow, organizationId: string) => void;
+  onUnlinkOrganization?: (lead: LeadRow) => void;
   rescanningSpam?: boolean;
   clearingSpam?: boolean;
+  linkingOrganization?: boolean;
+  unlinkingOrganization?: boolean;
 };
 
 function DetailItem({
@@ -125,6 +146,122 @@ function LeadInsightCard({
   );
 }
 
+function suggestOrganization(
+  lead: LeadRow,
+  organizations: LeadOrganizationOption[],
+) {
+  const email = lead.email.trim().toLowerCase();
+  const name = lead.business_name.trim().toLowerCase();
+  const byEmail = organizations.find(
+    (org) => org.email?.trim().toLowerCase() === email,
+  );
+  if (byEmail) return byEmail;
+  return (
+    organizations.find((org) => org.name.trim().toLowerCase() === name) ?? null
+  );
+}
+
+function LeadAccountLinkCard({
+  lead,
+  organizations,
+  onLink,
+  onUnlink,
+  linking,
+  unlinking,
+}: {
+  lead: LeadRow;
+  organizations: LeadOrganizationOption[];
+  onLink?: (lead: LeadRow, organizationId: string) => void;
+  onUnlink?: (lead: LeadRow) => void;
+  linking: boolean;
+  unlinking: boolean;
+}) {
+  const { href } = usePortal();
+  const linkedOrg = lead.organization_id
+    ? organizations.find((org) => org.id === lead.organization_id) ?? null
+    : null;
+  const suggested = !lead.organization_id
+    ? suggestOrganization(lead, organizations)
+    : null;
+  const [selectedId, setSelectedId] = useState(suggested?.id ?? "");
+
+  if (lead.organization_id) {
+    return (
+      <div className="mb-5 rounded-2xl border border-border bg-muted/30 p-4 text-sm">
+        <p className="font-medium">Linked business</p>
+        <p className="mt-1 text-foreground">
+          {linkedOrg?.name ?? "Account hub"}
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button asChild size="sm" type="button" variant="outline">
+            <Link href={href(`/organizations/${lead.organization_id}`)}>
+              Open account hub
+            </Link>
+          </Button>
+          {onUnlink ? (
+            <Button
+              disabled={unlinking}
+              onClick={() => onUnlink(lead)}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              <Unlink aria-hidden className="size-3.5" />
+              {unlinking ? "Unlinking…" : "Unlink"}
+            </Button>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  if (!onLink || organizations.length === 0) return null;
+
+  return (
+    <div className="mb-5 rounded-2xl border border-border bg-muted/30 p-4 text-sm">
+      <p className="font-medium">Link to existing business</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">
+        Connect this inquiry to an account already in CRM. Matches contact by
+        email when possible.
+      </p>
+      {suggested ? (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Suggested match:{" "}
+          <span className="font-medium text-foreground">{suggested.name}</span>
+        </p>
+      ) : null}
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <select
+          className="min-h-10 w-full rounded-2xl border border-input bg-background px-3 py-2 text-sm font-normal outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20 sm:flex-1"
+          onChange={(e) => setSelectedId(e.target.value)}
+          value={selectedId}
+        >
+          <option value="">Select a business…</option>
+          {organizations.map((org) => (
+            <option key={org.id} value={org.id}>
+              {org.name}
+              {org.email ? ` (${org.email})` : ""}
+            </option>
+          ))}
+        </select>
+        <Button
+          disabled={linking || !selectedId}
+          onClick={() => {
+            if (!selectedId) return;
+            onLink(lead, selectedId);
+          }}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          <Link2 aria-hidden className="size-3.5" />
+          {linking ? "Linking…" : "Link"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function LeadDetailDialog({
   open,
   lead,
@@ -132,16 +269,29 @@ export function LeadDetailDialog({
   deleting = false,
   acceptedProposalId = null,
   proposalId = null,
+  organizations = [],
   onClose,
   onEdit,
   onReply,
   onDelete,
   onRescanSpam,
   onClearSpam,
+  onLinkOrganization,
+  onUnlinkOrganization,
   rescanningSpam = false,
   clearingSpam = false,
+  linkingOrganization = false,
+  unlinkingOrganization = false,
 }: LeadDetailDialogProps) {
   const { href, isDemo } = usePortal();
+  const sortedOrganizations = useMemo(
+    () =>
+      [...organizations].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+      ),
+    [organizations],
+  );
+
   if (!open || !lead) return null;
 
   const existingProposalId = proposalId ?? acceptedProposalId;
@@ -177,7 +327,37 @@ export function LeadDetailDialog({
               generatedAt={lead.insight_generated_at}
               insight={insight}
             />
+          ) : onRescanSpam ? (
+            <div className="mb-5 rounded-2xl border border-dashed border-emerald-300 bg-emerald-50/40 p-4 text-sm text-emerald-950">
+              <p className="font-semibold">No lead insight yet</p>
+              <p className="mt-1 text-emerald-900/80">
+                Generate a sales briefing from this inquiry (and website research
+                when available). Existing leads need a one-time refresh.
+              </p>
+              <div className="mt-3">
+                <Button
+                  disabled={rescanningSpam}
+                  onClick={() => onRescanSpam(lead)}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  <Flag aria-hidden className="size-3.5" />
+                  {rescanningSpam ? "Generating…" : "Generate insight"}
+                </Button>
+              </div>
+            </div>
           ) : null}
+
+          <LeadAccountLinkCard
+            key={lead.id}
+            lead={lead}
+            linking={linkingOrganization}
+            onLink={onLinkOrganization}
+            onUnlink={onUnlinkOrganization}
+            organizations={sortedOrganizations}
+            unlinking={unlinkingOrganization}
+          />
 
           {lead.spam_flag ? (
             <div
@@ -279,19 +459,6 @@ export function LeadDetailDialog({
               value={lead.next_follow_up_at || "Not set"}
             />
             <DetailItem label="Message" value={lead.message || "—"} />
-            {lead.organization_id ? (
-              <DetailItem
-                label="Business"
-                value={
-                  <Link
-                    className="text-accent hover:underline"
-                    href={href(`/organizations/${lead.organization_id}`)}
-                  >
-                    Open account hub
-                  </Link>
-                }
-              />
-            ) : null}
           </dl>
 
           {lead.stage === "proposal_accepted" ? (

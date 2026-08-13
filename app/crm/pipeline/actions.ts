@@ -749,6 +749,123 @@ export async function rescanLeadSpam(leadId: string): Promise<ActionResult> {
   return { ok: true };
 }
 
+/** Attach a pipeline lead to an existing business without converting to customer. */
+export async function linkLeadToOrganization(
+  leadId: string,
+  organizationId: string,
+): Promise<ActionResult> {
+  if (!leadId) return { ok: false, error: "Missing lead id." };
+  if (!organizationId) return { ok: false, error: "Select a business." };
+
+  const { supabase, error: authError } = await requireUser();
+  if (authError) return { ok: false, error: authError };
+
+  const { data: lead, error: leadError } = await supabase
+    .from("leads")
+    .select(
+      "id, business_name, contact_name, email, phone, contact_id, organization_id",
+    )
+    .eq("id", leadId)
+    .single();
+
+  if (leadError || !lead) {
+    return { ok: false, error: leadError?.message ?? "Lead not found." };
+  }
+
+  const { data: organization, error: orgError } = await supabase
+    .from("organizations")
+    .select("id")
+    .eq("id", organizationId)
+    .maybeSingle();
+
+  if (orgError || !organization) {
+    return { ok: false, error: orgError?.message ?? "Business not found." };
+  }
+
+  const contactResult = await upsertPrimaryContactForOrg(
+    supabase,
+    organizationId,
+    {
+      contactName: lead.contact_name,
+      email: lead.email,
+      phone: lead.phone,
+      existingContactId: lead.contact_id,
+    },
+  );
+  if (contactResult.error || !contactResult.contactId) {
+    return {
+      ok: false,
+      error: contactResult.error ?? "Failed to link contact.",
+    };
+  }
+
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from("leads")
+    .update({
+      organization_id: organizationId,
+      contact_id: contactResult.contactId,
+      updated_at: now,
+    })
+    .eq("id", leadId);
+
+  if (error) return { ok: false, error: error.message };
+
+  await supabase
+    .from("activities")
+    .update({
+      organization_id: organizationId,
+      updated_at: now,
+    })
+    .eq("lead_id", leadId)
+    .is("organization_id", null);
+
+  revalidatePath("/crm/pipeline");
+  revalidatePath("/crm");
+  revalidatePath(`/crm/organizations/${organizationId}`);
+  return { ok: true, organizationId };
+}
+
+/** Remove business/contact link from a lead (keeps the lead in pipeline). */
+export async function unlinkLeadFromOrganization(
+  leadId: string,
+): Promise<ActionResult> {
+  if (!leadId) return { ok: false, error: "Missing lead id." };
+
+  const { supabase, error: authError } = await requireUser();
+  if (authError) return { ok: false, error: authError };
+
+  const { data: lead, error: leadError } = await supabase
+    .from("leads")
+    .select("id, organization_id")
+    .eq("id", leadId)
+    .single();
+
+  if (leadError || !lead) {
+    return { ok: false, error: leadError?.message ?? "Lead not found." };
+  }
+
+  const previousOrgId = lead.organization_id as string | null;
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from("leads")
+    .update({
+      organization_id: null,
+      contact_id: null,
+      updated_at: now,
+    })
+    .eq("id", leadId);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/crm/pipeline");
+  revalidatePath("/crm");
+  if (previousOrgId) {
+    revalidatePath(`/crm/organizations/${previousOrgId}`);
+  }
+  return { ok: true };
+}
+
 /** Manually clear an AI spam flag without re-running classification. */
 export async function clearLeadSpamFlag(leadId: string): Promise<ActionResult> {
   if (!leadId) return { ok: false, error: "Missing lead id." };

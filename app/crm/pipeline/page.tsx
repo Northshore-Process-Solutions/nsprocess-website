@@ -63,6 +63,7 @@ export default async function PipelinePage({
     acceptedResult,
     agreementsResult,
     depositsResult,
+    organizationsResult,
   ] = await Promise.all([
     openLeadIds.length > 0
       ? supabase
@@ -104,6 +105,10 @@ export default async function PipelinePage({
           .eq("invoice_type", "deposit")
           .in("status", ["draft", "sent"])
       : Promise.resolve({ data: [], error: null }),
+    supabase
+      .from("organizations")
+      .select("id, name, email")
+      .order("name", { ascending: true }),
   ]);
 
   if (activitiesResult.error) {
@@ -134,6 +139,11 @@ export default async function PipelinePage({
   if (depositsResult.error) {
     throw new Error(
       `Failed to load deposit invoices: ${depositsResult.error.message}`,
+    );
+  }
+  if (organizationsResult.error) {
+    throw new Error(
+      `Failed to load businesses: ${organizationsResult.error.message}`,
     );
   }
 
@@ -295,6 +305,11 @@ export default async function PipelinePage({
         activitiesByLeadId={visibleActivitiesByLeadId}
         eventsByLeadId={visibleEventsByLeadId}
         initialLeadId={initialLeadId}
+        organizations={(organizationsResult.data ?? []).map((org) => ({
+          id: org.id,
+          name: org.name,
+          email: org.email,
+        }))}
         proposalByLeadId={proposalByLeadId}
         rows={leads}
       />
