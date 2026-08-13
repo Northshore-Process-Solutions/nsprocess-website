@@ -2,9 +2,10 @@ import { revalidatePath } from "next/cache";
 
 import { classifyLeadSpam } from "@/lib/ai/classify-lead-spam";
 import { getAppAiConfigForBackground } from "@/lib/app-ai";
+import { researchLeadContext } from "@/lib/leads/research-lead";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 
-/** Run AI spam classification and persist results on the lead row. */
+/** Run AI research + spam classification and persist results on the lead row. */
 export async function scanLeadForSpam(
   leadId: string,
   options?: { force?: boolean },
@@ -40,6 +41,14 @@ export async function scanLeadForSpam(
     return;
   }
 
+  const research = await researchLeadContext({
+    businessName: lead.business_name,
+    contactName: lead.contact_name,
+    email: lead.email,
+    phone: lead.phone,
+    message: lead.message,
+  });
+
   const ai = await getAppAiConfigForBackground();
   const result = await classifyLeadSpam(
     {
@@ -51,6 +60,8 @@ export async function scanLeadForSpam(
       source: lead.source,
       message: lead.message,
       notes: lead.notes,
+      researchSummary: research.summary,
+      researchSources: research.sources,
     },
     ai,
   );
@@ -67,6 +78,9 @@ export async function scanLeadForSpam(
       spam_flag: result.isSpam,
       spam_reason: result.reason,
       spam_scanned_at: scannedAt,
+      research_summary: research.summary,
+      research_sources: research.sources.length > 0 ? research.sources : null,
+      researched_at: scannedAt,
       updated_at: scannedAt,
     })
     .eq("id", leadId);

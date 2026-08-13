@@ -33,6 +33,9 @@ export type LeadRow = {
   spam_flag: boolean;
   spam_reason: string | null;
   spam_scanned_at: string | null;
+  research_summary: string | null;
+  research_sources: Array<{ url: string; title?: string | null }> | null;
+  researched_at: string | null;
   created_at: string;
   updated_at: string;
 };

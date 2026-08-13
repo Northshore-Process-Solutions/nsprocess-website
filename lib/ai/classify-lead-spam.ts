@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getDraftModel } from "@/lib/ai/openai";
 import { type AppAiConfig } from "@/lib/app-ai";
+import type { LeadResearchSource } from "@/lib/leads/research-lead";
 
 export type LeadSpamInput = {
   businessName: string;
@@ -13,6 +14,8 @@ export type LeadSpamInput = {
   source?: string | null;
   message?: string | null;
   notes?: string | null;
+  researchSummary?: string | null;
+  researchSources?: LeadResearchSource[] | null;
 };
 
 export type LeadSpamClassification =
@@ -44,6 +47,8 @@ export async function classifyLeadSpam(
   const operatorRules = ai.spamInstructions?.trim() || null;
   const hasOperatorRules = Boolean(operatorRules);
   const lastName = contactLastName(input.contactName);
+  const researchSummary = input.researchSummary?.trim() || null;
+  const researchSources = input.researchSources?.filter((s) => s.url?.trim()) ?? [];
 
   const system = [
     hasOperatorRules
@@ -51,11 +56,12 @@ export async function classifyLeadSpam(
       : null,
     `You classify inbound CRM inquiries for ${ai.operatorName}, a ${ai.industry} business.`,
     hasOperatorRules
-      ? "When operator instructions define flagging rules, apply them strictly — including rules based on contact name, last name, email, domain, message content, source, or other inquiry fields."
+      ? "When operator instructions define flagging rules, apply them strictly — including rules based on contact name, last name, email, domain, message content, source, research briefing, or other inquiry fields."
       : null,
     hasOperatorRules
       ? "Default spam signals apply only when operator instructions do not cover the case: advertising, SEO/link-building pitches, unrelated B2B solicitations, crypto/scams, or generic mass outreach."
       : "Mark isSpam true when the message is clearly spam, advertising, SEO/link-building pitches, unrelated B2B solicitations, crypto/scams, or generic mass outreach — not a genuine local prospect.",
+    "Use any background research briefing as supporting context. Do not flag solely because research is thin or missing.",
     "Do NOT mark as spam: real questions about services, process reviews, scheduling, referrals, or vague but legitimate business inquiries — unless operator instructions explicitly say to flag them.",
     "When isSpam is true, reason must be one concise sentence (max ~20 words). When false, reason must be an empty string.",
   ]
@@ -80,6 +86,12 @@ export async function classifyLeadSpam(
         input.source ? `Source: ${input.source}` : null,
         input.message ? `Inquiry message:\n${input.message}` : "Inquiry message: (none)",
         input.notes ? `Internal notes:\n${input.notes}` : null,
+        researchSummary
+          ? `Background research briefing:\n${researchSummary}`
+          : "Background research briefing: (none available)",
+        researchSources.length > 0
+          ? `Research sources:\n${researchSources.map((s) => `- ${s.url}${s.title ? ` (${s.title})` : ""}`).join("\n")}`
+          : null,
         hasOperatorRules
           ? "Classify this inquiry. Operator instructions take priority."
           : "Classify this inquiry.",

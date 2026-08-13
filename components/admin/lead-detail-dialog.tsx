@@ -126,7 +126,7 @@ export function LeadDetailDialog({
           {onRescanSpam ? (
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/30 px-4 py-3 text-sm">
               <div>
-                <p className="font-medium">Spam check</p>
+                <p className="font-medium">Spam check & research</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {lead.spam_scanned_at
                     ? `Last checked ${new Date(lead.spam_scanned_at).toLocaleString()}`
@@ -146,6 +146,36 @@ export function LeadDetailDialog({
                 <Flag aria-hidden className="size-3.5" />
                 {rescanningSpam ? "Checking…" : "Re-check"}
               </Button>
+            </div>
+          ) : null}
+
+          {lead.research_summary?.trim() ? (
+            <div className="mb-5 rounded-2xl border border-sky-200 bg-sky-50/70 p-4 text-sm text-sky-950">
+              <p className="font-semibold">Background research</p>
+              {lead.researched_at ? (
+                <p className="mt-0.5 text-xs text-sky-900/70">
+                  Researched {new Date(lead.researched_at).toLocaleString()}
+                </p>
+              ) : null}
+              <p className="mt-2 whitespace-pre-wrap text-sky-950/95">
+                {lead.research_summary.trim()}
+              </p>
+              {lead.research_sources && lead.research_sources.length > 0 ? (
+                <ul className="mt-3 space-y-1 text-xs">
+                  {lead.research_sources.map((source) => (
+                    <li key={source.url}>
+                      <a
+                        className="break-all text-sky-800 underline-offset-2 hover:underline"
+                        href={source.url}
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        {source.title?.trim() || source.url}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </div>
           ) : null}
 

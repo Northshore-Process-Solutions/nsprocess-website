@@ -259,6 +259,9 @@ export function mapDemoSeedToCrm(raw: DemoSeed) {
     spam_flag: false,
     spam_reason: null,
     spam_scanned_at: null,
+    research_summary: null,
+    research_sources: null,
+    researched_at: null,
     created_at: stamp(),
     updated_at: stamp(),
   }));
