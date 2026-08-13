@@ -8,6 +8,12 @@ import { cn } from "@/lib/utils";
 
 const linkDefs = [
   {
+    path: "",
+    label: "Home",
+    key: "home" as const,
+    match: (p: string, base: string) => p === base,
+  },
+  {
     path: "/pipeline",
     label: "Pipeline",
     key: "pipeline" as const,
@@ -105,7 +111,7 @@ export function AdminNav({ current }: { current?: AdminNavKey } = {}) {
                   : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800",
               )}
               href={linkHref}
-              key={link.path}
+              key={link.path || "home"}
             >
               {link.label}
             </Link>
