@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Settings } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
@@ -10,6 +11,7 @@ import { markDemoSkipEnd } from "@/components/demo/demo-session-flags";
 import { usePortal } from "@/components/portal/portal-provider";
 import { Button } from "@/components/ui/button";
 import { portalModeFromPathname } from "@/lib/portal/paths";
+import { cn } from "@/lib/utils";
 
 function isBarePortalRoute(pathname: string, mode: "live" | "demo") {
   if (mode === "live") {
@@ -144,7 +146,27 @@ export function AdminShell({
                 </Button>
               </>
             ) : (
-              <SignOutButton />
+              <>
+                <Button
+                  asChild
+                  className={cn(
+                    "size-10 shrink-0",
+                    pathname.startsWith(`${portal.basePath}/settings`) &&
+                      "border-slate-900 text-slate-900",
+                  )}
+                  size="icon"
+                  variant="outline"
+                >
+                  <Link
+                    aria-label="Settings"
+                    href={portal.href("/settings")}
+                    title="Settings"
+                  >
+                    <Settings aria-hidden className="size-4" />
+                  </Link>
+                </Button>
+                <SignOutButton />
+              </>
             )}
           </div>
         </div>

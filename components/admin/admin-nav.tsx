@@ -8,36 +8,10 @@ import { cn } from "@/lib/utils";
 
 const linkDefs = [
   {
-    path: "",
-    label: "Home",
-    key: "home" as const,
-    match: (p: string, base: string) => p === base,
-  },
-  {
     path: "/pipeline",
     label: "Pipeline",
     key: "pipeline" as const,
     match: (p: string, base: string) => p.startsWith(`${base}/pipeline`),
-  },
-  {
-    path: "/projects",
-    label: "Projects",
-    key: "projects" as const,
-    match: (p: string, base: string) => p.startsWith(`${base}/projects`),
-  },
-  {
-    path: "/calendar",
-    label: "Calendar",
-    key: "calendar" as const,
-    match: (p: string, base: string) => p.startsWith(`${base}/calendar`),
-  },
-  {
-    path: "/businesses",
-    label: "Businesses",
-    key: "crm" as const,
-    match: (p: string, base: string) =>
-      p.startsWith(`${base}/businesses`) ||
-      p.startsWith(`${base}/organizations`),
   },
   {
     path: "/sales",
@@ -49,6 +23,12 @@ const linkDefs = [
       p.startsWith(`${base}/agreements`),
   },
   {
+    path: "/projects",
+    label: "Projects",
+    key: "projects" as const,
+    match: (p: string, base: string) => p.startsWith(`${base}/projects`),
+  },
+  {
     path: "/billing",
     label: "Billing",
     key: "billing" as const,
@@ -56,6 +36,14 @@ const linkDefs = [
       p.startsWith(`${base}/billing`) ||
       p.startsWith(`${base}/invoices`) ||
       p.startsWith(`${base}/statements`),
+  },
+  {
+    path: "/businesses",
+    label: "Businesses",
+    key: "crm" as const,
+    match: (p: string, base: string) =>
+      p.startsWith(`${base}/businesses`) ||
+      p.startsWith(`${base}/organizations`),
   },
   {
     path: "/purchases",
@@ -68,12 +56,6 @@ const linkDefs = [
     label: "Stack",
     key: "stack" as const,
     match: (p: string, base: string) => p.startsWith(`${base}/tools`),
-  },
-  {
-    path: "/settings",
-    label: "Settings",
-    key: "settings" as const,
-    match: (p: string, base: string) => p.startsWith(`${base}/settings`),
   },
 ];
 
@@ -92,10 +74,7 @@ export type AdminNavKey =
 
 export function AdminNav({ current }: { current?: AdminNavKey } = {}) {
   const pathname = usePathname() ?? "/crm";
-  const { href, basePath, isDemo } = usePortal();
-  const links = isDemo
-    ? linkDefs.filter((link) => link.key !== "settings")
-    : linkDefs;
+  const { href, basePath } = usePortal();
 
   return (
     <div className="relative -mx-4 sm:mx-0">
@@ -111,7 +90,7 @@ export function AdminNav({ current }: { current?: AdminNavKey } = {}) {
         aria-label="Admin sections"
         className="flex gap-0 overflow-x-auto overscroll-x-contain px-4 [-ms-overflow-style:none] [scrollbar-width:none] sm:px-0 [&::-webkit-scrollbar]:hidden"
       >
-        {links.map((link) => {
+        {linkDefs.map((link) => {
           const linkHref = href(link.path);
           const active = current
             ? current === link.key
@@ -126,7 +105,7 @@ export function AdminNav({ current }: { current?: AdminNavKey } = {}) {
                   : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800",
               )}
               href={linkHref}
-              key={link.path || "home"}
+              key={link.path}
             >
               {link.label}
             </Link>

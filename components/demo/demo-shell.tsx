@@ -10,29 +10,9 @@ import { cn } from "@/lib/utils";
 
 const links = [
   {
-    href: "/demo/home",
-    label: "Home",
-    match: (p: string) => p === "/demo/home" || p === "/demo",
-  },
-  {
     href: "/demo/pipeline",
     label: "Pipeline",
     match: (p: string) => p.startsWith("/demo/pipeline"),
-  },
-  {
-    href: "/demo/projects",
-    label: "Projects",
-    match: (p: string) => p.startsWith("/demo/projects"),
-  },
-  {
-    href: "/demo/calendar",
-    label: "Calendar",
-    match: (p: string) => p.startsWith("/demo/calendar"),
-  },
-  {
-    href: "/demo/businesses",
-    label: "Businesses",
-    match: (p: string) => p.startsWith("/demo/businesses"),
   },
   {
     href: "/demo/sales",
@@ -43,12 +23,22 @@ const links = [
       p.startsWith("/demo/agreements"),
   },
   {
+    href: "/demo/projects",
+    label: "Projects",
+    match: (p: string) => p.startsWith("/demo/projects"),
+  },
+  {
     href: "/demo/billing",
     label: "Billing",
     match: (p: string) =>
       p.startsWith("/demo/billing") ||
       p.startsWith("/demo/invoices") ||
       p.startsWith("/demo/statements"),
+  },
+  {
+    href: "/demo/businesses",
+    label: "Businesses",
+    match: (p: string) => p.startsWith("/demo/businesses"),
   },
   {
     href: "/demo/purchases",
