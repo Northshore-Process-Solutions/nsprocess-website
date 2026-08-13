@@ -749,6 +749,30 @@ export async function rescanLeadSpam(leadId: string): Promise<ActionResult> {
   return { ok: true };
 }
 
+/** Manually clear an AI spam flag without re-running classification. */
+export async function clearLeadSpamFlag(leadId: string): Promise<ActionResult> {
+  if (!leadId) return { ok: false, error: "Missing lead id." };
+
+  const { supabase, error: authError } = await requireUser();
+  if (authError) return { ok: false, error: authError };
+
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from("leads")
+    .update({
+      spam_flag: false,
+      spam_reason: null,
+      updated_at: now,
+    })
+    .eq("id", leadId);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/crm/pipeline");
+  revalidatePath("/crm");
+  return { ok: true };
+}
+
 export async function replyToLead(
   leadId: string,
   input: { subject: string; body: string; projectId?: string | null },

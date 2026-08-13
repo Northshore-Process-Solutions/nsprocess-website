@@ -346,21 +346,6 @@ export function InvoiceEditor({
                         ? "Already paid"
                         : "Mark paid"}
                   </Button>
-                  {canOfferPayLink ? (
-                    <Button
-                      disabled={sharing}
-                      onClick={onCopyPayLink}
-                      type="button"
-                      variant="accent"
-                    >
-                      <Link2 aria-hidden className="size-4" />
-                      {sharing
-                        ? "Preparing…"
-                        : copied
-                          ? "Copied"
-                          : "Copy pay link"}
-                    </Button>
-                  ) : null}
                 </>
               ) : null}
             </>

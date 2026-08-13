@@ -27,7 +27,9 @@ type LeadDetailDialogProps = {
   onReply?: (lead: LeadRow) => void;
   onDelete?: (lead: LeadRow) => void;
   onRescanSpam?: (lead: LeadRow) => void;
+  onClearSpam?: (lead: LeadRow) => void;
   rescanningSpam?: boolean;
+  clearingSpam?: boolean;
 };
 
 function DetailItem({
@@ -59,7 +61,9 @@ export function LeadDetailDialog({
   onReply,
   onDelete,
   onRescanSpam,
+  onClearSpam,
   rescanningSpam = false,
+  clearingSpam = false,
 }: LeadDetailDialogProps) {
   const { href, isDemo } = usePortal();
   if (!open || !lead) return null;
@@ -102,6 +106,19 @@ export function LeadDetailDialog({
               </div>
               {lead.spam_reason ? (
                 <p className="mt-2 text-orange-900/90">{lead.spam_reason}</p>
+              ) : null}
+              {onClearSpam ? (
+                <div className="mt-3">
+                  <Button
+                    disabled={clearingSpam}
+                    onClick={() => onClearSpam(lead)}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    {clearingSpam ? "Clearing…" : "Clear flag"}
+                  </Button>
+                </div>
               ) : null}
             </div>
           ) : null}

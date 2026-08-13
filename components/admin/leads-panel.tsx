@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { deleteLead, rescanLeadSpam } from "@/app/crm/pipeline/actions";
+import { clearLeadSpamFlag, deleteLead, rescanLeadSpam } from "@/app/crm/pipeline/actions";
 import { LeadDetailDialog } from "@/components/admin/lead-detail-dialog";
 import { LeadForm } from "@/components/admin/lead-form";
 import { LeadReplyDialog } from "@/components/admin/lead-reply-dialog";
@@ -42,6 +42,7 @@ export function LeadsPanel({
   const [replyLead, setReplyLead] = useState<LeadRow | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [rescanningSpamId, setRescanningSpamId] = useState<string | null>(null);
+  const [clearingSpamId, setClearingSpamId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [openedInitialId, setOpenedInitialId] = useState<string | null>(null);
 
@@ -121,6 +122,26 @@ export function LeadsPanel({
     router.refresh();
   }
 
+  async function handleClearSpam(row: LeadRow) {
+    setClearingSpamId(row.id);
+    setError(null);
+
+    const result = await clearLeadSpamFlag(row.id);
+    setClearingSpamId(null);
+
+    if (!result.ok) {
+      setError(result.error ?? "Failed to clear spam flag.");
+      return;
+    }
+
+    setSelectedRow((current) =>
+      current?.id === row.id
+        ? { ...current, spam_flag: false, spam_reason: null }
+        : current,
+    );
+    router.refresh();
+  }
+
   return (
     <div className="space-y-4">
       {!readOnly ? (
@@ -163,11 +184,15 @@ export function LeadsPanel({
         onDelete={readOnly ? undefined : handleDelete}
         onEdit={readOnly ? undefined : openEdit}
         onReply={readOnly ? undefined : openReply}
+        onClearSpam={readOnly ? undefined : handleClearSpam}
         onRescanSpam={readOnly ? undefined : handleRescanSpam}
         open={detailOpen}
         proposalId={
           selectedRow ? (proposalByLeadId[selectedRow.id] ?? null) : null
         }
+        clearingSpam={Boolean(
+          selectedRow && clearingSpamId === selectedRow.id,
+        )}
         rescanningSpam={Boolean(
           selectedRow && rescanningSpamId === selectedRow.id,
         )}
