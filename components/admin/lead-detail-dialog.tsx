@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   CalendarDays,
+  ChevronDown,
   FileText,
   Flag,
   Link2,
@@ -17,6 +18,7 @@ import { ActivityPanel } from "@/components/admin/activity-panel";
 import { SpamFlagBadge } from "@/components/admin/spam-flag-badge";
 import { usePortal } from "@/components/portal/portal-provider";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { ActivityRow } from "@/lib/activities";
 import { parseLeadInsight } from "@/lib/ai/generate-lead-insight";
 import {
@@ -75,71 +77,123 @@ function DetailItem({
 function LeadInsightCard({
   insight,
   generatedAt,
+  onRefresh,
+  refreshing = false,
 }: {
   insight: LeadInsight;
   generatedAt: string | null;
+  onRefresh?: () => void;
+  refreshing?: boolean;
 }) {
+  const [expanded, setExpanded] = useState(true);
+  const preview =
+    insight.nextStep?.trim() ||
+    insight.fit?.trim() ||
+    insight.companySnapshot?.trim() ||
+    null;
+
   return (
-    <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-sm text-emerald-950">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="font-semibold">Lead insight</p>
-        {generatedAt ? (
-          <p className="text-xs text-emerald-900/70">
-            {new Date(generatedAt).toLocaleString()}
-          </p>
-        ) : null}
-      </div>
-
-      {insight.companySnapshot ? (
-        <div className="mt-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/70">
-            Company
-          </p>
-          <p className="mt-1 whitespace-pre-wrap text-emerald-950/95">
-            {insight.companySnapshot}
-          </p>
+    <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50/80 text-sm text-emerald-950">
+      <button
+        aria-expanded={expanded}
+        className="flex w-full items-start justify-between gap-3 p-4 text-left"
+        onClick={() => setExpanded((open) => !open)}
+        type="button"
+      >
+        <div className="min-w-0">
+          <p className="font-semibold">Lead insight</p>
+          {generatedAt ? (
+            <p className="mt-0.5 text-xs text-emerald-900/70">
+              {new Date(generatedAt).toLocaleString()}
+            </p>
+          ) : null}
+          {!expanded && preview ? (
+            <p className="mt-2 line-clamp-2 text-emerald-950/90">{preview}</p>
+          ) : null}
         </div>
-      ) : null}
+        <ChevronDown
+          aria-hidden
+          className={cn(
+            "mt-0.5 size-4 shrink-0 text-emerald-900/70 transition-transform",
+            expanded && "rotate-180",
+          )}
+        />
+      </button>
 
-      {insight.fit ? (
-        <div className="mt-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/70">
-            Fit
-          </p>
-          <p className="mt-1 whitespace-pre-wrap text-emerald-950/95">
-            {insight.fit}
-          </p>
-        </div>
-      ) : null}
+      {expanded ? (
+        <div className="border-t border-emerald-200/80 px-4 pb-4 pt-3">
+          {insight.companySnapshot ? (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/70">
+                Company
+              </p>
+              <p className="mt-1 whitespace-pre-wrap text-emerald-950/95">
+                {insight.companySnapshot}
+              </p>
+            </div>
+          ) : null}
 
-      {insight.talkingPoints.length > 0 ? (
-        <div className="mt-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/70">
-            Talking points
-          </p>
-          <ul className="mt-1 list-disc space-y-1 pl-5 text-emerald-950/95">
-            {insight.talkingPoints.map((point) => (
-              <li key={point}>{point}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+          {insight.fit ? (
+            <div className="mt-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/70">
+                Fit
+              </p>
+              <p className="mt-1 whitespace-pre-wrap text-emerald-950/95">
+                {insight.fit}
+              </p>
+            </div>
+          ) : null}
 
-      {insight.nextStep ? (
-        <div className="mt-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/70">
-            Next step
-          </p>
-          <p className="mt-1 font-medium text-emerald-950">{insight.nextStep}</p>
-        </div>
-      ) : null}
+          {insight.talkingPoints.length > 0 ? (
+            <div className="mt-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/70">
+                Talking points
+              </p>
+              <ul className="mt-1 list-disc space-y-1 pl-5 text-emerald-950/95">
+                {insight.talkingPoints.map((point) => (
+                  <li key={point}>{point}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
-      {insight.risks ? (
-        <div className="mt-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/70">
-            Watch-outs
-          </p>
-          <p className="mt-1 text-emerald-950/90">{insight.risks}</p>
+          {insight.nextStep ? (
+            <div className="mt-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/70">
+                Next step
+              </p>
+              <p className="mt-1 font-medium text-emerald-950">
+                {insight.nextStep}
+              </p>
+            </div>
+          ) : null}
+
+          {insight.risks ? (
+            <div className="mt-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/70">
+                Watch-outs
+              </p>
+              <p className="mt-1 text-emerald-950/90">{insight.risks}</p>
+            </div>
+          ) : null}
+
+          {onRefresh ? (
+            <div className="mt-4">
+              <Button
+                disabled={refreshing}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRefresh();
+                }}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                <Flag aria-hidden className="size-3.5" />
+                {refreshing ? "Refreshing…" : "Refresh insight"}
+              </Button>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -187,7 +241,7 @@ function LeadAccountLinkCard({
 
   if (lead.organization_id) {
     return (
-      <div className="mb-5 rounded-2xl border border-border bg-muted/30 p-4 text-sm">
+      <div className="mt-8 rounded-2xl border border-border bg-muted/30 p-4 text-sm">
         <p className="font-medium">Linked business</p>
         <p className="mt-1 text-foreground">
           {linkedOrg?.name ?? "Account hub"}
@@ -218,7 +272,7 @@ function LeadAccountLinkCard({
   if (!onLink || organizations.length === 0) return null;
 
   return (
-    <div className="mb-5 rounded-2xl border border-border bg-muted/30 p-4 text-sm">
+    <div className="mt-8 rounded-2xl border border-border bg-muted/30 p-4 text-sm">
       <p className="font-medium">Link to existing business</p>
       <p className="mt-0.5 text-xs text-muted-foreground">
         Connect this inquiry to an account already in CRM. Matches contact by
@@ -326,6 +380,10 @@ export function LeadDetailDialog({
             <LeadInsightCard
               generatedAt={lead.insight_generated_at}
               insight={insight}
+              onRefresh={
+                onRescanSpam ? () => onRescanSpam(lead) : undefined
+              }
+              refreshing={rescanningSpam}
             />
           ) : onRescanSpam ? (
             <div className="mb-5 rounded-2xl border border-dashed border-emerald-300 bg-emerald-50/40 p-4 text-sm text-emerald-950">
@@ -349,70 +407,59 @@ export function LeadDetailDialog({
             </div>
           ) : null}
 
-          <LeadAccountLinkCard
-            key={lead.id}
-            lead={lead}
-            linking={linkingOrganization}
-            onLink={onLinkOrganization}
-            onUnlink={onUnlinkOrganization}
-            organizations={sortedOrganizations}
-            unlinking={unlinkingOrganization}
-          />
-
           {lead.spam_flag ? (
-            <div
-              className="mb-5 rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-950"
-              role="status"
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <SpamFlagBadge reason={lead.spam_reason} />
-                <p className="font-semibold">Possible spam or advertising</p>
+            <>
+              <div
+                className="mb-5 rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-950"
+                role="status"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <SpamFlagBadge reason={lead.spam_reason} />
+                  <p className="font-semibold">Possible spam or advertising</p>
+                </div>
+                {lead.spam_reason ? (
+                  <p className="mt-2 text-orange-900/90">{lead.spam_reason}</p>
+                ) : null}
+                {onClearSpam ? (
+                  <div className="mt-3">
+                    <Button
+                      disabled={clearingSpam}
+                      onClick={() => onClearSpam(lead)}
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      {clearingSpam ? "Clearing…" : "Clear flag"}
+                    </Button>
+                  </div>
+                ) : null}
               </div>
-              {lead.spam_reason ? (
-                <p className="mt-2 text-orange-900/90">{lead.spam_reason}</p>
-              ) : null}
-              {onClearSpam ? (
-                <div className="mt-3">
+
+              {onRescanSpam ? (
+                <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/30 px-4 py-3 text-sm">
+                  <div>
+                    <p className="font-medium">AI insight & spam check</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {lead.insight_generated_at || lead.spam_scanned_at
+                        ? `Last run ${new Date(
+                            lead.insight_generated_at || lead.spam_scanned_at!,
+                          ).toLocaleString()}`
+                        : "Not run yet"}
+                    </p>
+                  </div>
                   <Button
-                    disabled={clearingSpam}
-                    onClick={() => onClearSpam(lead)}
+                    disabled={rescanningSpam}
+                    onClick={() => onRescanSpam(lead)}
                     size="sm"
                     type="button"
                     variant="outline"
                   >
-                    {clearingSpam ? "Clearing…" : "Clear flag"}
+                    <Flag aria-hidden className="size-3.5" />
+                    {rescanningSpam ? "Refreshing…" : "Refresh"}
                   </Button>
                 </div>
               ) : null}
-            </div>
-          ) : null}
-
-          {onRescanSpam ? (
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/30 px-4 py-3 text-sm">
-              <div>
-                <p className="font-medium">AI insight & spam check</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {lead.insight_generated_at || lead.spam_scanned_at
-                    ? `Last run ${new Date(
-                        lead.insight_generated_at || lead.spam_scanned_at!,
-                      ).toLocaleString()}`
-                    : "Not run yet"}
-                  {!lead.spam_flag && lead.spam_scanned_at
-                    ? " · No spam flag"
-                    : null}
-                </p>
-              </div>
-              <Button
-                disabled={rescanningSpam}
-                onClick={() => onRescanSpam(lead)}
-                size="sm"
-                type="button"
-                variant="outline"
-              >
-                <Flag aria-hidden className="size-3.5" />
-                {rescanningSpam ? "Refreshing…" : "Refresh"}
-              </Button>
-            </div>
+            </>
           ) : null}
 
           {lead.research_summary?.trim() ? (
@@ -495,6 +542,16 @@ export function LeadDetailDialog({
               readOnly={isDemo}
             />
           </div>
+
+          <LeadAccountLinkCard
+            key={lead.id}
+            lead={lead}
+            linking={linkingOrganization}
+            onLink={onLinkOrganization}
+            onUnlink={onUnlinkOrganization}
+            organizations={sortedOrganizations}
+            unlinking={unlinkingOrganization}
+          />
         </div>
 
         <div className="sticky bottom-0 border-t border-border bg-card px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
