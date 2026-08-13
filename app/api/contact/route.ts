@@ -231,7 +231,14 @@ export async function POST(request: Request) {
         email,
         phone: normalizedPhone,
       }).then((result) => {
-        if (!result.ok && !result.skipped) {
+        if (result.ok) {
+          console.info("Operator SMS notify sent", {
+            sid: result.sid,
+            trialTemplate: result.trialTemplate ?? null,
+          });
+          return;
+        }
+        if (!result.skipped) {
           console.error("Operator SMS notify failed", result.error);
         }
       }),
