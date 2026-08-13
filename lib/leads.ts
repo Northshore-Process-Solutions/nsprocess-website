@@ -15,6 +15,14 @@ export type LeadSource =
   | "manual"
   | "other";
 
+export type LeadInsight = {
+  companySnapshot: string;
+  fit: string;
+  talkingPoints: string[];
+  nextStep: string;
+  risks: string | null;
+};
+
 export type LeadRow = {
   id: string;
   organization_id: string | null;
@@ -36,6 +44,8 @@ export type LeadRow = {
   research_summary: string | null;
   research_sources: Array<{ url: string; title?: string | null }> | null;
   researched_at: string | null;
+  lead_insight: LeadInsight | null;
+  insight_generated_at: string | null;
   created_at: string;
   updated_at: string;
 };

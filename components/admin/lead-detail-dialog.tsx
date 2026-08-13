@@ -11,8 +11,10 @@ import type { ActivityRow } from "@/lib/activities";
 import {
   leadSourceLabel,
   leadStageLabel,
+  type LeadInsight,
   type LeadRow,
 } from "@/lib/leads";
+import { parseLeadInsight } from "@/lib/ai/generate-lead-insight";
 
 type LeadDetailDialogProps = {
   open: boolean;
@@ -49,6 +51,80 @@ function DetailItem({
   );
 }
 
+function LeadInsightCard({
+  insight,
+  generatedAt,
+}: {
+  insight: LeadInsight;
+  generatedAt: string | null;
+}) {
+  return (
+    <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-sm text-emerald-950">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="font-semibold">Lead insight</p>
+        {generatedAt ? (
+          <p className="text-xs text-emerald-900/70">
+            {new Date(generatedAt).toLocaleString()}
+          </p>
+        ) : null}
+      </div>
+
+      {insight.companySnapshot ? (
+        <div className="mt-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/70">
+            Company
+          </p>
+          <p className="mt-1 whitespace-pre-wrap text-emerald-950/95">
+            {insight.companySnapshot}
+          </p>
+        </div>
+      ) : null}
+
+      {insight.fit ? (
+        <div className="mt-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/70">
+            Fit
+          </p>
+          <p className="mt-1 whitespace-pre-wrap text-emerald-950/95">
+            {insight.fit}
+          </p>
+        </div>
+      ) : null}
+
+      {insight.talkingPoints.length > 0 ? (
+        <div className="mt-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/70">
+            Talking points
+          </p>
+          <ul className="mt-1 list-disc space-y-1 pl-5 text-emerald-950/95">
+            {insight.talkingPoints.map((point) => (
+              <li key={point}>{point}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {insight.nextStep ? (
+        <div className="mt-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/70">
+            Next step
+          </p>
+          <p className="mt-1 font-medium text-emerald-950">{insight.nextStep}</p>
+        </div>
+      ) : null}
+
+      {insight.risks ? (
+        <div className="mt-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-900/70">
+            Watch-outs
+          </p>
+          <p className="mt-1 text-emerald-950/90">{insight.risks}</p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function LeadDetailDialog({
   open,
   lead,
@@ -69,6 +145,7 @@ export function LeadDetailDialog({
   if (!open || !lead) return null;
 
   const existingProposalId = proposalId ?? acceptedProposalId;
+  const insight = parseLeadInsight(lead.lead_insight);
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-primary/40 p-0 sm:items-center sm:p-6">
@@ -95,6 +172,13 @@ export function LeadDetailDialog({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+          {insight ? (
+            <LeadInsightCard
+              generatedAt={lead.insight_generated_at}
+              insight={insight}
+            />
+          ) : null}
+
           {lead.spam_flag ? (
             <div
               className="mb-5 rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-950"
@@ -126,13 +210,15 @@ export function LeadDetailDialog({
           {onRescanSpam ? (
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-muted/30 px-4 py-3 text-sm">
               <div>
-                <p className="font-medium">Spam check & research</p>
+                <p className="font-medium">AI insight & spam check</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {lead.spam_scanned_at
-                    ? `Last checked ${new Date(lead.spam_scanned_at).toLocaleString()}`
-                    : "Not checked yet"}
+                  {lead.insight_generated_at || lead.spam_scanned_at
+                    ? `Last run ${new Date(
+                        lead.insight_generated_at || lead.spam_scanned_at!,
+                      ).toLocaleString()}`
+                    : "Not run yet"}
                   {!lead.spam_flag && lead.spam_scanned_at
-                    ? " · No flag"
+                    ? " · No spam flag"
                     : null}
                 </p>
               </div>
@@ -144,7 +230,7 @@ export function LeadDetailDialog({
                 variant="outline"
               >
                 <Flag aria-hidden className="size-3.5" />
-                {rescanningSpam ? "Checking…" : "Re-check"}
+                {rescanningSpam ? "Refreshing…" : "Refresh"}
               </Button>
             </div>
           ) : null}

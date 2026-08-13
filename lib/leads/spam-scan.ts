@@ -1,11 +1,12 @@
 import { revalidatePath } from "next/cache";
 
 import { classifyLeadSpam } from "@/lib/ai/classify-lead-spam";
+import { generateLeadInsight } from "@/lib/ai/generate-lead-insight";
 import { getAppAiConfigForBackground } from "@/lib/app-ai";
 import { researchLeadContext } from "@/lib/leads/research-lead";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 
-/** Run AI research + spam classification and persist results on the lead row. */
+/** Run AI research, lead insight, and spam classification; persist on the lead. */
 export async function scanLeadForSpam(
   leadId: string,
   options?: { force?: boolean },
@@ -50,39 +51,48 @@ export async function scanLeadForSpam(
   });
 
   const ai = await getAppAiConfigForBackground();
-  const result = await classifyLeadSpam(
-    {
-      businessName: lead.business_name,
-      contactName: lead.contact_name,
-      email: lead.email,
-      phone: lead.phone,
-      title: lead.title,
-      source: lead.source,
-      message: lead.message,
-      notes: lead.notes,
-      researchSummary: research.summary,
-      researchSources: research.sources,
-    },
-    ai,
-  );
+  const leadInput = {
+    businessName: lead.business_name,
+    contactName: lead.contact_name,
+    email: lead.email,
+    phone: lead.phone,
+    title: lead.title,
+    source: lead.source,
+    message: lead.message,
+    notes: lead.notes,
+    researchSummary: research.summary,
+    researchSources: research.sources,
+  };
 
-  if (!result.ok) {
-    console.error("scanLeadForSpam classification failed", result.error);
-    return;
-  }
+  const [insight, result] = await Promise.all([
+    generateLeadInsight(leadInput, ai),
+    classifyLeadSpam(leadInput, ai),
+  ]);
 
   const scannedAt = new Date().toISOString();
+  const update: Record<string, unknown> = {
+    research_summary: research.summary,
+    research_sources: research.sources.length > 0 ? research.sources : null,
+    researched_at: scannedAt,
+    updated_at: scannedAt,
+  };
+
+  if (insight) {
+    update.lead_insight = insight;
+    update.insight_generated_at = scannedAt;
+  }
+
+  if (result.ok) {
+    update.spam_flag = result.isSpam;
+    update.spam_reason = result.reason;
+    update.spam_scanned_at = scannedAt;
+  } else {
+    console.error("scanLeadForSpam classification failed", result.error);
+  }
+
   const { error: updateError } = await admin
     .from("leads")
-    .update({
-      spam_flag: result.isSpam,
-      spam_reason: result.reason,
-      spam_scanned_at: scannedAt,
-      research_summary: research.summary,
-      research_sources: research.sources.length > 0 ? research.sources : null,
-      researched_at: scannedAt,
-      updated_at: scannedAt,
-    })
+    .update(update)
     .eq("id", leadId);
 
   if (updateError) {

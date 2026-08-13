@@ -115,7 +115,7 @@ export function LeadsPanel({
     setRescanningSpamId(null);
 
     if (!result.ok) {
-      setError(result.error ?? "Failed to re-check spam.");
+      setError(result.error ?? "Failed to refresh lead insight.");
       return;
     }
 

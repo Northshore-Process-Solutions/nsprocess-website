@@ -262,6 +262,8 @@ export function mapDemoSeedToCrm(raw: DemoSeed) {
     research_summary: null,
     research_sources: null,
     researched_at: null,
+    lead_insight: null,
+    insight_generated_at: null,
     created_at: stamp(),
     updated_at: stamp(),
   }));
