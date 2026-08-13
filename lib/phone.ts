@@ -30,3 +30,17 @@ export function isValidUsPhone(value?: string | null): boolean {
   if (!trimmed) return true;
   return normalizeUsPhone(trimmed) !== null;
 }
+
+/** Convert a US phone (or +1… input) to E.164 `+1XXXXXXXXXX`. */
+export function toE164Us(value?: string | null): string | null {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) return null;
+
+  const digits = trimmed.replace(/\D/g, "");
+  let local = digits;
+  if (local.length === 11 && local.startsWith("1")) {
+    local = local.slice(1);
+  }
+  if (local.length !== 10) return null;
+  return `+1${local}`;
+}

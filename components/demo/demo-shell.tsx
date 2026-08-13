@@ -33,6 +33,11 @@ const links = [
     match: (p: string) => p.startsWith("/demo/projects"),
   },
   {
+    href: "/demo/calendar",
+    label: "Calendar",
+    match: (p: string) => p.startsWith("/demo/calendar"),
+  },
+  {
     href: "/demo/billing",
     label: "Billing",
     match: (p: string) =>

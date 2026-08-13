@@ -175,7 +175,14 @@ export async function startInvoiceCheckout(
     const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      payment_method_types: ["card"],
+      payment_method_types: ["card", "us_bank_account"],
+      payment_method_options: {
+        us_bank_account: {
+          financial_connections: {
+            permissions: ["payment_method"],
+          },
+        },
+      },
       customer_email: invoice.client_email ?? undefined,
       line_items: [
         {

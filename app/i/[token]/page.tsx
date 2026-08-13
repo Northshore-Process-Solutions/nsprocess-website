@@ -112,6 +112,20 @@ export default async function PublicInvoicePayPage({
           </div>
         ) : null}
 
+        {query.paid === "1" && !justPaid ? (
+          <div
+            className="mb-5 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950"
+            role="status"
+          >
+            <p className="font-semibold">Payment submitted</p>
+            <p className="mt-1 text-sky-900/90">
+              If you paid by card, confirmation is usually immediate. Bank
+              transfers (ACH) can take a few business days to clear — we&apos;ll
+              mark this invoice paid when the payment settles.
+            </p>
+          </div>
+        ) : null}
+
         {canceled && !justPaid ? (
           <div
             className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"
@@ -217,7 +231,7 @@ export default async function PublicInvoicePayPage({
         </section>
 
         <p className="mt-6 text-center text-xs text-slate-500">
-          Secure card payment powered by Stripe.
+          Secure card or US bank transfer (ACH) via Stripe.
         </p>
       </div>
     </main>

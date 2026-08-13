@@ -41,6 +41,10 @@ export function InvoicePayButton({
       >
         {pending ? "Redirecting…" : `Pay ${formatMoney(balanceDue)}`}
       </Button>
+      <p className="text-xs text-slate-500">
+        Pay by card or US bank account (ACH). Bank transfers usually clear in a
+        few business days.
+      </p>
       {error ? (
         <p className="text-sm text-red-700" role="alert">
           {error}

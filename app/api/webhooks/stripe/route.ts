@@ -37,24 +37,38 @@ export async function POST(request: Request) {
     );
   }
 
-  if (event.type === "checkout.session.completed") {
+  if (
+    event.type === "checkout.session.completed" ||
+    event.type === "checkout.session.async_payment_succeeded"
+  ) {
     const session = event.data.object as Stripe.Checkout.Session;
-    const result = await handleCheckoutCompleted(session);
-    if (!result.ok) {
-      console.error("Stripe checkout apply failed", result.error);
-      return NextResponse.json({ error: result.error }, { status: 500 });
+    // Cards settle on completed; ACH often settles later via async_payment_succeeded.
+    const shouldFulfill =
+      event.type === "checkout.session.async_payment_succeeded" ||
+      session.payment_status === "paid";
+
+    if (shouldFulfill) {
+      const result = await handleCheckoutPaid(session);
+      if (!result.ok) {
+        console.error("Stripe checkout apply failed", result.error);
+        return NextResponse.json({ error: result.error }, { status: 500 });
+      }
     }
+  }
+
+  if (event.type === "checkout.session.async_payment_failed") {
+    const session = event.data.object as Stripe.Checkout.Session;
+    console.warn("Stripe ACH/async payment failed", {
+      sessionId: session.id,
+      invoiceId: session.metadata?.invoice_id ?? null,
+    });
   }
 
   return NextResponse.json({ received: true });
 }
 
-async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+async function handleCheckoutPaid(session: Stripe.Checkout.Session) {
   if (session.mode !== "payment") {
-    return { ok: true as const };
-  }
-
-  if (session.payment_status !== "paid") {
     return { ok: true as const };
   }
 

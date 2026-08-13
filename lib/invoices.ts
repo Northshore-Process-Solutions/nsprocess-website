@@ -33,6 +33,7 @@ export type InvoiceRow = {
   share_token: string | null;
   stripe_checkout_session_id: string | null;
   stripe_payment_intent_id: string | null;
+  payment_nudge_sent_at: string | null;
   created_at: string;
   updated_at: string;
 };

@@ -5,6 +5,7 @@ import { defaultNextFollowUpDate } from "@/lib/leads";
 import { scanLeadForSpam } from "@/lib/leads/spam-scan";
 import { escapeHtml, getSmtpConfig, sendAppEmail } from "@/lib/mail";
 import { normalizeUsPhone } from "@/lib/phone";
+import { notifyOperatorNewLeadSms } from "@/lib/sms";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -212,8 +213,9 @@ export async function POST(request: Request) {
     return redirectToContact(request, "error");
   }
 
-  // SMTP is slow — finish the response after the lead is saved, then email.
+  // SMTP / SMS / AI are slow — finish the response after the lead is saved.
   after(async () => {
+    const contactName = `${firstName} ${lastName}`.trim();
     await Promise.all([
       sendContactNotification({
         firstName,
@@ -222,6 +224,16 @@ export async function POST(request: Request) {
         email,
         phone: phone || "Not provided",
         message,
+      }),
+      notifyOperatorNewLeadSms({
+        business,
+        contactName,
+        email,
+        phone: normalizedPhone,
+      }).then((result) => {
+        if (!result.ok && !result.skipped) {
+          console.error("Operator SMS notify failed", result.error);
+        }
       }),
       scanLeadForSpam(leadResult.leadId),
     ]);

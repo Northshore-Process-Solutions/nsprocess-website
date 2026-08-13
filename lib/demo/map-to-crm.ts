@@ -390,6 +390,7 @@ export function mapDemoSeedToCrm(raw: DemoSeed) {
     share_token: null,
     stripe_checkout_session_id: null,
     stripe_payment_intent_id: null,
+    payment_nudge_sent_at: null,
     created_at: stamp(doc.issuedAt),
     updated_at: stamp(doc.issuedAt),
     invoice_items: invoiceItemsForDoc(doc),

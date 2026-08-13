@@ -35,6 +35,12 @@ const linkDefs = [
     match: (p: string, base: string) => p.startsWith(`${base}/projects`),
   },
   {
+    path: "/calendar",
+    label: "Calendar",
+    key: "calendar" as const,
+    match: (p: string, base: string) => p.startsWith(`${base}/calendar`),
+  },
+  {
     path: "/billing",
     label: "Billing",
     key: "billing" as const,
