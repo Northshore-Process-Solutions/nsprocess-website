@@ -32,8 +32,7 @@ export default async function NewAgreementPage({
   }
 
   return (
-    <main className="max-w-5xl">
-
+    <main>
       <AgreementEditor mode="create" />
     </main>
   );

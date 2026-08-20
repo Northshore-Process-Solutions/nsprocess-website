@@ -434,7 +434,7 @@ export function ProposalEditor({
               type="submit"
               variant="accent"
             >
-              {loading ? "Saving…" : mode === "create" ? "Create draft" : "Save"}
+              {loading ? "Saving…" : mode === "create" ? "Create Proposal" : "Save"}
             </Button>
           ) : null}
         </div>
@@ -443,7 +443,7 @@ export function ProposalEditor({
       {!isDemo ? (
         <div className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:hidden">
           <Button className="w-full" disabled={loading} type="submit" variant="accent">
-            {loading ? "Saving…" : mode === "create" ? "Create draft" : "Save"}
+            {loading ? "Saving…" : mode === "create" ? "Create Proposal" : "Save"}
           </Button>
         </div>
       ) : null}

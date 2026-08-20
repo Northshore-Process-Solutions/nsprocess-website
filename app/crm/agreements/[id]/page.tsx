@@ -58,8 +58,7 @@ export default async function AgreementPage({ params }: AgreementPageProps) {
   }
 
   return (
-    <main className="max-w-5xl">
-
+    <main>
       <AgreementEditor
         initialAgreement={data as AgreementWithItems}
         mode="edit"

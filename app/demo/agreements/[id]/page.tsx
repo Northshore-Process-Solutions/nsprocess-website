@@ -22,7 +22,7 @@ export default async function DemoAgreementDetailPage({
   if (!initialAgreement) notFound();
 
   return (
-    <main className="max-w-5xl">
+    <main>
       <DemoPreviewBanner />
       <header className="mb-5">
         <SalesSubnav current="agreements" />
