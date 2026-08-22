@@ -15,7 +15,7 @@ export default async function CrmSiteSettingsPage() {
   const { data: aiRow } = await supabase
     .from("app_settings")
     .select(
-      "ai_industry, ai_proposal_instructions, ai_reply_instructions, ai_spam_instructions",
+      "ai_industry, ai_proposal_instructions, ai_agreement_instructions, ai_reply_instructions, ai_spam_instructions",
     )
     .eq("id", true)
     .maybeSingle();
@@ -50,6 +50,15 @@ export default async function CrmSiteSettingsPage() {
               description: "Instructions for scope and line-item drafts.",
               meta: preview(
                 aiRow?.ai_proposal_instructions,
+                "Using defaults",
+              ),
+            },
+            {
+              href: "/crm/settings/site/ai/agreements",
+              title: "Agreement generation",
+              description: "Instructions for agreement scope and line items.",
+              meta: preview(
+                aiRow?.ai_agreement_instructions,
                 "Using defaults",
               ),
             },

@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import {
   saveAiIndustrySettings,
   saveAiProposalSettings,
+  saveAiAgreementSettings,
   saveAiReplySettings,
   saveAiSpamSettings,
 } from "@/app/crm/settings/actions";
@@ -111,6 +112,63 @@ export function AiProposalSettingsForm({
           />
           <span className="block text-xs text-muted-foreground">
             Structure rules stay locked so drafts remain reliable.
+          </span>
+        </label>
+
+        <SaveFeedback error={error} message={message} />
+        <Button disabled={pending} type="submit">
+          {pending ? "Saving…" : "Save"}
+        </Button>
+      </form>
+    </Card>
+  );
+}
+
+export function AiAgreementSettingsForm({
+  instructions,
+}: {
+  instructions: string | null;
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  function onSave(formData: FormData) {
+    setError(null);
+    setMessage(null);
+    startTransition(async () => {
+      const result = await saveAiAgreementSettings({
+        agreementInstructions: String(
+          formData.get("agreementInstructions") ?? "",
+        ),
+      });
+      if (!result.ok) {
+        setError(result.error ?? "Could not save.");
+        return;
+      }
+      setMessage("Agreement AI settings saved.");
+      router.refresh();
+    });
+  }
+
+  return (
+    <Card className="p-6 sm:p-8">
+      <form action={onSave} className="space-y-4">
+        <label className="block space-y-1.5 text-sm">
+          <span className="font-medium">Agreement instructions</span>
+          <textarea
+            className="min-h-40 w-full rounded-md border border-input bg-background px-3 py-2"
+            defaultValue={instructions ?? ""}
+            maxLength={4000}
+            name="agreementInstructions"
+            placeholder={
+              "Optional. e.g. Write as binding work description. Prefer install phases. Keep legal terms out of scope — use the Terms field for those."
+            }
+          />
+          <span className="block text-xs text-muted-foreground">
+            Applied when drafting agreement scope and line items. Terms stay
+            manual.
           </span>
         </label>
 

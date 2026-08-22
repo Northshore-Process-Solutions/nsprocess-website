@@ -24,6 +24,10 @@ export type AiProposalSettingsInput = {
   proposalInstructions?: string;
 };
 
+export type AiAgreementSettingsInput = {
+  agreementInstructions?: string;
+};
+
 export type AiReplySettingsInput = {
   replyInstructions?: string;
 };
@@ -121,7 +125,7 @@ export async function savePortalSettings(
   const { data: existing } = await supabase
     .from("app_settings")
     .select(
-      "company_name, tagline, phone, email, service_area, logo_path, ai_industry, ai_proposal_instructions, ai_reply_instructions, ai_spam_instructions",
+      "company_name, tagline, phone, email, service_area, logo_path, ai_industry, ai_proposal_instructions, ai_agreement_instructions, ai_reply_instructions, ai_spam_instructions",
     )
     .eq("id", true)
     .maybeSingle();
@@ -143,6 +147,7 @@ export async function savePortalSettings(
       logo_path: existing?.logo_path ?? null,
       ai_industry: existing?.ai_industry ?? null,
       ai_proposal_instructions: existing?.ai_proposal_instructions ?? null,
+      ai_agreement_instructions: existing?.ai_agreement_instructions ?? null,
       ai_reply_instructions: existing?.ai_reply_instructions ?? null,
       ai_spam_instructions: existing?.ai_spam_instructions ?? null,
       updated_at: new Date().toISOString(),
@@ -343,6 +348,26 @@ export async function saveAiProposalSettings(
   });
 }
 
+export async function saveAiAgreementSettings(
+  input: AiAgreementSettingsInput,
+): Promise<ActionResult> {
+  const agreementInstructions = clean(input.agreementInstructions);
+
+  if (
+    agreementInstructions &&
+    agreementInstructions.length > MAX_AI_INSTRUCTIONS
+  ) {
+    return {
+      ok: false,
+      error: `Agreement instructions must be ${MAX_AI_INSTRUCTIONS} characters or fewer.`,
+    };
+  }
+
+  return patchAiFields({
+    ai_agreement_instructions: agreementInstructions,
+  });
+}
+
 export async function saveAiReplySettings(
   input: AiReplySettingsInput,
 ): Promise<ActionResult> {
@@ -392,7 +417,7 @@ async function patchAiFields(
   const { data: existing } = await supabase
     .from("app_settings")
     .select(
-      "company_name, portal_name, tagline, phone, email, service_area, logo_path, ai_industry, ai_proposal_instructions, ai_reply_instructions, ai_spam_instructions",
+      "company_name, portal_name, tagline, phone, email, service_area, logo_path, ai_industry, ai_proposal_instructions, ai_agreement_instructions, ai_reply_instructions, ai_spam_instructions",
     )
     .eq("id", true)
     .maybeSingle();
@@ -418,6 +443,7 @@ async function patchAiFields(
       logo_path: existing?.logo_path ?? null,
       ai_industry: existing?.ai_industry ?? null,
       ai_proposal_instructions: existing?.ai_proposal_instructions ?? null,
+      ai_agreement_instructions: existing?.ai_agreement_instructions ?? null,
       ai_reply_instructions: existing?.ai_reply_instructions ?? null,
       ai_spam_instructions: existing?.ai_spam_instructions ?? null,
       ...fields,

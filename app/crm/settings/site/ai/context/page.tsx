@@ -18,7 +18,7 @@ export default async function CrmAiContextSettingsPage() {
     <SettingsDetailShell
       backHref="/crm/settings/site"
       backLabel="Site settings"
-      description={`Used by proposal generation and email replies. Company name comes from Company settings (${brand.companyName}).`}
+      description={`Used by proposal and agreement generation and email replies. Company name comes from Company settings (${brand.companyName}).`}
       title="Shared AI context"
     >
       <AiIndustrySettingsForm

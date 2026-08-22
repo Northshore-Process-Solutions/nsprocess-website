@@ -10,16 +10,19 @@ import {
   Mail,
   Plus,
   Receipt,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { draftAgreementScope } from "@/app/crm/ai/actions";
 import {
   createAgreement,
   markAgreementSigned,
   updateAgreement,
   type AgreementInput,
 } from "@/app/crm/agreements/actions";
+import { draftDemoAgreementScope } from "@/app/demo/ai/actions";
 import {
   ensureAgreementShareLink,
   sendAgreementShareEmail,
@@ -61,6 +64,7 @@ export function AgreementEditor({
       : emptyAgreementFormValues(defaults),
   );
   const [loading, setLoading] = useState(false);
+  const [drafting, setDrafting] = useState(false);
   const [signing, setSigning] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [emailing, setEmailing] = useState(false);
@@ -150,6 +154,42 @@ export function AgreementEditor({
       signerName: values.signerName || undefined,
       items: values.items,
     };
+  }
+
+  async function onDraftScope() {
+    setDrafting(true);
+    setError(null);
+    setSaved(false);
+
+    const draftInput = {
+      businessName: values.clientBusinessName,
+      contactName: values.clientContactName,
+      title: values.title,
+      notes: values.notes,
+      existingScope: values.scopeSummary,
+      existingItems: values.items,
+    };
+
+    const result = isDemo
+      ? await draftDemoAgreementScope(draftInput)
+      : await draftAgreementScope(draftInput);
+
+    setDrafting(false);
+
+    if (!result.ok || !result.text) {
+      setError(result.error ?? "Failed to draft scope.");
+      return;
+    }
+
+    setValues((current) => ({
+      ...current,
+      scopeSummary: result.text!,
+      items:
+        result.items && result.items.length > 0
+          ? result.items
+          : current.items,
+    }));
+    setSaved(false);
   }
 
   async function onSave(event: React.FormEvent) {
@@ -530,17 +570,35 @@ export function AgreementEditor({
       </section>
 
       <section className="space-y-4 rounded-2xl border border-border bg-card p-5 shadow-soft">
-        <label className="block space-y-2 text-sm font-semibold">
-          Scope summary
-          <textarea
-            className="min-h-28 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            onChange={(event) =>
-              updateField("scopeSummary", event.target.value)
-            }
-            placeholder="What we will do, outcomes, and boundaries."
-            value={values.scopeSummary}
-          />
-        </label>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-sm font-semibold">Scope summary</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Tip: put consult notes in Internal notes, then draft with AI.
+              Scope stays high-level; line items hold the billable detail.
+              Terms stay manual.
+            </p>
+          </div>
+          <Button
+            disabled={drafting}
+            onClick={onDraftScope}
+            type="button"
+            variant="outline"
+          >
+            <Sparkles aria-hidden className="size-4" />
+            {drafting ? "Drafting…" : "Draft with AI"}
+          </Button>
+        </div>
+        <textarea
+          className="min-h-44 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          onChange={(event) =>
+            updateField("scopeSummary", event.target.value)
+          }
+          placeholder={
+            "What we will do:\n1. ...\n\nExpected outcomes:\n- ...\n\nOut of scope:\n- ..."
+          }
+          value={values.scopeSummary}
+        />
       </section>
 
       <section className="space-y-4 rounded-2xl border border-border bg-card p-5 shadow-soft">

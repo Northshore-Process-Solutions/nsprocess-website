@@ -75,10 +75,16 @@ export async function generateProposalDraft(input: {
   /** Extra system constraints (e.g. do not write as NSPS). */
   extraSystemRules?: string;
   emptyNotesFallback: string;
+  /** Defaults to proposal wording in prompts. */
+  documentKind?: "proposal" | "agreement";
 }): Promise<DraftProposalOutput> {
+  const documentKind = input.documentKind ?? "proposal";
+  const documentLabel = documentKind === "agreement" ? "Agreement" : "Proposal";
   const businessName = clean(input.businessName) ?? "the client";
   const contactName = clean(input.contactName);
-  const title = clean(input.title) ?? "Service Proposal";
+  const title =
+    clean(input.title) ??
+    (documentKind === "agreement" ? "Service Agreement" : "Service Proposal");
   const notes = clean(input.notes);
   const existingScope = clean(input.existingScope);
 
@@ -92,7 +98,9 @@ export async function generateProposalDraft(input: {
 
   const system = [
     input.extraSystemRules?.trim() || null,
-    `You draft proposal content for ${input.operatorName}, a ${input.industry} business.`,
+    documentKind === "agreement"
+      ? `You draft agreement (contract) content for ${input.operatorName}, a ${input.industry} business. Scope and line items must read as a clear binding work description suitable for client signature — precise deliverables, not marketing copy.`
+      : `You draft proposal content for ${input.operatorName}, a ${input.industry} business.`,
     input.extraSystemRules?.trim()
       ? "Default voice only when operator instructions do not specify otherwise: calm, practical, plain English. No hype, no emojis."
       : "Voice: calm, practical, plain English. No hype, no emojis.",
@@ -135,7 +143,7 @@ Line item rules:
       schema: draftSchema,
       system,
       prompt: [
-        `Proposal title: ${title}`,
+        `${documentLabel} title: ${title}`,
         `Client business: ${businessName}`,
         contactName ? `Contact: ${contactName}` : null,
         notes ? `Consult / internal notes:\n${notes}` : null,
@@ -148,7 +156,7 @@ Line item rules:
         !notes && !existingScope && existingItems.length === 0
           ? input.emptyNotesFallback
           : null,
-        "Draft a concise high-level scope summary plus distinct billable line items. Do not repeat deliverables in both places.",
+        `Draft a concise high-level ${documentKind} scope summary plus distinct billable line items. Do not repeat deliverables in both places.`,
       ]
         .filter(Boolean)
         .join("\n\n"),

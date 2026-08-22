@@ -103,6 +103,68 @@ export async function draftProposalScope(input: {
     existingItems: input.existingItems,
     extraSystemRules,
     emptyNotesFallback,
+    documentKind: "proposal",
+  });
+
+  if (!result.ok) {
+    return { ok: false, error: result.error };
+  }
+
+  return {
+    ok: true,
+    text: result.scopeSummary,
+    items: result.items,
+  };
+}
+
+export async function draftAgreementScope(input: {
+  businessName?: string;
+  contactName?: string;
+  title?: string;
+  notes?: string;
+  existingScope?: string;
+  existingItems?: DraftProposalLineItem[];
+}): Promise<AiActionResult> {
+  const auth = await requireCrmUserOrDemo();
+  if (auth.error) return { ok: false, error: auth.error };
+
+  const demoCompany = auth.demoSeed?.business;
+  let operatorName: string;
+  let industry: string;
+  let extraSystemRules: string | undefined;
+  let emptyNotesFallback: string;
+
+  if (auth.demoSeed) {
+    industry =
+      demoCompany?.category?.trim() ||
+      demoCompany?.notes?.trim() ||
+      "local service business";
+    operatorName = demoCompany?.name?.trim() || "the service company";
+    extraSystemRules = buildAiExtraRules(
+      null,
+      "Do not write as if you are North Shore Process Solutions unless that is the demo company.",
+    );
+    emptyNotesFallback = `No consult notes were provided. Draft a general ${industry} agreement scope and matching line items suitable for this client type, kept intentionally non-specific.`;
+  } else {
+    const ai = await getAppAiConfig();
+    operatorName = ai.operatorName;
+    industry = ai.industry;
+    extraSystemRules = buildAiExtraRules(ai.agreementInstructions);
+    emptyNotesFallback = `No consult notes were provided. Draft a general ${industry} agreement scope and matching line items suitable for a typical client of ${operatorName}, kept intentionally non-specific.`;
+  }
+
+  const result = await generateProposalDraft({
+    operatorName,
+    industry,
+    businessName: input.businessName,
+    contactName: input.contactName,
+    title: input.title,
+    notes: input.notes,
+    existingScope: input.existingScope,
+    existingItems: input.existingItems,
+    extraSystemRules,
+    emptyNotesFallback,
+    documentKind: "agreement",
   });
 
   if (!result.ok) {
