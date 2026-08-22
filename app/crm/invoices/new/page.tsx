@@ -5,12 +5,19 @@ import {
   createInvoiceFromAgreement,
 } from "@/app/crm/invoices/actions";
 import { InvoiceEditor } from "@/components/admin/invoice-editor";
+import {
+  mapOrganizationToCrmRow,
+  ORGANIZATION_DOCUMENT_SELECT,
+  organizationDocumentDefaults,
+  type OrganizationRow,
+} from "@/lib/crm";
 import { createClient } from "@/lib/supabase/server";
 
 type NewInvoicePageProps = {
   searchParams?: Promise<{
     agreementId?: string;
     mode?: string;
+    organizationId?: string;
   }>;
 };
 
@@ -20,6 +27,7 @@ export default async function NewInvoicePage({
   const params = await searchParams;
   const agreementId = params?.agreementId;
   const mode = params?.mode ?? "full";
+  const organizationId = params?.organizationId;
 
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
@@ -41,10 +49,29 @@ export default async function NewInvoicePage({
     redirect(`/crm/invoices/${result.id}`);
   }
 
+  let organizationDefaults: ReturnType<typeof organizationDocumentDefaults> | undefined;
+
+  if (organizationId) {
+    const { data, error } = await supabase
+      .from("organizations")
+      .select(ORGANIZATION_DOCUMENT_SELECT)
+      .eq("id", organizationId)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to load business: ${error.message}`);
+    }
+
+    if (data) {
+      organizationDefaults = organizationDocumentDefaults(
+        mapOrganizationToCrmRow(data as unknown as OrganizationRow),
+      );
+    }
+  }
+
   return (
     <main className="max-w-5xl">
-
-      <InvoiceEditor mode="create" />
+      <InvoiceEditor defaults={organizationDefaults} mode="create" />
     </main>
   );
 }

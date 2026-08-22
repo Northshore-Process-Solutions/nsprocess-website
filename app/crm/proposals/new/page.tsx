@@ -2,12 +2,19 @@ import { redirect } from "next/navigation";
 
 import { SalesSubnav } from "@/components/admin/sales-subnav";
 import { ProposalEditor } from "@/components/admin/proposal-editor";
+import {
+  mapOrganizationToCrmRow,
+  ORGANIZATION_DOCUMENT_SELECT,
+  organizationDocumentDefaults,
+  type OrganizationRow,
+} from "@/lib/crm";
 import type { LeadRow } from "@/lib/leads";
 import { createClient } from "@/lib/supabase/server";
 
 type NewProposalPageProps = {
   searchParams?: Promise<{
     leadId?: string;
+    organizationId?: string;
   }>;
 };
 
@@ -16,6 +23,7 @@ export default async function NewProposalPage({
 }: NewProposalPageProps) {
   const params = await searchParams;
   const leadId = params?.leadId;
+  const organizationId = params?.organizationId;
 
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
@@ -38,6 +46,26 @@ export default async function NewProposalPage({
     lead = (data as LeadRow | null) ?? null;
   }
 
+  let organizationDefaults: ReturnType<typeof organizationDocumentDefaults> | undefined;
+
+  if (!lead && organizationId) {
+    const { data, error } = await supabase
+      .from("organizations")
+      .select(ORGANIZATION_DOCUMENT_SELECT)
+      .eq("id", organizationId)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to load business: ${error.message}`);
+    }
+
+    if (data) {
+      organizationDefaults = organizationDocumentDefaults(
+        mapOrganizationToCrmRow(data as unknown as OrganizationRow),
+      );
+    }
+  }
+
   return (
     <main>
       <header className="mb-5">
@@ -56,7 +84,7 @@ export default async function NewProposalPage({
                 clientPhone: lead.phone,
                 title: "Process Improvement Proposal",
               }
-            : undefined
+            : organizationDefaults
         }
         mode="create"
       />

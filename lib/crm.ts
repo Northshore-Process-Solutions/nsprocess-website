@@ -232,3 +232,46 @@ export function matchesCrmSearch(row: CrmTableRow, query: string) {
 
   return haystack.includes(normalized);
 }
+
+/** Prefill proposal / agreement / invoice create forms from a business account. */
+export function organizationDocumentDefaults(organization: CrmTableRow) {
+  return {
+    organizationId: organization.id,
+    clientBusinessName: organization.name,
+    clientContactName: organization.primaryContact,
+    clientEmail: organization.email ?? organization.organizationEmail,
+    clientPhone: organization.phone ?? organization.organizationPhone,
+  };
+}
+
+export const ORGANIZATION_DOCUMENT_SELECT = `
+  id,
+  name,
+  category,
+  website,
+  email,
+  phone,
+  city,
+  state,
+  status,
+  notes,
+  organization_relationships (
+    id,
+    relationship_type,
+    lifecycle_stage
+  ),
+  organization_contacts (
+    id,
+    title,
+    is_primary,
+    contact_id,
+    contacts (
+      id,
+      first_name,
+      last_name,
+      display_name,
+      email,
+      phone
+    )
+  )
+`;

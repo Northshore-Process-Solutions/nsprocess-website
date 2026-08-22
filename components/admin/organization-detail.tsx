@@ -452,18 +452,43 @@ export function OrganizationDetail({
         <HubCard
           actions={
             <>
-              <Button asChild size="sm" variant="outline">
-                <Link href={href("/sales")}>Sales</Link>
-              </Button>
+              {!readOnly ? (
+                <>
+                  <Button asChild size="sm" variant="outline">
+                    <Link
+                      href={href(
+                        `/proposals/new?organizationId=${organization.id}`,
+                      )}
+                    >
+                      Proposal
+                    </Link>
+                  </Button>
+                  <Button asChild size="sm" variant="outline">
+                    <Link
+                      href={href(
+                        `/agreements/new?organizationId=${organization.id}`,
+                      )}
+                    >
+                      Agreement
+                    </Link>
+                  </Button>
+                  <Button asChild size="sm" variant="outline">
+                    <Link
+                      href={href(
+                        `/invoices/new?organizationId=${organization.id}`,
+                      )}
+                    >
+                      Invoice
+                    </Link>
+                  </Button>
+                </>
+              ) : null}
               <Button asChild size="sm" variant="outline">
                 <Link
                   href={href(`/statements?organizationId=${organization.id}`)}
                 >
                   Statement
                 </Link>
-              </Button>
-              <Button asChild size="sm" variant="outline">
-                <Link href={href("/billing")}>Billing</Link>
               </Button>
             </>
           }
