@@ -88,6 +88,8 @@ export default async function DemoHomePage({ searchParams }: DemoHomePageProps) 
       status: row.status,
       proposal_id: row.proposal_id,
       lead_id: row.lead_id,
+      title: row.title,
+      client_business_name: row.client_business_name,
     }));
 
   return (

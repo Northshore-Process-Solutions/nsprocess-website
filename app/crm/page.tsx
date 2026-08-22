@@ -74,13 +74,13 @@ export default async function AdminTodayPage() {
       .select("*")
       .eq("status", "draft")
       .order("updated_at", { ascending: false })
-      .limit(5),
+      .limit(8),
     supabase
       .from("proposals")
       .select("*")
       .eq("status", "sent")
       .order("updated_at", { ascending: false })
-      .limit(5),
+      .limit(8),
     supabase
       .from("invoices")
       .select("*")
@@ -110,7 +110,7 @@ export default async function AdminTodayPage() {
       .limit(6),
     supabase
       .from("agreements")
-      .select("id, status, proposal_id, lead_id")
+      .select("id, status, proposal_id, lead_id, title, client_business_name")
       .in("status", ["draft", "sent", "signed"])
       .order("updated_at", { ascending: false })
       .limit(40),

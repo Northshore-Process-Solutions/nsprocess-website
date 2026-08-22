@@ -423,7 +423,7 @@ export function AgreementEditor({
           ) : null}
           {!isDemo ? (
             <Button disabled={loading} type="submit" variant="accent">
-              {loading ? "Saving…" : mode === "create" ? "Create draft" : "Save"}
+              {loading ? "Saving…" : "Save"}
             </Button>
           ) : null}
         </div>

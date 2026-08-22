@@ -79,9 +79,9 @@ export function PortalHome({
           value={String(dash.followUpsDueCount)}
         />
         <StatCard
-          href={dash.href("/pipeline")}
-          label="Ready to propose"
-          value={String(dash.readyToProposeCount)}
+          href={dash.href("/sales")}
+          label="Open sales docs"
+          value={String(dash.salesCount)}
         />
         <StatCard
           emphasize={dash.acceptedJobsCount > 0}
@@ -103,6 +103,12 @@ export function PortalHome({
       </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
+        <QueueCard
+          empty="No open proposals or agreements."
+          href={dash.href("/sales")}
+          items={dash.sales}
+          title="Sales"
+        />
         <QueueCard
           empty="No pipeline work waiting."
           href={dash.href("/pipeline")}

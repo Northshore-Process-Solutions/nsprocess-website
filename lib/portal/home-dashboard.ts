@@ -37,6 +37,8 @@ export type AgreementLite = {
   status: string;
   proposal_id: string | null;
   lead_id: string | null;
+  title?: string | null;
+  client_business_name?: string | null;
 };
 
 type EventLite = {
@@ -74,21 +76,71 @@ export function buildHomeDashboard(input: {
   const customerLeadIds = input.customerLeadIds ?? new Set<string>();
   const coveredLeadIds = new Set<string>();
 
-  const pipeline: HomeQueueItem[] = [];
+  const sales: HomeQueueItem[] = [];
+  const acceptedProposalIds = new Set(
+    input.acceptedProposals.map((proposal) => proposal.id),
+  );
 
   for (const proposal of input.draftProposals) {
     if (proposal.lead_id) coveredLeadIds.add(proposal.lead_id);
-    pipeline.push({
+    sales.push({
       key: `draft-${proposal.id}`,
-      href: proposal.lead_id
-        ? href(`/pipeline?leadId=${proposal.lead_id}`)
-        : href(`/proposals/${proposal.id}`),
-      title: proposal.client_business_name,
+      href: href(`/proposals/${proposal.id}`),
+      title:
+        proposal.client_business_name?.trim() ||
+        proposal.title ||
+        "Untitled proposal",
       nextAction: "Next: Finish proposal draft",
-      badge: { label: "Draft", tone: "gray" },
+      badge: { label: "Proposal draft", tone: "gray" },
       dueLabel: null,
     });
   }
+
+  for (const proposal of input.sentProposals) {
+    if (proposal.lead_id) coveredLeadIds.add(proposal.lead_id);
+    sales.push({
+      key: `sent-${proposal.id}`,
+      href: href(`/proposals/${proposal.id}`),
+      title:
+        proposal.client_business_name?.trim() ||
+        proposal.title ||
+        "Untitled proposal",
+      nextAction: followUpAction(proposal.valid_until, today),
+      badge: { label: "Proposal sent", tone: "blue" },
+      dueLabel: formatDueLabel(proposal.valid_until, today),
+    });
+  }
+
+  for (const agreement of input.agreements) {
+    if (agreement.status !== "draft" && agreement.status !== "sent") continue;
+    // Accepted-job handoff already covers agreements tied to accepted proposals.
+    if (
+      agreement.proposal_id &&
+      acceptedProposalIds.has(agreement.proposal_id)
+    ) {
+      continue;
+    }
+    if (agreement.lead_id) coveredLeadIds.add(agreement.lead_id);
+    sales.push({
+      key: `agreement-${agreement.id}`,
+      href: href(`/agreements/${agreement.id}`),
+      title:
+        agreement.client_business_name?.trim() ||
+        agreement.title?.trim() ||
+        "Untitled agreement",
+      nextAction:
+        agreement.status === "sent"
+          ? "Next: Get agreement signed"
+          : "Next: Finish and send agreement",
+      badge: {
+        label: agreement.status === "sent" ? "Agreement sent" : "Agreement draft",
+        tone: agreement.status === "sent" ? "blue" : "gray",
+      },
+      dueLabel: null,
+    });
+  }
+
+  const pipeline: HomeQueueItem[] = [];
 
   for (const lead of input.readyToPropose) {
     if (lead.stage !== "review_completed") continue;
@@ -103,20 +155,6 @@ export function buildHomeDashboard(input: {
       dueLabel: formatDueLabel(lead.next_follow_up_at, today),
       spamFlag: lead.spam_flag,
       spamReason: lead.spam_reason,
-    });
-  }
-
-  for (const proposal of input.sentProposals) {
-    if (proposal.lead_id) coveredLeadIds.add(proposal.lead_id);
-    pipeline.push({
-      key: `sent-${proposal.id}`,
-      href: proposal.lead_id
-        ? href(`/pipeline?leadId=${proposal.lead_id}`)
-        : href(`/proposals/${proposal.id}`),
-      title: proposal.client_business_name,
-      nextAction: followUpAction(proposal.valid_until, today),
-      badge: { label: "Proposal sent", tone: "blue" },
-      dueLabel: formatDueLabel(proposal.valid_until, today),
     });
   }
 
@@ -143,7 +181,10 @@ export function buildHomeDashboard(input: {
     acceptedJobs.push({
       key: `accepted-${proposal.id}`,
       href: next.href,
-      title: proposal.client_business_name,
+      title:
+        proposal.client_business_name?.trim() ||
+        proposal.title ||
+        "Accepted proposal",
       nextAction: next.action,
       badge: { label: "Accepted", tone: "green" },
       dueLabel: null,
@@ -198,8 +239,10 @@ export function buildHomeDashboard(input: {
     readyToProposeCount: input.readyToPropose.filter(
       (lead) => lead.stage === "review_completed",
     ).length,
+    salesCount: sales.length,
     acceptedJobsCount: acceptedJobs.length,
     eventsCount: input.events.length,
+    sales: sales.slice(0, 8),
     pipeline: pipeline.slice(0, 8),
     acceptedJobs: acceptedJobs.slice(0, 8),
     billing: billing.slice(0, 8),
